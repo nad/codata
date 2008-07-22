@@ -1,10 +1,14 @@
+------------------------------------------------------------------------
+-- An ad-hoc but straightforward solution to the problem of showing
+-- that elegant definitions of the Hamming numbers (see EWD 792) and
+-- the Fibonacci sequence are productive
+------------------------------------------------------------------------
+
 module StreamProg where
 
 import Stream as S
 open S using (Stream; _∷_)
 open import Data.Nat
-import Data.Vec as V
-open V using (Vec; []; _∷_)
 
 ------------------------------------------------------------------------
 -- Stream programs
@@ -14,96 +18,61 @@ data Ord : Set where
   eq : Ord
   gt : Ord
 
-infixr 5 _++_
-infix  4 ↓_
+infix 4 ↓_
 
 mutual
 
-  -- Streams generated in chunks of m.
+  codata Stream′ A : Set1 where
+    _∷_ : (x : A) (xs : StreamProg A) -> Stream′ A
 
-  codata Stream′ A m : Set1 where
-    _++_ : (xs′ : Vec A m) (xs″ : StreamProg A m m) -> Stream′ A m
-
-  data StreamProg (A : Set) : ℕ -> ℕ -> Set1 where
-    ↓_      : forall {m} (xs : Stream′ A m) -> StreamProg A m m
-    forget  : forall {m n}
-              (xs : StreamProg A m (suc n)) -> StreamProg A m n
-    _∷_     : forall {m n}
-              (x : A) (xs : StreamProg A m n) ->
-              StreamProg A m (suc n)
-    tail    : forall {m n}
-              (xs : StreamProg A m (suc n)) -> StreamProg A m n
-    zipWith : forall {m n B C}
+  data StreamProg (A : Set) : Set1 where
+    ↓_      : (xs : Stream′ A) -> StreamProg A
+    zipWith : forall {B C}
               (f : B -> C -> A)
-              (xs : StreamProg B m n) (ys : StreamProg C m n) ->
-              StreamProg A m n
-    map     : forall {m n B}
-              (f : B -> A) (xs : StreamProg B m n) -> StreamProg A m n
-    -- The implementation of merge becomes messy if the indices are
-    -- more general.
+              (xs : StreamProg B) (ys : StreamProg C) -> StreamProg A
+    map     : forall {B}
+              (f : B -> A) (xs : StreamProg B) -> StreamProg A
     merge   : (cmp : A -> A -> Ord)
-              (xs : StreamProg A 1 1) (ys : StreamProg A 1 1) ->
-              StreamProg A 1 1
+              (xs : StreamProg A) (ys : StreamProg A) -> StreamProg A
 
-data Stream″ A m n : Set1 where
-  _++_ : (xs′ : Vec A n) (xs″ : StreamProg A m m) -> Stream″ A m n
-
-P⇒″ : forall {A m n} -> StreamProg A m n -> Stream″ A m n
-P⇒″ (↓ xs′ ++ xs″)    = xs′ ++ xs″
-P⇒″ (forget xs)       with P⇒″ xs
-P⇒″ (forget xs)       | xs′ ++ xs″ = V.init xs′ ++ forget (V.last xs′ ∷ xs″)
-P⇒″ (x ∷ xs)          with P⇒″ xs
-P⇒″ (x ∷ xs)          | xs′ ++ xs″ = (x ∷ xs′) ++ xs″
-P⇒″ (tail xs)         with P⇒″ xs
-P⇒″ (tail xs)         | xs′ ++ xs″ = V.tail xs′ ++ xs″
-P⇒″ (zipWith f xs ys) with P⇒″ xs | P⇒″ ys
-P⇒″ (zipWith f xs ys) | xs′ ++ xs″ | ys′ ++ ys″ =
-  V.zipWith f xs′ ys′ ++ zipWith f xs″ ys″
-P⇒″ (map f xs)        with P⇒″ xs
-P⇒″ (map f xs)        | xs′ ++ xs″ = V.map f xs′ ++ map f xs″
-P⇒″ (merge cmp xs ys) with P⇒″ xs | P⇒″ ys
-P⇒″ (merge cmp xs ys) | (x ∷ []) ++ xs″ | (y ∷ []) ++ ys″ with cmp x y
-... | lt = (x ∷ []) ++ merge cmp xs″ (forget (y ∷ ys″))
-... | eq = (x ∷ []) ++ merge cmp xs″ ys″
-... | gt = (y ∷ []) ++ merge cmp (forget (x ∷ xs″)) ys″
+P⇒′ : forall {A} -> StreamProg A -> Stream′ A
+P⇒′ (↓ xs)            = xs
+P⇒′ (zipWith f xs ys) with P⇒′ xs | P⇒′ ys
+P⇒′ (zipWith f xs ys) | x ∷ xs′ | y ∷ ys′ = f x y ∷ zipWith f xs′ ys′
+P⇒′ (map f xs)        with P⇒′ xs
+P⇒′ (map f xs)        | x ∷ xs′ = f x ∷ map f xs′
+P⇒′ (merge cmp xs ys) with P⇒′ xs | P⇒′ ys
+P⇒′ (merge cmp xs ys) | x ∷ xs′ | y ∷ ys′ with cmp x y
+P⇒′ (merge cmp xs ys) | x ∷ xs′ | y ∷ ys′ | lt = x ∷ merge cmp xs′ ys
+P⇒′ (merge cmp xs ys) | x ∷ xs′ | y ∷ ys′ | eq = x ∷ merge cmp xs′ ys′
+P⇒′ (merge cmp xs ys) | x ∷ xs′ | y ∷ ys′ | gt = y ∷ merge cmp xs ys′
 
 mutual
 
-  ″⇒ : forall {A m n} -> Stream″ A (suc m) (suc n) -> Stream A
-  ″⇒ ((x ∷ [])        ++ ys) ~ x ∷ P⇒ ys
-  ″⇒ ((x ∷ (x' ∷ xs)) ++ ys) ~ x ∷ ″⇒ ((x' ∷ xs) ++ ys)
+  ′⇒ : forall {A} -> Stream′ A -> Stream A
+  ′⇒ (x ∷ xs) ~ x ∷ P⇒ xs
 
-  P⇒ : forall {A m n} -> StreamProg A (suc m) (suc n) -> Stream A
-  P⇒ xs ~ ″⇒ (P⇒″ xs)
+  P⇒ : forall {A} -> StreamProg A -> Stream A
+  P⇒ xs ~ ′⇒ (P⇒′ xs)
 
 ------------------------------------------------------------------------
 -- Lifting of stream program transformers into functions on streams
 
-⇒P : forall {A} n -> Stream A -> StreamProg A n n
-⇒P n xs ~ ↓ S.take n xs ++ ⇒P n (S.drop n xs)
+⇒P : forall {A} -> Stream A -> StreamProg A
+⇒P (x ∷ xs) ~ ↓ x ∷ ⇒P xs
 
-lift : forall {i j k A B} ->
-       (StreamProg A i i -> StreamProg B (suc j) (suc k)) ->
-       Stream A -> Stream B
-lift f xs = P⇒ (f (⇒P _ xs))
+lift : forall {A B} ->
+       (StreamProg A -> StreamProg B) -> Stream A -> Stream B
+lift f xs = P⇒ (f (⇒P xs))
 
 ------------------------------------------------------------------------
 -- Examples
 
--- Note that for every cycle another instance of forget is applied, so
--- after a while there will be a large number of forgets in the
--- unevaluated thunk. However, there will also be a large number of
--- _+_'s, so the forgets shouldn't change the asymptotic complexity of
--- the code. On the other hand, the asymptotic performance of merge
--- (defined above) is likely to be affected by the presence of the
--- forgets.
+fib : StreamProg ℕ
+fib ~ ↓ 0 ∷ zipWith _+_ fib (↓ 1 ∷ fib)
 
-fib : StreamProg ℕ 1 1
-fib ~ ↓ (1 ∷ []) ++ 1 ∷ zipWith _+_ (forget fib) (tail fib)
-
-hamming : StreamProg ℕ 1 1
-hamming ~
-  ↓ (1 ∷ []) ++ merge cmp (map (_*_ 2) hamming) (map (_*_ 3) hamming)
+hamming : StreamProg ℕ
+hamming ~ ↓ 1 ∷ merge cmp (map (_*_ 2) hamming) (map (_*_ 3) hamming)
   where
   toOrd : forall {m n} -> Ordering m n -> Ord
   toOrd (less _ _)    ~ lt
