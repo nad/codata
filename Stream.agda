@@ -1,17 +1,27 @@
 module Stream where
 
+open import Data.Vec hiding (take; drop; map)
 open import Data.Unit
 open import Data.Nat
 open import Data.Nat.Show
-open import Data.Colist
+open import Data.Colist hiding (take)
 import Data.String as S
 open import Data.Function
 open import IO
 
-infixr 5 _∷_
-
 codata Stream A : Set where
   _∷_ : (x : A) (xs : Stream A) -> Stream A
+
+interleave : forall {A} -> Stream A -> Stream A -> Stream A
+interleave (x ∷ xs) ys ~ x ∷ interleave ys xs
+
+take : forall {A} n -> Stream A -> Vec A n
+take zero    xs       = []
+take (suc n) (x ∷ xs) = x ∷ take n xs
+
+drop : forall {A} -> ℕ -> Stream A -> Stream A
+drop zero    xs       ~ xs
+drop (suc n) (x ∷ xs) ~ drop n xs
 
 map : forall {A B} -> (A -> B) -> Stream A -> Stream B
 map f (x ∷ xs) ~ f x ∷ map f xs
