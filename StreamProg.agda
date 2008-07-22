@@ -6,6 +6,9 @@ open import Data.Nat
 import Data.Vec as V
 open V using (Vec; []; _∷_)
 
+------------------------------------------------------------------------
+-- Stream programs
+
 data Ord : Set where
   lt : Ord
   eq : Ord
@@ -72,6 +75,20 @@ mutual
 
   P⇒ : forall {A m n} -> StreamProg A (suc m) (suc n) -> Stream A
   P⇒ xs ~ ″⇒ (P⇒″ xs)
+
+------------------------------------------------------------------------
+-- Lifting of stream program transformers into functions on streams
+
+⇒P : forall {A} n -> Stream A -> StreamProg A n n
+⇒P n xs ~ ↓ S.take n xs ++ ⇒P n (S.drop n xs)
+
+lift : forall {i j k A B} ->
+       (StreamProg A i i -> StreamProg B (suc j) (suc k)) ->
+       Stream A -> Stream B
+lift f xs = P⇒ (f (⇒P _ xs))
+
+------------------------------------------------------------------------
+-- Examples
 
 -- Note that for every cycle another instance of forget is applied, so
 -- after a while there will be a large number of forgets in the
