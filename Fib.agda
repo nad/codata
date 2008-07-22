@@ -16,23 +16,26 @@ mutual
 
   data StreamProg (A : Set) : ℕ -> Set1 where
     ↓_      : forall {n} (xs : Stream′ A n) -> StreamProg A n
+    forget  : forall {n} (xs : StreamProg A (suc n)) -> StreamProg A n
     _∷_     : forall {n} (x : A) (xs : StreamProg A n) ->
               StreamProg A (suc n)
     tail    : forall {n} (xs : StreamProg A (suc n)) -> StreamProg A n
     zipWith : forall {n B C}
               (f : B -> C -> A)
-              (xs : StreamProg B (suc n)) (ys : StreamProg C n) ->
+              (xs : StreamProg B n) (ys : StreamProg C n) ->
               StreamProg A n
 
 P⇒′ : forall {A n} -> StreamProg A n -> Stream′ A n
-P⇒′ (↓ xs) = xs
-P⇒′ (x ∷ xs) with P⇒′ xs
-P⇒′ (x ∷ xs) | xs′ ++ ys = (x ∷ xs′) ++ ys
-P⇒′ (tail xs) with P⇒′ xs
-P⇒′ (tail xs) | (x ∷ xs′) ++ ys = xs′ ++ ys
+P⇒′ (↓ xs)            = xs
+P⇒′ (forget xs)       with P⇒′ xs
+P⇒′ (forget xs)       | xs′ ++ xs″ = V.init xs′ ++ forget (V.last xs′ ∷ xs″)
+P⇒′ (x ∷ xs)          with P⇒′ xs
+P⇒′ (x ∷ xs)          | xs′ ++ xs″ = (x ∷ xs′) ++ xs″
+P⇒′ (tail xs)         with P⇒′ xs
+P⇒′ (tail xs)         | (x ∷ xs′) ++ xs″ = xs′ ++ xs″
 P⇒′ (zipWith f xs ys) with P⇒′ xs | P⇒′ ys
 P⇒′ (zipWith f xs ys) | xs′ ++ xs″ | ys′ ++ ys″ =
-  V.zipWith f (V.init xs′) ys′ ++ zipWith f (V.last xs′ ∷ xs″) ys″
+  V.zipWith f xs′ ys′ ++ zipWith f xs″ ys″
 
 mutual
 
@@ -43,8 +46,14 @@ mutual
   P⇒ : forall {A n} -> StreamProg A n -> Stream A
   P⇒ xs ~ ′⇒ (P⇒′ xs)
 
+-- Note that for every cycle another instance of forget is applied, so
+-- after a while there will be a large number of forgets in the
+-- unevaluated thunk. However, there will also be a large number of
+-- _+_'s, so the forgets shouldn't change the asymptotic complexity of
+-- the code.
+
 fibP : StreamProg ℕ 1
-fibP ~ ↓ (1 ∷ (1 ∷ [])) ++ zipWith _+_ fibP (tail fibP)
+fibP ~ ↓ (1 ∷ (1 ∷ [])) ++ zipWith _+_ (forget fibP) (tail fibP)
 
 fib : Stream ℕ
 fib = P⇒ fibP
