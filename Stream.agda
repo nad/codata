@@ -1,16 +1,30 @@
 module Stream where
 
-open import Data.Vec hiding (take; drop; map)
+import Data.Vec as V
+open V using (Vec; []; _∷_)
 open import Data.Unit
 open import Data.Nat
 open import Data.Nat.Show
 open import Data.Colist hiding (take)
 import Data.String as S
 open import Data.Function
+open import Relation.Binary
+open import Relation.Binary.PropositionalEquality
 open import IO
+
+------------------------------------------------------------------------
+-- Streams
+
+infixr 5 _∷_
 
 codata Stream A : Set where
   _∷_ : (x : A) (xs : Stream A) -> Stream A
+
+head : forall {A} -> Stream A -> A
+head (x ∷ xs) = x
+
+tail : forall {A} -> Stream A -> Stream A
+tail (x ∷ xs) = xs
 
 interleave : forall {A} -> Stream A -> Stream A -> Stream A
 interleave (x ∷ xs) ys ~ x ∷ interleave ys xs
@@ -28,6 +42,40 @@ map f (x ∷ xs) ~ f x ∷ map f xs
 
 toColist : forall {A} -> Stream A -> Colist A
 toColist (x ∷ xs) ~ x ∷ toColist xs
+
+------------------------------------------------------------------------
+-- Stream equality
+
+infix 4 _≈_
+
+codata _≈_ {A} (xs ys : Stream A) : Set where
+  _∷_ : (x≡ : head xs ≡ head ys) (xs≈ : tail xs ≈ tail ys) -> xs ≈ ys
+
+refl : forall {A} -> Reflexive (_≈_ {A})
+refl ~ ≡-refl ∷ refl
+
+sym : forall {A} -> Symmetric (_≈_ {A})
+sym (x≡ ∷ xs≈) ~ ≡-sym x≡ ∷ sym xs≈
+
+trans : forall {A} -> Transitive (_≈_ {A})
+trans (x≡ ∷ xs≈) (y≡ ∷ ys≈) ~ ≡-trans x≡ y≡ ∷ trans xs≈ ys≈
+
+≈-isEquivalence : forall {A} -> IsEquivalence (_≈_ {A})
+≈-isEquivalence {A} = record
+  { refl  = refl
+  ; sym   = sym
+  ; trans = trans
+  }
+
+Stream-setoid : Set -> Setoid
+Stream-setoid A = record
+  { carrier       = Stream A
+  ; _≈_           = _≈_
+  ; isEquivalence = ≈-isEquivalence
+  }
+
+------------------------------------------------------------------------
+-- IO
 
 -- This definition would be accepted by the termination checker if
 -- return and _>>=_ were constructors.
