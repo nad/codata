@@ -10,41 +10,48 @@ infix  4 ↓_
 
 mutual
 
-  codata Stream′ A : ℕ -> Set1 where
-    _++_ : forall {n} (xs : Vec A (suc n)) (ys : StreamProg A 0) ->
-           Stream′ A n
+  -- Streams generated in chunks of m.
 
-  data StreamProg (A : Set) : ℕ -> Set1 where
-    ↓_      : forall {n} (xs : Stream′ A n) -> StreamProg A n
-    forget  : forall {n} (xs : StreamProg A (suc n)) -> StreamProg A n
-    _∷_     : forall {n} (x : A) (xs : StreamProg A n) ->
-              StreamProg A (suc n)
-    tail    : forall {n} (xs : StreamProg A (suc n)) -> StreamProg A n
-    zipWith : forall {n B C}
+  codata Stream′ A m : Set1 where
+    _++_ : (xs′ : Vec A m) (xs″ : StreamProg A m m) -> Stream′ A m
+
+  data StreamProg (A : Set) : ℕ -> ℕ -> Set1 where
+    ↓_      : forall {m} (xs : Stream′ A m) -> StreamProg A m m
+    forget  : forall {m n}
+              (xs : StreamProg A m (suc n)) -> StreamProg A m n
+    _∷_     : forall {m n}
+              (x : A) (xs : StreamProg A m n) ->
+              StreamProg A m (suc n)
+    tail    : forall {m n}
+              (xs : StreamProg A m (suc n)) -> StreamProg A m n
+    zipWith : forall {m n B C}
               (f : B -> C -> A)
-              (xs : StreamProg B n) (ys : StreamProg C n) ->
-              StreamProg A n
+              (xs : StreamProg B m n) (ys : StreamProg C m n) ->
+              StreamProg A m n
 
-P⇒′ : forall {A n} -> StreamProg A n -> Stream′ A n
-P⇒′ (↓ xs)            = xs
-P⇒′ (forget xs)       with P⇒′ xs
-P⇒′ (forget xs)       | xs′ ++ xs″ = V.init xs′ ++ forget (V.last xs′ ∷ xs″)
-P⇒′ (x ∷ xs)          with P⇒′ xs
-P⇒′ (x ∷ xs)          | xs′ ++ xs″ = (x ∷ xs′) ++ xs″
-P⇒′ (tail xs)         with P⇒′ xs
-P⇒′ (tail xs)         | (x ∷ xs′) ++ xs″ = xs′ ++ xs″
-P⇒′ (zipWith f xs ys) with P⇒′ xs | P⇒′ ys
-P⇒′ (zipWith f xs ys) | xs′ ++ xs″ | ys′ ++ ys″ =
+data Stream″ A m n : Set1 where
+  _++_ : (xs′ : Vec A n) (xs″ : StreamProg A m m) -> Stream″ A m n
+
+P⇒″ : forall {A m n} -> StreamProg A m n -> Stream″ A m n
+P⇒″ (↓ xs′ ++ xs″)    = xs′ ++ xs″
+P⇒″ (forget xs)       with P⇒″ xs
+P⇒″ (forget xs)       | xs′ ++ xs″ = V.init xs′ ++ forget (V.last xs′ ∷ xs″)
+P⇒″ (x ∷ xs)          with P⇒″ xs
+P⇒″ (x ∷ xs)          | xs′ ++ xs″ = (x ∷ xs′) ++ xs″
+P⇒″ (tail xs)         with P⇒″ xs
+P⇒″ (tail xs)         | xs′ ++ xs″ = V.tail xs′ ++ xs″
+P⇒″ (zipWith f xs ys) with P⇒″ xs | P⇒″ ys
+P⇒″ (zipWith f xs ys) | xs′ ++ xs″ | ys′ ++ ys″ =
   V.zipWith f xs′ ys′ ++ zipWith f xs″ ys″
 
 mutual
 
-  ′⇒ : forall {A n} -> Stream′ A n -> Stream A
-  ′⇒ ((x ∷ [])        ++ ys) ~ x ∷ P⇒ ys
-  ′⇒ ((x ∷ (x′ ∷ xs)) ++ ys) ~ x ∷ ′⇒ ((x′ ∷ xs) ++ ys)
+  ″⇒ : forall {A m n} -> Stream″ A (suc m) (suc n) -> Stream A
+  ″⇒ ((x ∷ [])        ++ ys) ~ x ∷ P⇒ ys
+  ″⇒ ((x ∷ (x' ∷ xs)) ++ ys) ~ x ∷ ″⇒ ((x' ∷ xs) ++ ys)
 
-  P⇒ : forall {A n} -> StreamProg A n -> Stream A
-  P⇒ xs ~ ′⇒ (P⇒′ xs)
+  P⇒ : forall {A m n} -> StreamProg A (suc m) (suc n) -> Stream A
+  P⇒ xs ~ ″⇒ (P⇒″ xs)
 
 -- Note that for every cycle another instance of forget is applied, so
 -- after a while there will be a large number of forgets in the
@@ -52,8 +59,8 @@ mutual
 -- _+_'s, so the forgets shouldn't change the asymptotic complexity of
 -- the code.
 
-fibP : StreamProg ℕ 1
-fibP ~ ↓ (1 ∷ (1 ∷ [])) ++ zipWith _+_ (forget fibP) (tail fibP)
+fibP : StreamProg ℕ 1 1
+fibP ~ ↓ (1 ∷ []) ++ 1 ∷ zipWith _+_ (forget fibP) (tail fibP)
 
 fib : Stream ℕ
 fib = P⇒ fibP
