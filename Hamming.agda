@@ -6,16 +6,14 @@
 
 module Hamming where
 
+open import Stream hiding (map)
+
 data Ordering : Set where
   lt : Ordering
   eq : Ordering
   gt : Ordering
 
-infixr 5 _∷_
 infix  4 ↓_
-
-codata Stream A : Set where
-  _∷_ : (x : A) (xs : Stream A) -> Stream A
 
 mutual
 
@@ -63,3 +61,5 @@ hamming″ ~ ↓ 1 ∷ merge cmp (map (_*_ 2) hamming″) (map (_*_ 3) hamming�
 
 hamming : Stream ℕ
 hamming = ″⇒ hamming″
+
+main = putStream hamming
