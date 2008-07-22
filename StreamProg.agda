@@ -1,9 +1,15 @@
-module Fib where
+module StreamProg where
 
-open import Stream
+import Stream as S
+open S using (Stream; _∷_)
 open import Data.Nat
 import Data.Vec as V
 open V using (Vec; []; _∷_)
+
+data Ord : Set where
+  lt : Ord
+  eq : Ord
+  gt : Ord
 
 infixr 5 _++_
 infix  4 ↓_
@@ -28,6 +34,13 @@ mutual
               (f : B -> C -> A)
               (xs : StreamProg B m n) (ys : StreamProg C m n) ->
               StreamProg A m n
+    map     : forall {m n B}
+              (f : B -> A) (xs : StreamProg B m n) -> StreamProg A m n
+    -- The implementation of merge becomes messy if the indices are
+    -- more general.
+    merge   : (cmp : A -> A -> Ord)
+              (xs : StreamProg A 1 1) (ys : StreamProg A 1 1) ->
+              StreamProg A 1 1
 
 data Stream″ A m n : Set1 where
   _++_ : (xs′ : Vec A n) (xs″ : StreamProg A m m) -> Stream″ A m n
@@ -43,6 +56,13 @@ P⇒″ (tail xs)         | xs′ ++ xs″ = V.tail xs′ ++ xs″
 P⇒″ (zipWith f xs ys) with P⇒″ xs | P⇒″ ys
 P⇒″ (zipWith f xs ys) | xs′ ++ xs″ | ys′ ++ ys″ =
   V.zipWith f xs′ ys′ ++ zipWith f xs″ ys″
+P⇒″ (map f xs)        with P⇒″ xs
+P⇒″ (map f xs)        | xs′ ++ xs″ = V.map f xs′ ++ map f xs″
+P⇒″ (merge cmp xs ys) with P⇒″ xs | P⇒″ ys
+P⇒″ (merge cmp xs ys) | (x ∷ []) ++ xs″ | (y ∷ []) ++ ys″ with cmp x y
+... | lt = (x ∷ []) ++ merge cmp xs″ (forget (y ∷ ys″))
+... | eq = (x ∷ []) ++ merge cmp xs″ ys″
+... | gt = (y ∷ []) ++ merge cmp (forget (x ∷ xs″)) ys″
 
 mutual
 
@@ -57,12 +77,23 @@ mutual
 -- after a while there will be a large number of forgets in the
 -- unevaluated thunk. However, there will also be a large number of
 -- _+_'s, so the forgets shouldn't change the asymptotic complexity of
--- the code.
+-- the code. On the other hand, the asymptotic performance of merge
+-- (defined above) is likely to be affected by the presence of the
+-- forgets.
 
-fibP : StreamProg ℕ 1 1
-fibP ~ ↓ (1 ∷ []) ++ 1 ∷ zipWith _+_ (forget fibP) (tail fibP)
+fib : StreamProg ℕ 1 1
+fib ~ ↓ (1 ∷ []) ++ 1 ∷ zipWith _+_ (forget fib) (tail fib)
 
-fib : Stream ℕ
-fib = P⇒ fibP
+hamming : StreamProg ℕ 1 1
+hamming ~
+  ↓ (1 ∷ []) ++ merge cmp (map (_*_ 2) hamming) (map (_*_ 3) hamming)
+  where
+  toOrd : forall {m n} -> Ordering m n -> Ord
+  toOrd (less _ _)    ~ lt
+  toOrd (equal _)     ~ eq
+  toOrd (greater _ _) ~ gt
 
-main = putStream fib
+  cmp : ℕ -> ℕ -> Ord
+  cmp m n ~ toOrd (compare m n)
+
+main = S.putStream (S.interleave (P⇒ fib) (P⇒ hamming))
