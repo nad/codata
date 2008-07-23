@@ -15,40 +15,40 @@ open import IO
 ------------------------------------------------------------------------
 -- Streams
 
-infixr 5 _∷_
+infixr 5 _≺_
 
 codata Stream A : Set where
-  _∷_ : (x : A) (xs : Stream A) -> Stream A
+  _≺_ : (x : A) (xs : Stream A) -> Stream A
 
 head : forall {A} -> Stream A -> A
-head (x ∷ xs) = x
+head (x ≺ xs) = x
 
 tail : forall {A} -> Stream A -> Stream A
-tail (x ∷ xs) = xs
+tail (x ≺ xs) = xs
 
 interleave : forall {A} -> Stream A -> Stream A -> Stream A
-interleave (x ∷ xs) ys ~ x ∷ interleave ys xs
+interleave (x ≺ xs) ys ~ x ≺ interleave ys xs
 
 take : forall {A} n -> Stream A -> Vec A n
 take zero    xs       = []
-take (suc n) (x ∷ xs) = x ∷ take n xs
+take (suc n) (x ≺ xs) = x ∷ take n xs
 
 drop : forall {A} -> ℕ -> Stream A -> Stream A
 drop zero    xs       ~ xs
-drop (suc n) (x ∷ xs) ~ drop n xs
+drop (suc n) (x ≺ xs) ~ drop n xs
 
 map : forall {A B} -> (A -> B) -> Stream A -> Stream B
-map f (x ∷ xs) ~ f x ∷ map f xs
+map f (x ≺ xs) ~ f x ≺ map f xs
 
 zipWith : forall {A B C} ->
           (A -> B -> C) -> Stream A -> Stream B -> Stream C
-zipWith _∙_ (x ∷ xs) (y ∷ ys) ~ (x ∙ y) ∷ zipWith _∙_ xs ys
+zipWith _∙_ (x ≺ xs) (y ≺ ys) ~ (x ∙ y) ≺ zipWith _∙_ xs ys
 
 repeat : forall {A} -> A -> Stream A
-repeat x ~ x ∷ repeat x
+repeat x ~ x ≺ repeat x
 
 toColist : forall {A} -> Stream A -> Colist A
-toColist (x ∷ xs) ~ x ∷ toColist xs
+toColist (x ≺ xs) ~ x ∷ toColist xs
 
 ------------------------------------------------------------------------
 -- Stream equality
@@ -56,16 +56,16 @@ toColist (x ∷ xs) ~ x ∷ toColist xs
 infix 4 _≈_
 
 codata _≈_ {A} (xs ys : Stream A) : Set where
-  _∷_ : (x≡ : head xs ≡ head ys) (xs≈ : tail xs ≈ tail ys) -> xs ≈ ys
+  _≺_ : (x≡ : head xs ≡ head ys) (xs≈ : tail xs ≈ tail ys) -> xs ≈ ys
 
 refl : forall {A} -> Reflexive (_≈_ {A})
-refl ~ ≡-refl ∷ refl
+refl ~ ≡-refl ≺ refl
 
 sym : forall {A} -> Symmetric (_≈_ {A})
-sym (x≡ ∷ xs≈) ~ ≡-sym x≡ ∷ sym xs≈
+sym (x≡ ≺ xs≈) ~ ≡-sym x≡ ≺ sym xs≈
 
 trans : forall {A} -> Transitive (_≈_ {A})
-trans (x≡ ∷ xs≈) (y≡ ∷ ys≈) ~ ≡-trans x≡ y≡ ∷ trans xs≈ ys≈
+trans (x≡ ≺ xs≈) (y≡ ≺ ys≈) ~ ≡-trans x≡ y≡ ≺ trans xs≈ ys≈
 
 ≈-isEquivalence : forall {A} -> IsEquivalence (_≈_ {A})
 ≈-isEquivalence {A} = record

@@ -7,7 +7,7 @@
 module StreamProg where
 
 import Stream as S
-open S using (Stream; _∷_)
+open S using (Stream; _≺_)
 open import Data.Nat
 
 ------------------------------------------------------------------------
@@ -23,7 +23,7 @@ infix 4 ↓_
 mutual
 
   codata Stream′ A : Set1 where
-    _∷_ : (x : A) (xs : StreamProg A) -> Stream′ A
+    _≺_ : (x : A) (xs : StreamProg A) -> Stream′ A
 
   data StreamProg (A : Set) : Set1 where
     ↓_      : (xs : Stream′ A) -> StreamProg A
@@ -38,19 +38,19 @@ mutual
 P⇒′ : forall {A} -> StreamProg A -> Stream′ A
 P⇒′ (↓ xs)            = xs
 P⇒′ (zipWith f xs ys) with P⇒′ xs | P⇒′ ys
-P⇒′ (zipWith f xs ys) | x ∷ xs′ | y ∷ ys′ = f x y ∷ zipWith f xs′ ys′
+P⇒′ (zipWith f xs ys) | x ≺ xs′ | y ≺ ys′ = f x y ≺ zipWith f xs′ ys′
 P⇒′ (map f xs)        with P⇒′ xs
-P⇒′ (map f xs)        | x ∷ xs′ = f x ∷ map f xs′
+P⇒′ (map f xs)        | x ≺ xs′ = f x ≺ map f xs′
 P⇒′ (merge cmp xs ys) with P⇒′ xs | P⇒′ ys
-P⇒′ (merge cmp xs ys) | x ∷ xs′ | y ∷ ys′ with cmp x y
-P⇒′ (merge cmp xs ys) | x ∷ xs′ | y ∷ ys′ | lt = x ∷ merge cmp xs′ ys
-P⇒′ (merge cmp xs ys) | x ∷ xs′ | y ∷ ys′ | eq = x ∷ merge cmp xs′ ys′
-P⇒′ (merge cmp xs ys) | x ∷ xs′ | y ∷ ys′ | gt = y ∷ merge cmp xs ys′
+P⇒′ (merge cmp xs ys) | x ≺ xs′ | y ≺ ys′ with cmp x y
+P⇒′ (merge cmp xs ys) | x ≺ xs′ | y ≺ ys′ | lt = x ≺ merge cmp xs′ ys
+P⇒′ (merge cmp xs ys) | x ≺ xs′ | y ≺ ys′ | eq = x ≺ merge cmp xs′ ys′
+P⇒′ (merge cmp xs ys) | x ≺ xs′ | y ≺ ys′ | gt = y ≺ merge cmp xs ys′
 
 mutual
 
   ′⇒ : forall {A} -> Stream′ A -> Stream A
-  ′⇒ (x ∷ xs) ~ x ∷ P⇒ xs
+  ′⇒ (x ≺ xs) ~ x ≺ P⇒ xs
 
   P⇒ : forall {A} -> StreamProg A -> Stream A
   P⇒ xs ~ ′⇒ (P⇒′ xs)
@@ -59,7 +59,7 @@ mutual
 -- Lifting of stream program transformers into functions on streams
 
 ⇒P : forall {A} -> Stream A -> StreamProg A
-⇒P (x ∷ xs) ~ ↓ x ∷ ⇒P xs
+⇒P (x ≺ xs) ~ ↓ x ≺ ⇒P xs
 
 lift : forall {A B} ->
        (StreamProg A -> StreamProg B) -> Stream A -> Stream B
@@ -69,10 +69,10 @@ lift f xs = P⇒ (f (⇒P xs))
 -- Examples
 
 fib : StreamProg ℕ
-fib ~ ↓ 0 ∷ zipWith _+_ fib (↓ 1 ∷ fib)
+fib ~ ↓ 0 ≺ zipWith _+_ fib (↓ 1 ≺ fib)
 
 hamming : StreamProg ℕ
-hamming ~ ↓ 1 ∷ merge cmp (map (_*_ 2) hamming) (map (_*_ 3) hamming)
+hamming ~ ↓ 1 ≺ merge cmp (map (_*_ 2) hamming) (map (_*_ 3) hamming)
   where
   toOrd : forall {m n} -> Ordering m n -> Ord
   toOrd (less _ _)    ~ lt

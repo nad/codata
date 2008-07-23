@@ -6,7 +6,7 @@
 module IndexedStreamProg where
 
 import Stream as S
-open S using (Stream; _∷_)
+open S using (Stream; _≺_)
 open import Data.Nat
 import Data.Vec as V
 open V using (Vec; []; _∷_)
@@ -19,25 +19,25 @@ data Ord : Set where
   eq : Ord
   gt : Ord
 
-infixr 5 _++_
+infixr 5 _≺≺_
 infix  4 ↓_
 
 mutual
 
   -- Streams generated in chunks of m. A more general variant is also
-  -- possible (drop the first index of StreamProg and let _++_ have
+  -- possible (drop the first index of StreamProg and let _≺≺_ have
   -- type (xs′ : Vec A (suc m)) (xs″ : StreamProg A 0) ->
   -- Stream′ A m), but the current indexing scheme may be slightly
   -- easier to understand.
 
   codata Stream′ A m : Set1 where
-    _++_ : (xs′ : Vec A m) (xs″ : StreamProg A m m) -> Stream′ A m
+    _≺≺_ : (xs′ : Vec A m) (xs″ : StreamProg A m m) -> Stream′ A m
 
   data StreamProg (A : Set) : ℕ -> ℕ -> Set1 where
     ↓_      : forall {m} (xs : Stream′ A m) -> StreamProg A m m
     forget  : forall {m n}
               (xs : StreamProg A m (suc n)) -> StreamProg A m n
-    _∷_     : forall {m n}
+    _≺_     : forall {m n}
               (x : A) (xs : StreamProg A m n) ->
               StreamProg A m (suc n)
     tail    : forall {m n}
@@ -55,32 +55,32 @@ mutual
               StreamProg A 1 1
 
 data Stream″ A m n : Set1 where
-  _++_ : (xs′ : Vec A n) (xs″ : StreamProg A m m) -> Stream″ A m n
+  _≺≺_ : (xs′ : Vec A n) (xs″ : StreamProg A m m) -> Stream″ A m n
 
 P⇒″ : forall {A m n} -> StreamProg A m n -> Stream″ A m n
-P⇒″ (↓ xs′ ++ xs″)    = xs′ ++ xs″
+P⇒″ (↓ xs′ ≺≺ xs″)    = xs′ ≺≺ xs″
 P⇒″ (forget xs)       with P⇒″ xs
-P⇒″ (forget xs)       | xs′ ++ xs″ = V.init xs′ ++ forget (V.last xs′ ∷ xs″)
-P⇒″ (x ∷ xs)          with P⇒″ xs
-P⇒″ (x ∷ xs)          | xs′ ++ xs″ = (x ∷ xs′) ++ xs″
+P⇒″ (forget xs)       | xs′ ≺≺ xs″ = V.init xs′ ≺≺ forget (V.last xs′ ≺ xs″)
+P⇒″ (x ≺ xs)          with P⇒″ xs
+P⇒″ (x ≺ xs)          | xs′ ≺≺ xs″ = (x ∷ xs′) ≺≺ xs″
 P⇒″ (tail xs)         with P⇒″ xs
-P⇒″ (tail xs)         | xs′ ++ xs″ = V.tail xs′ ++ xs″
+P⇒″ (tail xs)         | xs′ ≺≺ xs″ = V.tail xs′ ≺≺ xs″
 P⇒″ (zipWith f xs ys) with P⇒″ xs | P⇒″ ys
-P⇒″ (zipWith f xs ys) | xs′ ++ xs″ | ys′ ++ ys″ =
-  V.zipWith f xs′ ys′ ++ zipWith f xs″ ys″
+P⇒″ (zipWith f xs ys) | xs′ ≺≺ xs″ | ys′ ≺≺ ys″ =
+  V.zipWith f xs′ ys′ ≺≺ zipWith f xs″ ys″
 P⇒″ (map f xs)        with P⇒″ xs
-P⇒″ (map f xs)        | xs′ ++ xs″ = V.map f xs′ ++ map f xs″
+P⇒″ (map f xs)        | xs′ ≺≺ xs″ = V.map f xs′ ≺≺ map f xs″
 P⇒″ (merge cmp xs ys) with P⇒″ xs | P⇒″ ys
-P⇒″ (merge cmp xs ys) | (x ∷ []) ++ xs″ | (y ∷ []) ++ ys″ with cmp x y
-... | lt = (x ∷ []) ++ merge cmp xs″ (forget (y ∷ ys″))
-... | eq = (x ∷ []) ++ merge cmp xs″ ys″
-... | gt = (y ∷ []) ++ merge cmp (forget (x ∷ xs″)) ys″
+P⇒″ (merge cmp xs ys) | (x ∷ []) ≺≺ xs″ | (y ∷ []) ≺≺ ys″ with cmp x y
+... | lt = (x ∷ []) ≺≺ merge cmp xs″ (forget (y ≺ ys″))
+... | eq = (x ∷ []) ≺≺ merge cmp xs″ ys″
+... | gt = (y ∷ []) ≺≺ merge cmp (forget (x ≺ xs″)) ys″
 
 mutual
 
   ″⇒ : forall {A m n} -> Stream″ A (suc m) (suc n) -> Stream A
-  ″⇒ ((x ∷ [])        ++ ys) ~ x ∷ P⇒ ys
-  ″⇒ ((x ∷ (x' ∷ xs)) ++ ys) ~ x ∷ ″⇒ ((x' ∷ xs) ++ ys)
+  ″⇒ ((x ∷ [])        ≺≺ ys) ~ x ≺ P⇒ ys
+  ″⇒ ((x ∷ (x' ∷ xs)) ≺≺ ys) ~ x ≺ ″⇒ ((x' ∷ xs) ≺≺ ys)
 
   P⇒ : forall {A m n} -> StreamProg A (suc m) (suc n) -> Stream A
   P⇒ xs ~ ″⇒ (P⇒″ xs)
@@ -89,7 +89,7 @@ mutual
 -- Lifting of stream program transformers into functions on streams
 
 ⇒P : forall {A} n -> Stream A -> StreamProg A n n
-⇒P n xs ~ ↓ S.take n xs ++ ⇒P n (S.drop n xs)
+⇒P n xs ~ ↓ S.take n xs ≺≺ ⇒P n (S.drop n xs)
 
 lift : forall {i j k A B} ->
        (StreamProg A i i -> StreamProg B (suc j) (suc k)) ->
@@ -108,11 +108,11 @@ lift f xs = P⇒ (f (⇒P _ xs))
 -- forgets.
 
 fib : StreamProg ℕ 1 1
-fib ~ ↓ (0 ∷ []) ++ 1 ∷ zipWith _+_ (forget fib) (tail fib)
+fib ~ ↓ (0 ∷ []) ≺≺ 1 ≺ zipWith _+_ (forget fib) (tail fib)
 
 hamming : StreamProg ℕ 1 1
 hamming ~
-  ↓ (1 ∷ []) ++ merge cmp (map (_*_ 2) hamming) (map (_*_ 3) hamming)
+  ↓ (1 ∷ []) ≺≺ merge cmp (map (_*_ 2) hamming) (map (_*_ 3) hamming)
   where
   toOrd : forall {m n} -> Ordering m n -> Ord
   toOrd (less _ _)    ~ lt
