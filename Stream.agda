@@ -40,6 +40,13 @@ drop (suc n) (x ∷ xs) ~ drop n xs
 map : forall {A B} -> (A -> B) -> Stream A -> Stream B
 map f (x ∷ xs) ~ f x ∷ map f xs
 
+zipWith : forall {A B C} ->
+          (A -> B -> C) -> Stream A -> Stream B -> Stream C
+zipWith _∙_ (x ∷ xs) (y ∷ ys) ~ (x ∙ y) ∷ zipWith _∙_ xs ys
+
+repeat : forall {A} -> A -> Stream A
+repeat x ~ x ∷ repeat x
+
 toColist : forall {A} -> Stream A -> Colist A
 toColist (x ∷ xs) ~ x ∷ toColist xs
 
