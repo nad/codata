@@ -81,6 +81,11 @@ Stream-setoid A = record
   ; isEquivalence = ≈-isEquivalence
   }
 
+-- A convenient lemma.
+
+η : forall {A} {xs : Stream A} -> xs ≡ head xs ≺ tail xs
+η {xs = x ≺ xs} = ≡-refl
+
 ------------------------------------------------------------------------
 -- IO
 

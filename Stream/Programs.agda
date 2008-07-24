@@ -38,6 +38,9 @@ mutual
     _≺≺_    : forall {n} (xs : Vec A n) (ys : StreamProg A) ->
               StreamProg A
 
+------------------------------------------------------------------------
+-- Conversion
+
 P⇒′ : forall {A} -> StreamProg A -> Stream′ A
 P⇒′ (↓ xs)           = xs
 P⇒′ (x ∞)            = x ≺ x ∞
@@ -63,3 +66,13 @@ P⇒ xs = ′⇒ (P⇒′ xs)
 lift : forall {A} ->
        (StreamProg A -> StreamProg A) -> Stream A -> Stream A
 lift f xs = P⇒ (f (⇒P xs))
+
+------------------------------------------------------------------------
+-- Some abbreviations
+
+headP : forall {A} -> StreamProg A -> A
+headP xs = head (P⇒ xs)
+
+tailP : forall {A} -> StreamProg A -> StreamProg A
+tailP xs with P⇒′ xs
+tailP xs | x ≺ xs′ = xs′
