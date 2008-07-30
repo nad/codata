@@ -146,7 +146,7 @@ private
     unfold xs ρ
       ≣⟨ η ⟩
     ⟪ xs ⟫ (Vec1.map₁₀ headP ρ) ≺ P⇒ (⟦ xs ⟧ (Vec1.map tailP ρ))
-      ≈⟨ ↓ ≡-refl ≺ main-lemma xs (Vec1.map tailP ρ) ⟩
+      ≅⟨ ↓ ≡-refl ≺ main-lemma xs (Vec1.map tailP ρ) ⟩
     lift ⟪ xs ⟫ ρ
       ▯
 
@@ -167,7 +167,7 @@ pointwise' xs ys hyp ρ =
   lift ⟪ xs ⟫ ρ
     ≊⟨ lift-cong hyp ρ ⟩
   lift ⟪ ys ⟫ ρ
-    ≊⟨ sym′ (main-lemma ys ρ) ⟩
+    ≊⟨ ≅-sym (main-lemma ys ρ) ⟩
   ⟦ ys ⟧ ρ
     ▯
 

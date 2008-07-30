@@ -11,7 +11,7 @@ open import Relation.Binary.PropositionalEquality
 infixr 5 _≺_
 infix  4 ↓_
 infix  3 _≃_ _≅_ _≊_ _∎ _▯
-infixr 2 _≈⟨_⟩_ _≊⟨_⟩_ _≡⟨_⟩_ _≣⟨_⟩_
+infixr 2 _≅⟨_⟩_ _≊⟨_⟩_ _≡⟨_⟩_ _≣⟨_⟩_
 
 mutual
 
@@ -24,7 +24,7 @@ mutual
 
   data _≅_ {A} : (xs ys : Stream A) -> Set1 where
     ↓_           : forall {xs ys} (xs≈ : xs ≃ ys) -> xs ≅ ys
-    _≈⟨_⟩_       : forall xs {ys zs}
+    _≅⟨_⟩_       : forall xs {ys zs}
                    (xs≈ys : xs ≅ ys) (ys≈zs : ys ≅ zs) -> xs ≅ zs
     _≊⟨_⟩_       : forall xs {ys zs}
                    (xs≈ys : P⇒ xs ≅ ys) (ys≈zs : ys ≅ zs) -> P⇒ xs ≅ zs
@@ -32,7 +32,7 @@ mutual
                    (xs≡ys : xs ≡ ys) (ys≈zs : ys ≅ zs) -> xs ≅ zs
     _≣⟨_⟩_       : forall xs {ys zs}
                    (xs≡ys : P⇒ xs ≡ ys) (ys≈zs : ys ≅ zs) -> P⇒ xs ≅ zs
-    sym′         : forall {xs ys} (xs≈ys : xs ≅ ys) -> ys ≅ xs
+    ≅-sym        : forall {xs ys} (xs≈ys : xs ≅ ys) -> ys ≅ xs
     $-cong       : forall {B}
                    (f : B -> A) xs ys (xs≈ys : xs ≊ ys) ->
                    f $ xs ≊ f $ ys
@@ -43,16 +43,16 @@ mutual
 
 ≅⇒≃ : forall {A} {xs ys : Stream A} -> xs ≅ ys -> xs ≃ ys
 ≅⇒≃ (↓ xs≈)                    = xs≈
-≅⇒≃ (xs ≈⟨ xs≈ys ⟩ ys≈zs)      with ≅⇒≃ xs≈ys | ≅⇒≃ ys≈zs
-≅⇒≃ (xs ≈⟨ xs≈ys ⟩ ys≈zs)      | x≡y ≺ xs≈ys′ | y≡z ≺ ys≈zs′ =
-                                 ≡-trans x≡y y≡z ≺ (tail xs ≈⟨ xs≈ys′ ⟩ ys≈zs′)
+≅⇒≃ (xs ≅⟨ xs≈ys ⟩ ys≈zs)      with ≅⇒≃ xs≈ys | ≅⇒≃ ys≈zs
+≅⇒≃ (xs ≅⟨ xs≈ys ⟩ ys≈zs)      | x≡y ≺ xs≈ys′ | y≡z ≺ ys≈zs′ =
+                                 ≡-trans x≡y y≡z ≺ (tail xs ≅⟨ xs≈ys′ ⟩ ys≈zs′)
 ≅⇒≃ (xs ≊⟨ xs≈ys ⟩ ys≈zs)      with P⇒′ xs | ≅⇒≃ xs≈ys | ≅⇒≃ ys≈zs
 ≅⇒≃ (xs ≊⟨ xs≈ys ⟩ ys≈zs)      | x ≺ xs′ | x≡y ≺ xs≈ys′ | y≡z ≺ ys≈zs′ =
                                  ≡-trans x≡y y≡z ≺ (xs′ ≊⟨ xs≈ys′ ⟩ ys≈zs′)
 ≅⇒≃ (xs ≡⟨ ≡-refl ⟩ ys≈zs)     = ≅⇒≃ ys≈zs
 ≅⇒≃ (xs ≣⟨ ≡-refl ⟩ ys≈zs)     = ≅⇒≃ ys≈zs
-≅⇒≃ (sym′ xs≈ys)               with ≅⇒≃ xs≈ys
-≅⇒≃ (sym′ xs≈ys)               | x≡y ≺ xs≈ys′ = ≡-sym x≡y ≺ sym′ xs≈ys′
+≅⇒≃ (≅-sym xs≈ys)              with ≅⇒≃ xs≈ys
+≅⇒≃ (≅-sym xs≈ys)              | x≡y ≺ xs≈ys′ = ≡-sym x≡y ≺ ≅-sym xs≈ys′
 ≅⇒≃ ($-cong f xs ys xs≈ys)     with P⇒′ xs | P⇒′ ys | ≅⇒≃ xs≈ys
 ≅⇒≃ ($-cong f xs ys xs≈ys)     | x ≺ xs′ | y ≺ ys′ | x≡y ≺ xs≈ys′ =
                                  ≡-cong f x≡y ≺ $-cong f xs′ ys′ xs≈ys′
