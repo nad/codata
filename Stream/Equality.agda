@@ -40,6 +40,9 @@ mutual
                    xs xs′ (xs≈xs′ : xs ≊ xs′)
                    ys ys′ (ys≈ys′ : ys ≊ ys′) ->
                    xs ⟨ _∙_ ⟩ ys ≊ xs′ ⟨ _∙_ ⟩ ys′
+    ⋎-cong       : forall xs xs′ (xs≈xs′ : xs ≊ xs′)
+                          ys ys′ (ys≈ys′ : ys ≊ ys′) ->
+                   xs ⋎ ys ≊ xs′ ⋎ ys′
 
 ≅⇒≃ : forall {A} {xs ys : Stream A} -> xs ≅ ys -> xs ≃ ys
 ≅⇒≃ (↓ xs≈)                    = xs≈
@@ -64,6 +67,11 @@ mutual
                                | _ ≺ _ | _ ≺ _ | x≡y′ ≺ xs≈ys′ =
                                  ≡-cong₂ ∙ x≡y x≡y′ ≺
                                  ⟨ ∙ ⟩-cong _ _ xs≈ys _ _ xs≈ys′
+≅⇒≃ (⋎-cong xs xs′ xs≈xs′
+            ys ys′ ys≈ys′)     with P⇒′ xs | P⇒′ xs′ | ≅⇒≃ xs≈xs′
+≅⇒≃ (⋎-cong xs xs′ xs≈xs′
+            ys ys′ ys≈ys′)     | _ ≺ _ | _ ≺ _ | x≡y ≺ txs≈txs′ =
+                                 x≡y ≺ ⋎-cong _ _ ys≈ys′ _ _ txs≈txs′
 
 ≃⇒≈ : forall {A} {xs ys : Stream A} -> xs ≃ ys -> xs ≈ ys
 ≃⇒≈ (x≡ ≺ xs≈) ~ x≡ ≺ ≃⇒≈ (≅⇒≃ xs≈)
