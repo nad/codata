@@ -19,7 +19,7 @@ open import Relation.Binary.PropositionalEquality
 -- Definitions
 
 infix  8 _∞
-infixl 7 _$_
+infixr 7 _$_
 infix  6 _⟨_⟩_
 
 -- Expressions corresponding to pointwise definitions of streams.

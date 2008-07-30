@@ -13,7 +13,7 @@ open import Data.Vec using (Vec; []; _∷_)
 -- Stream programs
 
 infix  8 _∞
-infixl 7 _$_
+infixr 7 _$_
 infix  6 _⟨_⟩_
 infixr 5 _≺_ _⋎_ _≺≺_
 infix  4 ↓_
