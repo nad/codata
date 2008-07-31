@@ -50,6 +50,24 @@ repeat x ~ x ≺ repeat x
 toColist : forall {A} -> Stream A -> Colist A
 toColist (x ≺ xs) ~ x ∷ toColist xs
 
+infix 4 _[_]
+
+_[_] : forall {A} -> Stream A -> ℕ -> A
+x ≺ xs [ zero  ] = x
+x ≺ xs [ suc n ] = xs [ n ]
+
+data Ord : Set where
+  lt : Ord
+  eq : Ord
+  gt : Ord
+
+merge : forall {A} -> (A -> A -> Ord) ->
+        Stream A -> Stream A -> Stream A
+merge cmp (x ≺ xs) (y ≺ ys) with cmp x y
+merge cmp (x ≺ xs) (y ≺ ys) | lt ~ x ≺ merge cmp xs       (y ≺ ys)
+merge cmp (x ≺ xs) (y ≺ ys) | eq ~ x ≺ merge cmp xs       ys
+merge cmp (x ≺ xs) (y ≺ ys) | gt ~ y ≺ merge cmp (x ≺ xs) ys
+
 ------------------------------------------------------------------------
 -- Stream equality
 
