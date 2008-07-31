@@ -108,13 +108,13 @@ Stream-setoid A = record
 -- IO
 
 -- This definition would be accepted by the termination checker if
--- return and _>>=_ were constructors.
+-- return and _>>=_ were coconstructors.
 
 mapM_ : forall {A B} -> (A -> IO B) -> Colist A -> IO Unit
 mapM_ f []       ~ return unit
 mapM_ f (x ∷ xs) ~ f x >>= \_ -> mapM_ f xs
 
 putStream : Stream ℕ -> IO Unit
-putStream = mapM_ (\s -> putStrLn s) ∘
+putStream = mapM_ putStrLn ∘
             toColist ∘
             map (S.toCostring ∘ show)
