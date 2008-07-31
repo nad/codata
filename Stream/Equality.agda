@@ -7,6 +7,7 @@ module Stream.Equality where
 open import Stream
 open import Stream.Programs
 open import Relation.Binary.PropositionalEquality
+open import Data.Vec using (Vec; []; _∷_)
 
 infixr 5 _≺_
 infix  4 ↓_
@@ -43,6 +44,10 @@ mutual
     ⋎-cong       : forall xs xs′ (xs≈xs′ : xs ≊ xs′)
                           ys ys′ (ys≈ys′ : ys ≊ ys′) ->
                    xs ⋎ ys ≊ xs′ ⋎ ys′
+    ≺≺-cong      : forall {n}
+                   (xs xs′ : Vec A n) (xs≡xs′ : xs ≡ xs′)
+                   ys ys′ (ys≈ys′ : ys ≊ ys′) ->
+                   xs ≺≺ ys ≊ xs′ ≺≺ ys′
 
 ≅⇒≃ : forall {A} {xs ys : Stream A} -> xs ≅ ys -> xs ≃ ys
 ≅⇒≃ (↓ xs≈)                    = xs≈
@@ -72,6 +77,11 @@ mutual
 ≅⇒≃ (⋎-cong xs xs′ xs≈xs′
             ys ys′ ys≈ys′)     | _ ≺ _ | _ ≺ _ | x≡y ≺ txs≈txs′ =
                                  x≡y ≺ ⋎-cong _ _ ys≈ys′ _ _ txs≈txs′
+≅⇒≃ (≺≺-cong [] [] ≡-refl
+             ys ys′ ys≈ys′)    = ≅⇒≃ ys≈ys′
+≅⇒≃ (≺≺-cong
+      (x ∷ xs) .(_ ∷ _) ≡-refl
+      ys ys′ ys≈ys′)           = ≡-refl ≺ ≺≺-cong xs xs ≡-refl ys ys′ ys≈ys′
 
 ≃⇒≈ : forall {A} {xs ys : Stream A} -> xs ≃ ys -> xs ≈ ys
 ≃⇒≈ (x≡ ≺ xs≈) ~ x≡ ≺ ≃⇒≈ (≅⇒≃ xs≈)
