@@ -8,7 +8,7 @@ open import Stream.Programs
 open import Stream.Equality
 
 open import Relation.Binary.PropositionalEquality
-open import Data.Function using (flip)
+open import Data.Function using (_∘_; flip)
 
 ------------------------------------------------------------------------
 -- Some lemmas from Section 2.3 of Hinze's paper
@@ -36,6 +36,11 @@ tailP-cong : forall {A} (xs ys : StreamProg A) ->
              xs ≊ ys -> tailP xs ≊ tailP ys
 tailP-cong xs ys xs≈ys with P⇒′ xs | P⇒′ ys | ≅⇒≃ xs≈ys
 tailP-cong xs ys xs≈ys | x ≺ xs′ | y ≺ ys′ | x≡y ≺ xs≈ys′ = xs≈ys′
+
+map-fusion : forall {A B C} (f : B -> C) (g : A -> B) xs ->
+             f $ g $ xs ≊ (f ∘ g) $ xs
+map-fusion f g xs with P⇒′ xs
+map-fusion f g xs | x ≺ xs′ ~ ↓ ≡-refl ≺ map-fusion f g xs′
 
 zip-const-is-map : forall {A B C} (_∙_ : A -> B -> C) xs y ->
                    xs ⟨ _∙_ ⟩ y ∞ ≊ (\x -> x ∙ y) $ xs

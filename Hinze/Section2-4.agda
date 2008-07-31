@@ -7,6 +7,9 @@
 -- proofs look just like Hinze's, but they are based on guarded
 -- coinduction rather than relying (directly) on universality.
 
+-- Also note that the formalisation can be simplified by defining the
+-- streams differently. See Hinze.Simplified.
+
 module Hinze.Section2-4 where
 
 open import Stream.Programs
