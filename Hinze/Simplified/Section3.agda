@@ -12,7 +12,7 @@ open import Hinze.Lemmas
 
 open import Data.Product
 open import Data.Bool
-open import Data.Vec
+open import Data.Vec hiding (_⋎_)
 open import Data.Nat renaming (suc to 1+)
 open import Data.Nat.Properties
 open import Relation.Binary.PropositionalEquality
