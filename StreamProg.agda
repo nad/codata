@@ -18,7 +18,8 @@ data Ord : Set where
   eq : Ord
   gt : Ord
 
-infix 4 ↓_
+infixr 5 _≺_
+infix  4 ↓_
 
 mutual
 
