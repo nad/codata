@@ -13,7 +13,7 @@ open import Data.Vec using (Vec; []; _∷_)
 -- Stream programs
 
 infix  8 _∞
-infixr 7 _$_
+infixr 7 _·_
 infix  6 _⟨_⟩_
 infixr 5 _≺_ _⋎_ _≺≺_
 infix  4 ↓_
@@ -26,7 +26,7 @@ mutual
   data StreamProg (A : Set) : Set1 where
     ↓_      : (xs : Stream′ A) -> StreamProg A
     _∞      : (x : A) -> StreamProg A
-    _$_     : forall {B}
+    _·_     : forall {B}
               (f : B -> A) (xs : StreamProg B) -> StreamProg A
     _⟨_⟩_   : forall {B C}
               (xs : StreamProg B)
@@ -44,8 +44,8 @@ mutual
 P⇒′ : forall {A} -> StreamProg A -> Stream′ A
 P⇒′ (↓ xs)           = xs
 P⇒′ (x ∞)            = x ≺ x ∞
-P⇒′ (f $ xs)         with P⇒′ xs
-P⇒′ (f $ xs)         | x ≺ xs′ = f x ≺ f $ xs′
+P⇒′ (f · xs)         with P⇒′ xs
+P⇒′ (f · xs)         | x ≺ xs′ = f x ≺ f · xs′
 P⇒′ (xs ⟨ _∙_ ⟩ ys)  with P⇒′ xs | P⇒′ ys
 P⇒′ (xs ⟨ _∙_ ⟩ ys)  | x ≺ xs′ | y ≺ ys′ = (x ∙ y) ≺ xs′ ⟨ _∙_ ⟩ ys′
 P⇒′ (xs ⋎ ys)        with P⇒′ xs

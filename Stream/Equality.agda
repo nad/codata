@@ -34,9 +34,9 @@ mutual
     _≣⟨_⟩_       : forall xs {ys zs}
                    (xs≡ys : P⇒ xs ≡ ys) (ys≈zs : ys ≅ zs) -> P⇒ xs ≅ zs
     ≅-sym        : forall {xs ys} (xs≈ys : xs ≅ ys) -> ys ≅ xs
-    $-cong       : forall {B}
+    ·-cong       : forall {B}
                    (f : B -> A) xs ys (xs≈ys : xs ≊ ys) ->
-                   f $ xs ≊ f $ ys
+                   f · xs ≊ f · ys
     ⟨_⟩-cong     : forall {B C} (_∙_ : B -> C -> A)
                    xs xs′ (xs≈xs′ : xs ≊ xs′)
                    ys ys′ (ys≈ys′ : ys ≊ ys′) ->
@@ -61,9 +61,9 @@ mutual
 ≅⇒≃ (xs ≣⟨ ≡-refl ⟩ ys≈zs)     = ≅⇒≃ ys≈zs
 ≅⇒≃ (≅-sym xs≈ys)              with ≅⇒≃ xs≈ys
 ≅⇒≃ (≅-sym xs≈ys)              | x≡y ≺ xs≈ys′ = ≡-sym x≡y ≺ ≅-sym xs≈ys′
-≅⇒≃ ($-cong f xs ys xs≈ys)     with P⇒′ xs | P⇒′ ys | ≅⇒≃ xs≈ys
-≅⇒≃ ($-cong f xs ys xs≈ys)     | x ≺ xs′ | y ≺ ys′ | x≡y ≺ xs≈ys′ =
-                                 ≡-cong f x≡y ≺ $-cong f xs′ ys′ xs≈ys′
+≅⇒≃ (·-cong f xs ys xs≈ys)     with P⇒′ xs | P⇒′ ys | ≅⇒≃ xs≈ys
+≅⇒≃ (·-cong f xs ys xs≈ys)     | x ≺ xs′ | y ≺ ys′ | x≡y ≺ xs≈ys′ =
+                                 ≡-cong f x≡y ≺ ·-cong f xs′ ys′ xs≈ys′
 ≅⇒≃ (⟨ ∙ ⟩-cong xs xs′ xs≈xs′
                 ys ys′ ys≈ys′) with P⇒′ xs | P⇒′ xs′ | ≅⇒≃ xs≈xs′
                                   | P⇒′ ys | P⇒′ ys′ | ≅⇒≃ ys≈ys′

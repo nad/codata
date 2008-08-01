@@ -19,7 +19,7 @@ open import Relation.Binary.PropositionalEquality
 -- Definitions
 
 infix  8 _∞
-infixr 7 _$_
+infixr 7 _·_
 infix  6 _⟨_⟩_
 
 -- Expressions corresponding to pointwise definitions of streams.
@@ -27,14 +27,14 @@ infix  6 _⟨_⟩_
 
 -- It is possible to generalise this type, allowing variables to
 -- correspond to streams containing elements of arbitrary type, and
--- letting the function arguments of _$_ and _⟨_⟩_ be more general.
+-- letting the function arguments of _·_ and _⟨_⟩_ be more general.
 -- However, this would complicate the development, so I hesitate to do
 -- so without evidence that it would be genuinely useful.
 
 data Pointwise A n : Set where
   var   : (x : Fin n) -> Pointwise A n
   _∞    : (x : A) -> Pointwise A n
-  _$_   : (f : A -> A) (xs : Pointwise A n) -> Pointwise A n
+  _·_   : (f : A -> A) (xs : Pointwise A n) -> Pointwise A n
   _⟨_⟩_ : (xs : Pointwise A n)
           (_∙_ : A -> A -> A)
           (ys : Pointwise A n) ->
@@ -46,7 +46,7 @@ data Pointwise A n : Set where
       Pointwise A n -> (Vec₁ (StreamProg A) n -> StreamProg A)
 ⟦ var x ⟧         ρ = Vec1.lookup x ρ
 ⟦ x ∞ ⟧           ρ = x ∞
-⟦ f $ xs ⟧        ρ = f $ ⟦ xs ⟧ ρ
+⟦ f · xs ⟧        ρ = f · ⟦ xs ⟧ ρ
 ⟦ xs ⟨ _∙_ ⟩ ys ⟧ ρ = ⟦ xs ⟧ ρ ⟨ _∙_ ⟩ ⟦ ys ⟧ ρ
 
 -- Pointwise semantics.
@@ -54,7 +54,7 @@ data Pointwise A n : Set where
 ⟪_⟫ : forall {A n} -> Pointwise A n -> (Vec A n -> A)
 ⟪ var x ⟫         ρ = Vec.lookup x ρ
 ⟪ x ∞ ⟫           ρ = x
-⟪ f $ xs ⟫        ρ = f (⟪ xs ⟫ ρ)
+⟪ f · xs ⟫        ρ = f (⟪ xs ⟫ ρ)
 ⟪ xs ⟨ _∙_ ⟩ ys ⟫ ρ = ⟪ xs ⟫ ρ ∙ ⟪ ys ⟫ ρ
 
 ------------------------------------------------------------------------
@@ -124,10 +124,10 @@ private
     unfold (var x) ρ
       ▯
   unfold-lemma (x ∞)    ρ = x ∞ ▯
-  unfold-lemma (f $ xs) ρ =
-    f $ ⟦ xs ⟧ ρ
-      ≊⟨ $-cong f (⟦ xs ⟧ ρ) (unfold xs ρ) (unfold-lemma xs ρ) ⟩
-    f $ unfold xs ρ
+  unfold-lemma (f · xs) ρ =
+    f · ⟦ xs ⟧ ρ
+      ≊⟨ ·-cong f (⟦ xs ⟧ ρ) (unfold xs ρ) (unfold-lemma xs ρ) ⟩
+    f · unfold xs ρ
       ▯
   unfold-lemma (xs ⟨ ∙ ⟩ ys) ρ =
     ⟦ xs ⟧ ρ ⟨ ∙ ⟩ ⟦ ys ⟧ ρ
@@ -198,11 +198,11 @@ pointwise n f g hyp =
 
 private
 
-  example₁ : suc $ 0 ∞ ≊ 1 ∞
-  example₁ = pointwise 0 (suc $ 0 ∞) (1 ∞) ≡-refl
+  example₁ : suc · 0 ∞ ≊ 1 ∞
+  example₁ = pointwise 0 (suc · 0 ∞) (1 ∞) ≡-refl
 
-  example₂ : forall s -> suc $ s ≊ 1 ∞ ⟨ _+_ ⟩ s
-  example₂ = pointwise 1 (\s -> suc $ s)
+  example₂ : forall s -> suc · s ≊ 1 ∞ ⟨ _+_ ⟩ s
+  example₂ = pointwise 1 (\s -> suc · s)
                          (\s -> 1 ∞ ⟨ _+_ ⟩ s)
                          (\_ -> ≡-refl)
 

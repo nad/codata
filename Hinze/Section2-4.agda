@@ -134,11 +134,11 @@ nat≊bin ~
 iterate-fusion
   : forall {A B} (h : A -> B) (f₁ : A -> A) (f₂ : B -> B) ->
     (forall x -> h (f₁ x) ≡ f₂ (h x)) ->
-    forall x -> h $ iterate f₁ x ≊ iterate f₂ (h x)
+    forall x -> h · iterate f₁ x ≊ iterate f₂ (h x)
 iterate-fusion h f₁ f₂ hyp x ~
-  h $ iterate f₁ x
+  h · iterate f₁ x
                                  ≣⟨ ≡-refl ⟩
-  ↓ h x ≺ h $ iterate f₁ (f₁ x)
+  ↓ h x ≺ h · iterate f₁ (f₁ x)
                                  ≊⟨ ↓ ≡-refl ≺ iterate-fusion h f₁ f₂ hyp (f₁ x) ⟩
   ↓ h x ≺ iterate f₂ (h (f₁ x))
                                  ≣⟨ ≡-cong (\y -> P⇒ (↓ h x ≺ iterate f₂ y)) (hyp x) ⟩
@@ -152,11 +152,11 @@ nat-iterate ~
   nat
                              ≣⟨ ≡-refl ⟩
   ↓ 0 ≺ nat ⟨ _+_ ⟩ 1 ∞
-                             ≊⟨ ↓ ≡-refl ≺ pointwise 1 (\s -> s ⟨ _+_ ⟩ 1 ∞) (_$_ suc)
+                             ≊⟨ ↓ ≡-refl ≺ pointwise 1 (\s -> s ⟨ _+_ ⟩ 1 ∞) (_·_ suc)
                                                        (\x -> CS.+-comm x 1) nat ⟩
-  ↓ 0 ≺ suc $ nat
-                             ≊⟨ ↓ ≡-refl ≺ $-cong suc nat (iterate suc 0) nat-iterate ⟩
-  ↓ 0 ≺ suc $ iterate suc 0
+  ↓ 0 ≺ suc · nat
+                             ≊⟨ ↓ ≡-refl ≺ ·-cong suc nat (iterate suc 0) nat-iterate ⟩
+  ↓ 0 ≺ suc · iterate suc 0
                              ≊⟨ ↓ ≡-refl ≺ iterate-fusion suc suc suc (\_ -> ≡-refl) 0 ⟩
   ↓ 0 ≺ iterate suc 1
                              ≣⟨ ≡-refl ⟩
