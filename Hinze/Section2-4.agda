@@ -56,21 +56,21 @@ const-is-∞ {x = x} {xs} eq ~
   ↓ x ≺ xs
              ≊⟨ ↓ ≡-refl ≺ const-is-∞ eq ⟩
   ↓ x ≺ x ∞
-             ≣⟨ ≡-refl ⟩
+             ≡⟨ ≡-refl ⟩
   x ∞
-             ▯
+             ∎
 
 nat-lemma₁ : ↓ 0 ≺ 2*nat+1 ⋎ 2*nat ⟨ _+_ ⟩ 2 ∞ ≊ 2*nat ⋎ 2*nat+1
 nat-lemma₁ =
   ↓ 0 ≺ 2*nat+1 ⋎ 2*nat ⟨ _+_ ⟩ 2 ∞
-                                                 ≊⟨ ↓ ≡-refl ≺ ⋎-cong 2*nat+1 2*nat+1 (2*nat+1 ▯)
+                                                 ≊⟨ ↓ ≡-refl ≺ ⋎-cong 2*nat+1 2*nat+1 (2*nat+1 ∎)
                                                                       (2*nat ⟨ _+_ ⟩ 2 ∞)
                                                                       (2 ∞ ⟨ _*_ ⟩ (nat ⟨ _+_ ⟩ 1 ∞))
                                                                       (lemma (2 ∞) nat) ⟩
   ↓ 0 ≺ 2*nat+1 ⋎ 2 ∞ ⟨ _*_ ⟩ (nat ⟨ _+_ ⟩ 1 ∞)
-                                                 ≣⟨ ≡-refl ⟩
+                                                 ≡⟨ ≡-refl ⟩
   2*nat ⋎ 2*nat+1
-                                                 ▯
+                                                 ∎
   where
   lemma : forall s t ->
           (s ⟨ _*_ ⟩ t) ⟨ _+_ ⟩ s ≊ s ⟨ _*_ ⟩ (t ⟨ _+_ ⟩ 1 ∞)
@@ -87,20 +87,20 @@ nat-lemma₁ =
 nat-lemma₂ : nat ≊ 2*nat ⋎ 2*nat+1
 nat-lemma₂ ~
   nat
-                                       ≣⟨ ≡-refl ⟩
+                                       ≡⟨ ≡-refl ⟩
   ↓ 0 ≺ nat ⟨ _+_ ⟩ 1 ∞
                                        ≊⟨ ↓ ≡-refl ≺ ⟨ _+_ ⟩-cong nat (2*nat ⋎ 2*nat+1) nat-lemma₂
-                                                                  (1 ∞) (1 ∞) (1 ∞ ▯) ⟩
+                                                                  (1 ∞) (1 ∞) (1 ∞ ∎) ⟩
   ↓ 0 ≺ (2*nat ⋎ 2*nat+1) ⟨ _+_ ⟩ 1 ∞
                                        ≊⟨ ↓ ≡-refl ≺ zip-⋎-const _+_ 2*nat 2*nat+1 1 ⟩
   ↓ 0 ≺ 2*nat+1 ⋎ 2*nat+1 ⟨ _+_ ⟩ 1 ∞
-                                       ≊⟨ ↓ ≡-refl ≺ ⋎-cong 2*nat+1 2*nat+1 (2*nat+1 ▯)
+                                       ≊⟨ ↓ ≡-refl ≺ ⋎-cong 2*nat+1 2*nat+1 (2*nat+1 ∎)
                                                             (2*nat+1 ⟨ _+_ ⟩ 1 ∞)
                                                             (2*nat ⟨ _+_ ⟩ 2 ∞) (lemma 2*nat) ⟩
   ↓ 0 ≺ 2*nat+1 ⋎ 2*nat ⟨ _+_ ⟩ 2 ∞
                                        ≊⟨ nat-lemma₁ ⟩
   2*nat ⋎ 2*nat+1
-                                       ▯
+                                       ∎
   where
   lemma : forall s -> (s ⟨ _+_ ⟩ 1 ∞) ⟨ _+_ ⟩ 1 ∞ ≊ s ⟨ _+_ ⟩ 2 ∞
   lemma ~ pointwise 1 (\s -> (s ⟨ _+_ ⟩ 1 ∞) ⟨ _+_ ⟩ 1 ∞)
@@ -116,20 +116,20 @@ nat≊bin ~
   ↓ 0 ≺ 2*nat+1 ⋎ 2*nat ⟨ _+_ ⟩ 2 ∞
                                          ≊⟨ ↓ ≡-refl ≺ ⋎-cong 2*nat+1 ((2 ∞ ⟨ _*_ ⟩ bin) ⟨ _+_ ⟩ 1 ∞)
                                                               (⟨ _+_ ⟩-cong 2*nat (2 ∞ ⟨ _*_ ⟩ bin)
-                                                                            (⟨ _*_ ⟩-cong (2 ∞) (2 ∞) (2 ∞ ▯)
+                                                                            (⟨ _*_ ⟩-cong (2 ∞) (2 ∞) (2 ∞ ∎)
                                                                                           nat bin nat≊bin)
-                                                                            (1 ∞) (1 ∞) (1 ∞ ▯))
+                                                                            (1 ∞) (1 ∞) (1 ∞ ∎))
                                                               (2*nat ⟨ _+_ ⟩ 2 ∞)
                                                               ((2 ∞ ⟨ _*_ ⟩ bin) ⟨ _+_ ⟩ 2 ∞)
                                                               (⟨ _+_ ⟩-cong 2*nat (2 ∞ ⟨ _*_ ⟩ bin)
-                                                                            (⟨ _*_ ⟩-cong (2 ∞) (2 ∞) (2 ∞ ▯)
+                                                                            (⟨ _*_ ⟩-cong (2 ∞) (2 ∞) (2 ∞ ∎)
                                                                                           nat bin nat≊bin)
-                                                                            (2 ∞) (2 ∞) (2 ∞ ▯)) ⟩
+                                                                            (2 ∞) (2 ∞) (2 ∞ ∎)) ⟩
   ↓ 0 ≺ (2 ∞ ⟨ _*_ ⟩ bin) ⟨ _+_ ⟩ 1 ∞ ⋎
         (2 ∞ ⟨ _*_ ⟩ bin) ⟨ _+_ ⟩ 2 ∞
-                                         ≣⟨ ≡-refl ⟩
+                                         ≡⟨ ≡-refl ⟩
   bin
-                                         ▯
+                                         ∎
 
 iterate-fusion
   : forall {A B} (h : A -> B) (f₁ : A -> A) (f₂ : B -> B) ->
@@ -137,20 +137,20 @@ iterate-fusion
     forall x -> h · iterate f₁ x ≊ iterate f₂ (h x)
 iterate-fusion h f₁ f₂ hyp x ~
   h · iterate f₁ x
-                                 ≣⟨ ≡-refl ⟩
+                                 ≡⟨ ≡-refl ⟩
   ↓ h x ≺ h · iterate f₁ (f₁ x)
                                  ≊⟨ ↓ ≡-refl ≺ iterate-fusion h f₁ f₂ hyp (f₁ x) ⟩
   ↓ h x ≺ iterate f₂ (h (f₁ x))
-                                 ≣⟨ ≡-cong (\y -> P⇒ (↓ h x ≺ iterate f₂ y)) (hyp x) ⟩
+                                 ≡⟨ ≡-cong (\y -> P⇒ (↓ h x ≺ iterate f₂ y)) (hyp x) ⟩
   ↓ h x ≺ iterate f₂ (f₂ (h x))
-                                 ≣⟨ ≡-refl ⟩
+                                 ≡⟨ ≡-refl ⟩
   iterate f₂ (h x)
-                                 ▯
+                                 ∎
 
 nat-iterate : nat ≊ iterate suc 0
 nat-iterate ~
   nat
-                             ≣⟨ ≡-refl ⟩
+                             ≡⟨ ≡-refl ⟩
   ↓ 0 ≺ nat ⟨ _+_ ⟩ 1 ∞
                              ≊⟨ ↓ ≡-refl ≺ pointwise 1 (\s -> s ⟨ _+_ ⟩ 1 ∞) (_·_ suc)
                                                        (\x -> CS.+-comm x 1) nat ⟩
@@ -159,6 +159,6 @@ nat-iterate ~
   ↓ 0 ≺ suc · iterate suc 0
                              ≊⟨ ↓ ≡-refl ≺ iterate-fusion suc suc suc (\_ -> ≡-refl) 0 ⟩
   ↓ 0 ≺ iterate suc 1
-                             ≣⟨ ≡-refl ⟩
+                             ≡⟨ ≡-refl ⟩
   iterate suc 0
-                             ▯
+                             ∎

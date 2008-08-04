@@ -13,7 +13,11 @@ import Data.Vec  as Vec
 import Data.Vec1 as Vec1
 open Vec  using (Vec;  _∷_)
 open Vec1 using (Vec₁; _∷_)
+open import Relation.Binary
 open import Relation.Binary.PropositionalEquality
+open import Relation.Binary.PropositionalEquality1
+private
+  module IsEq {A} = IsEquivalence (≈-isEquivalence {A})
 
 ------------------------------------------------------------------------
 -- Definitions
@@ -69,19 +73,10 @@ private
   lookup-nat f zero    (x ∷ ρ) = ≡-refl
   lookup-nat f (suc i) (x ∷ ρ) = lookup-nat f i ρ
 
-  lookup-nat' : forall {A B C n} (f : A -> C) (g : B -> C) (h : A -> B)
-                (hyp : forall x -> f x ≡ g (h x)) (x : Fin n) ρ ->
-                f (Vec1.lookup x ρ) ≡ g (Vec1.lookup x (Vec1.map h ρ))
-  lookup-nat' f g h hyp zero    (x ∷ ρ) = hyp x
-  lookup-nat' f g h hyp (suc i) (x ∷ ρ) =
-    lookup-nat' f g h hyp i ρ
-
-  -- tail(P) commutes with P⇒.
-
-  tail-commutes : forall {A} (xs : StreamProg A) ->
-                  tail (P⇒ xs) ≡ P⇒ (tailP xs)
-  tail-commutes xs with P⇒′ xs
-  tail-commutes xs | x ≺ xs′ = ≡-refl
+  lookup-nat' : forall {A B : Set1} {n} (f : A -> B) (x : Fin n) ρ ->
+                f (Vec1.lookup x ρ) ≡₁ Vec1.lookup x (Vec1.map f ρ)
+  lookup-nat' f zero    (x ∷ ρ) = ≡₁-refl
+  lookup-nat' f (suc i) (x ∷ ρ) = lookup-nat' f i ρ
 
 ------------------------------------------------------------------------
 -- The two semantics above are related via the function lift
@@ -113,28 +108,27 @@ private
                  ⟦ xs ⟧ ρ ≊ unfold xs ρ
   unfold-lemma (var x) ρ =
     Vec1.lookup x ρ
-      ≣⟨ η ⟩
-    headP (Vec1.lookup x ρ) ≺ tail (P⇒ (Vec1.lookup x ρ))
-      ≡⟨ ≡-cong₂ _≺_ (lookup-nat headP x ρ)
-                     (lookup-nat' (\xs -> tail (P⇒ xs)) P⇒ tailP
-                                  tail-commutes x ρ) ⟩
-    Vec.lookup x (Vec1.map₁₀ headP ρ) ≺
-    P⇒ (Vec1.lookup x (Vec1.map tailP ρ))
-      ≡⟨ ≡-sym η ⟩
+      ≊⟨ ≊-η (Vec1.lookup x ρ) ⟩
+    ↓ headP (Vec1.lookup x ρ) ≺ tailP (Vec1.lookup x ρ)
+      ≊⟨ ↓ lookup-nat headP x ρ ≺
+         ≈⇒≅ (IsEq.reflexive (≡₁₀-cong P⇒ (lookup-nat' tailP x ρ))) ⟩
+    ↓ Vec.lookup x (Vec1.map₁₀ headP ρ) ≺
+    Vec1.lookup x (Vec1.map tailP ρ)
+      ≊⟨ ≅-sym (≊-η (unfold (var x) ρ)) ⟩
     unfold (var x) ρ
-      ▯
-  unfold-lemma (x ∞)    ρ = x ∞ ▯
+      ∎
+  unfold-lemma (x ∞)    ρ = x ∞ ∎
   unfold-lemma (f · xs) ρ =
     f · ⟦ xs ⟧ ρ
       ≊⟨ ·-cong f (⟦ xs ⟧ ρ) (unfold xs ρ) (unfold-lemma xs ρ) ⟩
     f · unfold xs ρ
-      ▯
+      ∎
   unfold-lemma (xs ⟨ ∙ ⟩ ys) ρ =
     ⟦ xs ⟧ ρ ⟨ ∙ ⟩ ⟦ ys ⟧ ρ
       ≊⟨ ⟨ ∙ ⟩-cong (⟦ xs ⟧ ρ) (unfold xs ρ) (unfold-lemma xs ρ)
                     (⟦ ys ⟧ ρ) (unfold ys ρ) (unfold-lemma ys ρ) ⟩
     unfold xs ρ ⟨ ∙ ⟩ unfold ys ρ
-      ▯
+      ∎
 
   -- The two semantics are related.
 
@@ -144,11 +138,11 @@ private
     ⟦ xs ⟧ ρ
       ≊⟨ unfold-lemma xs ρ ⟩
     unfold xs ρ
-      ≣⟨ η ⟩
-    ⟪ xs ⟫ (Vec1.map₁₀ headP ρ) ≺ P⇒ (⟦ xs ⟧ (Vec1.map tailP ρ))
-      ≅⟨ ↓ ≡-refl ≺ main-lemma xs (Vec1.map tailP ρ) ⟩
+      ≊⟨ ≊-η (unfold xs ρ) ⟩
+    ↓ ⟪ xs ⟫ (Vec1.map₁₀ headP ρ) ≺ ⟦ xs ⟧ (Vec1.map tailP ρ)
+      ≊⟨ ↓ ≡-refl ≺ main-lemma xs (Vec1.map tailP ρ) ⟩
     lift ⟪ xs ⟫ ρ
-      ▯
+      ∎
 
 ------------------------------------------------------------------------
 -- To prove that two streams which are defined pointwise are equal, it
@@ -169,7 +163,7 @@ pointwise' xs ys hyp ρ =
   lift ⟪ ys ⟫ ρ
     ≊⟨ ≅-sym (main-lemma ys ρ) ⟩
   ⟦ ys ⟧ ρ
-    ▯
+    ∎
 
 open import Data.Vec.N-ary
 import Data.Vec.N-ary1 as N1

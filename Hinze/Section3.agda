@@ -43,7 +43,7 @@ carry : StreamProg ℕ
 carry ~ ↓ 0 ≺ carry ⟨ _+_ ⟩ 1 ∞ ⋎ 0 ∞
 
 carry-folded : carry ≊ 0 ∞ ⋎ carry ⟨ _+_ ⟩ 1 ∞
-carry-folded = carry ▯
+carry-folded = carry ∎
 
 2^carry = 2 ∞ ⟨ _^_ ⟩ carry
 
@@ -63,7 +63,7 @@ frac : StreamProg ℕ
 frac ~ ↓ 0 ≺ frac ⋎ nat ⟨ _+_ ⟩ 1 ∞
 
 frac-folded : frac ≊ nat ⋎ frac
-frac-folded = frac ▯
+frac-folded = frac ∎
 
 god : StreamProg ℕ
 god = (2 ∞ ⟨ _*_ ⟩ frac) ⟨ _+_ ⟩ 1 ∞
@@ -74,21 +74,21 @@ god = (2 ∞ ⟨ _*_ ⟩ frac) ⟨ _+_ ⟩ 1 ∞
 god-lemma : god ≊ 2*nat+1 ⋎ god
 god-lemma =
   god
-                                          ≣⟨ ≡-refl ⟩
+                                          ≡⟨ ≡-refl ⟩
   (2 ∞ ⟨ _*_ ⟩ (nat ⋎ frac)) ⟨ _+_ ⟩ 1 ∞
                                           ≊⟨ ⟨ _+_ ⟩-cong (2 ∞ ⟨ _*_ ⟩ (nat ⋎ frac))
                                                           (2*nat ⋎ 2 ∞ ⟨ _*_ ⟩ frac)
                                                           (zip-const-⋎ _*_ 2 nat frac)
-                                                          (1 ∞) (1 ∞) (1 ∞ ▯)  ⟩
+                                                          (1 ∞) (1 ∞) (1 ∞ ∎)  ⟩
   (2*nat ⋎ 2 ∞ ⟨ _*_ ⟩ frac) ⟨ _+_ ⟩ 1 ∞
                                           ≊⟨ zip-⋎-const _+_ 2*nat (2 ∞ ⟨ _*_ ⟩ frac) 1 ⟩
   2*nat+1 ⋎ god
-                                          ▯
+                                          ∎
 
 carry-god-nat : 2^carry ⟨ _*_ ⟩ god ≊ tailP nat
 carry-god-nat ~
   2^carry ⟨ _*_ ⟩ god
-                                                           ≣⟨ ≡-refl ⟩
+                                                           ≡⟨ ≡-refl ⟩
   (2 ∞ ⟨ _^_ ⟩ (0 ∞ ⋎ carry ⟨ _+_ ⟩ 1 ∞)) ⟨ _*_ ⟩ god
                                                            ≊⟨ ⟨ _*_ ⟩-cong (2 ∞ ⟨ _^_ ⟩ (0 ∞ ⋎ carry ⟨ _+_ ⟩ 1 ∞))
                                                                            (1 ∞ ⋎ 2 ∞ ⟨ _*_ ⟩ 2^carry) lemma
@@ -109,18 +109,18 @@ carry-god-nat ~
                                                            ≊⟨ ↓ ≡-refl ≺
                                                               ⋎-cong (2 ∞ ⟨ _*_ ⟩ (2^carry ⟨ _*_ ⟩ god))
                                                                      (2 ∞ ⟨ _*_ ⟩ (tailP nat))
-                                                                     (⟨ _*_ ⟩-cong (2 ∞) (2 ∞) (2 ∞ ▯)
+                                                                     (⟨ _*_ ⟩-cong (2 ∞) (2 ∞) (2 ∞ ∎)
                                                                                    (2^carry ⟨ _*_ ⟩ god) (tailP nat)
                                                                                    carry-god-nat)
-                                                                     (tailP 2*nat+1) (tailP 2*nat+1) (tailP 2*nat+1 ▯) ⟩
+                                                                     (tailP 2*nat+1) (tailP 2*nat+1) (tailP 2*nat+1 ∎) ⟩
   2*nat+1 ⋎ 2 ∞ ⟨ _*_ ⟩ tailP nat
                                                            ≊⟨ ≅-sym (tailP-cong nat (2*nat ⋎ 2*nat+1) nat-lemma₂) ⟩
   tailP nat
-                                                           ▯
+                                                           ∎
   where
   lemma ~
     2^carry
-                                                       ≣⟨ ≡-refl ⟩
+                                                       ≡⟨ ≡-refl ⟩
     2 ∞ ⟨ _^_ ⟩ (0 ∞ ⋎ carry ⟨ _+_ ⟩ 1 ∞)
                                                        ≊⟨ zip-const-⋎ _^_ 2 (0 ∞) (carry ⟨ _+_ ⟩ 1 ∞) ⟩
     2 ∞ ⟨ _^_ ⟩ 0 ∞ ⋎ 2 ∞ ⟨ _^_ ⟩ (carry ⟨ _+_ ⟩ 1 ∞)
@@ -133,4 +133,4 @@ carry-god-nat ~
                                                                               (\x -> ≡-cong (_^_ 2) (CS.+-comm x 1))
                                                                               carry) ⟩
     1 ∞ ⋎ 2 ∞ ⟨ _*_ ⟩ 2^carry
-                                                       ▯
+                                                       ∎

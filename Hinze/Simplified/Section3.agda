@@ -51,7 +51,7 @@ carry : StreamProg ℕ
 carry ~ ↓ 0 ≺ 1+ · carry ⋎ 0 ∞
 
 carry-folded : carry ≊ 0 ∞ ⋎ 1+ · carry
-carry-folded = carry ▯
+carry-folded = carry ∎
 
 turn-length : ℕ -> ℕ
 turn-length 0      = 0
@@ -69,7 +69,7 @@ frac : StreamProg ℕ
 frac ~ ↓ 0 ≺ frac ⋎ 1+ · nat
 
 frac-folded : frac ≊ nat ⋎ frac
-frac-folded = frac ▯
+frac-folded = frac ∎
 
 god : StreamProg ℕ
 god = 1+2* · frac
@@ -103,15 +103,15 @@ carry-god-nat ~
                                     ⋎-cong (2* · (2^ · carry ⟨ _*_ ⟩ god)) (2* · tailP nat)
                                            (·-cong 2* (2^ · carry ⟨ _*_ ⟩ god) (tailP nat)
                                                    carry-god-nat)
-                                           (tailP (1+2* · nat)) (tailP (1+2* · nat)) (tailP (1+2* · nat) ▯) ⟩
+                                           (tailP (1+2* · nat)) (tailP (1+2* · nat)) (tailP (1+2* · nat) ∎) ⟩
   1+2* · nat ⋎ 2* · tailP nat
                                  ≊⟨ ≅-sym (tailP-cong nat (2* · nat ⋎ 1+2* · nat) nat-lemma₂) ⟩
   tailP nat
-                                 ▯
+                                 ∎
   where
   lemma ~
     2^ · carry
-                                ≣⟨ ≡-refl ⟩
+                                ≡⟨ ≡-refl ⟩
     2^ · (0 ∞ ⋎ 1+ · carry)
                                 ≊⟨ ≅-sym (⋎-map 2^ (0 ∞) (1+ · carry)) ⟩
     2^ · 0 ∞ ⋎ 2^ · 1+ · carry
@@ -122,4 +122,4 @@ carry-god-nat ~
                                                        (\s -> 2* · 2^ · s)
                                                        (\_ -> ≡-refl) carry) ⟩
     (1 ∞ ⋎ 2* · 2^ · carry)
-                                ▯
+                                ∎

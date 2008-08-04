@@ -57,20 +57,20 @@ const-is-∞ {x = x} {xs} eq ~
   ↓ x ≺ xs
              ≊⟨ ↓ ≡-refl ≺ const-is-∞ eq ⟩
   ↓ x ≺ x ∞
-             ≣⟨ ≡-refl ⟩
+             ≡⟨ ≡-refl ⟩
   x ∞
-             ▯
+             ∎
 
 nat-lemma₁ : ↓ 0 ≺ 1+2* · nat ⋎ 2+2* · nat ≊ 2* · nat ⋎ 1+2* · nat
 nat-lemma₁ =
   ↓ 0 ≺ 1+2* · nat ⋎ 2+2* · nat
                                     ≊⟨ ↓ ≡-refl ≺ ⋎-cong
-                                         (1+2* · nat) (1+2* · nat) (1+2* · nat ▯)
+                                         (1+2* · nat) (1+2* · nat) (1+2* · nat ∎)
                                          (2+2* · nat) (2* · 1+ · nat) (lemma 2 nat) ⟩
   ↓ 0 ≺ 1+2* · nat ⋎ 2* · 1+ · nat
-                                    ≣⟨ ≡-refl ⟩
+                                    ≡⟨ ≡-refl ⟩
   2* · nat ⋎ 1+2* · nat
-                                    ▯
+                                    ∎
   where
   lemma : forall m s -> (\n -> m + m * n) · s ≊ _*_ m · 1+ · s
   lemma m = pointwise 1 (\s -> (\n -> m + m * n) · s)
@@ -87,7 +87,7 @@ nat-lemma₁ =
 nat-lemma₂ : nat ≊ 2* · nat ⋎ 1+2* · nat
 nat-lemma₂ ~
   nat
-                                         ≣⟨ ≡-refl ⟩
+                                         ≡⟨ ≡-refl ⟩
   ↓ 0 ≺ 1+ · nat
                                          ≊⟨ ↓ ≡-refl ≺ ·-cong 1+ nat (2* · nat ⋎ 1+2* · nat)
                                                               nat-lemma₂ ⟩
@@ -101,7 +101,7 @@ nat-lemma₂ ~
   ↓ 0 ≺ 1+2* · nat ⋎ 2+2* · nat
                                          ≊⟨ nat-lemma₁ ⟩
   2* · nat ⋎ 1+2* · nat
-                                         ▯
+                                         ∎
 
 nat≊bin : nat ≊ bin
 nat≊bin ~
@@ -115,9 +115,9 @@ nat≊bin ~
                                                       (2+2* · nat) (2+2* · bin)
                                                       (·-cong 2+2* nat bin nat≊bin) ⟩
   ↓ 0 ≺ 1+2* · bin ⋎ 2+2* · bin
-                                 ≣⟨ ≡-refl ⟩
+                                 ≡⟨ ≡-refl ⟩
   bin
-                                 ▯
+                                 ∎
 
 iterate-fusion
   : forall {A B} (h : A -> B) (f₁ : A -> A) (f₂ : B -> B) ->
@@ -125,25 +125,25 @@ iterate-fusion
     forall x -> h · iterate f₁ x ≊ iterate f₂ (h x)
 iterate-fusion h f₁ f₂ hyp x ~
   h · iterate f₁ x
-                                 ≣⟨ ≡-refl ⟩
+                                 ≡⟨ ≡-refl ⟩
   ↓ h x ≺ h · iterate f₁ (f₁ x)
                                  ≊⟨ ↓ ≡-refl ≺ iterate-fusion h f₁ f₂ hyp (f₁ x) ⟩
   ↓ h x ≺ iterate f₂ (h (f₁ x))
-                                 ≣⟨ ≡-cong (\y -> P⇒ (↓ h x ≺ iterate f₂ y)) (hyp x) ⟩
+                                 ≡⟨ ≡-cong (\y -> P⇒ (↓ h x ≺ iterate f₂ y)) (hyp x) ⟩
   ↓ h x ≺ iterate f₂ (f₂ (h x))
-                                 ≣⟨ ≡-refl ⟩
+                                 ≡⟨ ≡-refl ⟩
   iterate f₂ (h x)
-                                 ▯
+                                 ∎
 
 nat-iterate : nat ≊ iterate 1+ 0
 nat-iterate ~
   nat
-                           ≣⟨ ≡-refl ⟩
+                           ≡⟨ ≡-refl ⟩
   ↓ 0 ≺ 1+ · nat
                            ≊⟨ ↓ ≡-refl ≺ ·-cong 1+ nat (iterate 1+ 0) nat-iterate ⟩
   ↓ 0 ≺ 1+ · iterate 1+ 0
                            ≊⟨ ↓ ≡-refl ≺ iterate-fusion 1+ 1+ 1+ (\_ -> ≡-refl) 0 ⟩
   ↓ 0 ≺ iterate 1+ 1
-                           ≣⟨ ≡-refl ⟩
+                           ≡⟨ ≡-refl ⟩
   iterate 1+ 0
-                           ▯
+                           ∎

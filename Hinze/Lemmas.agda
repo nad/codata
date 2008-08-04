@@ -13,7 +13,7 @@ open import Data.Function using (_∘_; flip)
 ------------------------------------------------------------------------
 -- Some lemmas from Section 2.3 of Hinze's paper
 
--- See also Stream.η.
+-- See also Stream.Equality.≊-η.
 
 ⋎-∞ : forall {A} (x : A) -> x ∞ ⋎ x ∞ ≊ x ∞
 ⋎-∞ x ~ ↓ ≡-refl ≺ ⋎-∞ x
@@ -64,7 +64,7 @@ zip-⋎-const _∙_ s t x =
                                          ≊⟨ ≅-sym (⋎-cong _ _ (zip-const-is-map _ _ _)
                                                           _ _ (zip-const-is-map _ _ _)) ⟩
   s ⟨ _∙_ ⟩ x ∞ ⋎ t ⟨ _∙_ ⟩ x ∞
-                                         ▯
+                                         ∎
 
 zip-const-⋎ : forall {A B C} (∙ : A -> B -> C) x s t ->
               x ∞ ⟨ ∙ ⟩ (s ⋎ t) ≊ x ∞ ⟨ ∙ ⟩ s ⋎ x ∞ ⟨ ∙ ⟩ t
@@ -77,4 +77,4 @@ zip-const-⋎ ∙ x s t =
                                        ≊⟨ ≅-sym (⋎-cong _ _ (zip-flip ∙ (x ∞) s)
                                                         _ _ (zip-flip ∙ (x ∞) t)) ⟩
   x ∞ ⟨ ∙ ⟩ s ⋎ x ∞ ⟨ ∙ ⟩ t
-                                       ▯
+                                       ∎
