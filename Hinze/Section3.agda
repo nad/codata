@@ -54,7 +54,7 @@ turn-length (suc n) = ℓ + suc ℓ
 
 turn : (n : ℕ) -> Vec ℕ (turn-length n)
 turn zero    = []
-turn (suc n) = turn n ++ singleton n ++ turn n
+turn (suc n) = turn n ++ [ n ] ++ turn n
 
 tree : ℕ -> StreamProg ℕ
 tree n ~ ↓ n ≺ turn n ≺≺ tree (suc n)

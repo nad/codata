@@ -8,7 +8,7 @@ open import Stream
 open import Stream.Equality
 open import Stream.Programs hiding (lift)
 open import Data.Nat
-open import Data.Fin
+open import Data.Fin using (Fin; zero; suc)
 import Data.Vec  as Vec
 import Data.Vec1 as Vec1
 open Vec  using (Vec;  _∷_)
