@@ -21,9 +21,9 @@ open import Data.Nat
 open import Relation.Binary.PropositionalEquality
 open ≡-Reasoning renaming (_≡⟨_⟩_ to _=⟨_⟩_; _∎ to _QED)
 open import Algebra.Structures
-open import Data.Nat.Properties
+import Data.Nat.Properties as Nat
 private
-  module CS = IsCommutativeSemiring _ ℕ-isCommutativeSemiring
+  module CS = IsCommutativeSemiring _ Nat.isCommutativeSemiring
 open import Data.Product
 
 ------------------------------------------------------------------------

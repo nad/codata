@@ -14,14 +14,14 @@ open import Data.Product
 open import Data.Bool
 open import Data.Vec hiding (_⋎_)
 open import Data.Nat renaming (suc to 1+)
-open import Data.Nat.Properties
+import Data.Nat.Properties as Nat
 open import Relation.Binary.PropositionalEquality
 open import Algebra
 open import Algebra.Structures
 private
-  module CS = IsCommutativeSemiring _ ℕ-isCommutativeSemiring
+  module CS = IsCommutativeSemiring _ Nat.isCommutativeSemiring
 import Algebra.Operations as Op
-open Op (CommutativeSemiring.semiring ℕ-commutativeSemiring)
+open Op (CommutativeSemiring.semiring Nat.commutativeSemiring)
 
 ------------------------------------------------------------------------
 -- Abbreviations

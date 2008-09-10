@@ -208,4 +208,4 @@ private
     where
     open import Data.Nat.Properties
     open import Algebra.Structures
-    open IsCommutativeSemiring _ ℕ-isCommutativeSemiring
+    open IsCommutativeSemiring _ isCommutativeSemiring
