@@ -12,6 +12,11 @@ import Stream.Programs
 import Stream.Equality
 import Stream.Pointwise
 
+import Tree
+import BreadthFirst.Universe
+import BreadthFirst.Programs
+import BreadthFirst
+
 import Hinze.Lemmas
 import Hinze.Section2-4
 import Hinze.Section3
