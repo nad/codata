@@ -19,9 +19,8 @@ destruct : forall {A} -> Tree A -> TreeD A
 destruct (tree d) = d
 
 map : forall {A B} -> (A -> B) -> Tree A -> Tree B
-map f t with destruct t
-map f t | leaf       ~ tree leaf
-map f t | node l x r ~ tree (node (map f l) (f x) (map f r))
+map f (tree leaf)         ~ tree leaf
+map f (tree (node l x r)) ~ tree (node (map f l) (f x) (map f r))
 
 mutual
 
@@ -44,14 +43,12 @@ refl (tree (node l x r)) ~ tree (node (refl l) ≡-refl (refl r))
 
 trans : forall {A} {t₁ t₂ t₃ : Tree A} ->
         t₁ ≈ t₂ -> t₂ ≈ t₃ -> t₁ ≈ t₃
-trans t₁≈t₂ t₂≈t₃ with destruct≈ t₁≈t₂ | destruct≈ t₂≈t₃
-trans {t₁ = tree ._} {tree ._} {tree ._} t₁≈t₂ t₂≈t₃ | leaf          | leaf             ~ tree leaf
-trans {t₁ = tree ._} {tree ._} {tree ._} t₁≈t₂ t₂≈t₃ | node l≈ x≡ r≈ | node l≈′ x≡′ r≈′ ~
+trans {t₁ = tree ._} {tree ._} {tree ._} (tree leaf)            (tree leaf)               ~ tree leaf
+trans {t₁ = tree ._} {tree ._} {tree ._} (tree (node l≈ x≡ r≈)) (tree (node l≈′ x≡′ r≈′)) ~
   tree (node (trans l≈ l≈′) (≡-trans x≡ x≡′) (trans r≈ r≈′))
 
 map-cong : forall {A B} (f : A -> B) {t₁ t₂ : Tree A} ->
            t₁ ≈ t₂ -> map f t₁ ≈ map f t₂
-map-cong f t₁≈t₂ with destruct≈ t₁≈t₂
-map-cong f {tree ._} {tree ._} t₁≈t₂ | leaf          ~ tree leaf
-map-cong f {tree ._} {tree ._} t₁≈t₂ | node l≈ x≡ r≈ ~
+map-cong f {tree ._} {tree ._} (tree leaf)            ~ tree leaf
+map-cong f {tree ._} {tree ._} (tree (node l≈ x≡ r≈)) ~
   tree (node (map-cong f l≈) (≡-cong f x≡) (map-cong f r≈))
