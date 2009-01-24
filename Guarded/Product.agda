@@ -13,17 +13,17 @@ open import Data.Function
 
 infixr 5 _⊗_
 
-_⊗_ : (AP BP : Productive) -> Productive
+_⊗_ : (AP BP : Productive) → Productive
 AP ⊗ BP = record
   { T        = A.T × B.T
-  ; Producer = \s g -> A.Producer s g × B.Producer s g
-  ; return   = map-× A.return B.return
+  ; Producer = λ s g → A.Producer s g × B.Producer s g
+  ; return   = map A.return B.return
   ; rec      = < A.rec , B.rec >
-  ; unguard  = \step -> map-× (A.unguard (proj₁ ∘ step))
-                              (B.unguard (proj₂ ∘ step))
-  ; produce  = \step -> map-× (A.produce (proj₁ ∘ step))
-                              (B.produce (proj₂ ∘ step))
-  ; smap     = \f -> map-× (A.smap f) (B.smap f)
+  ; unguard  = λ step → map (A.unguard (proj₁ ∘ step))
+                            (B.unguard (proj₂ ∘ step))
+  ; produce  = λ step → map (A.produce (proj₁ ∘ step))
+                            (B.produce (proj₂ ∘ step))
+  ; smap     = λ f → map (A.smap f) (B.smap f)
   }
   where
   module A = Productive AP
@@ -44,7 +44,7 @@ module Examples where
   open Productive (S.StreamProductive ⊗ S.StreamProductive)
 
   onesTwos : S.Stream ℕ × S.Stream ℕ
-  onesTwos = unfold (\s -> 1 ∷ proj₂ (rec s) , 2 ∷ proj₁ (rec s)) tt
+  onesTwos = unfold (λ s → 1 ∷ proj₂ (rec s) , 2 ∷ proj₁ (rec s)) tt
 
   -- Note that even though proj₂ (rec tt) is used for the first
   -- component, and proj₁ (rec tt) for the second, the ones and twos
@@ -77,6 +77,6 @@ module Examples where
 
   n = 5
 
-  ex : map-× (S.take n) (S.take n) onesTwos ≡
+  ex : map {Q = λ _ → Vec.Vec ℕ n} (S.take n) (S.take n) onesTwos ≡
        (Vec.replicate 1 , Vec.replicate 2)
-  ex = ≡-refl
+  ex = refl

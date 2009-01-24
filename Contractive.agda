@@ -19,7 +19,7 @@ open import Data.Function
 record IsWellFoundedOrder {A} (_<_ : Rel A) : Set where
   field
     trans         : Transitive _<_
-    isWellFounded : forall a -> WF.Acc _<_ a
+    isWellFounded : ∀ a → WF.Acc _<_ a
 
 -- Ordered families of equivalences.
 
@@ -29,14 +29,14 @@ record OFE : Set1 where
     domain             : Set
     _<_                : Rel carrier
     isWellFoundedOrder : IsWellFoundedOrder _<_
-    Eq                 : carrier -> Rel domain
-    isEquivalence      : forall a -> IsEquivalence (Eq a)
+    Eq                 : carrier → Rel domain
+    isEquivalence      : ∀ a → IsEquivalence (Eq a)
 
   open IsWellFoundedOrder isWellFoundedOrder public
   open WF _<_ public using (WfRec)
   open WF.All _<_ isWellFounded public
 
-  setoid : carrier -> Setoid
+  setoid : carrier → Setoid
   setoid a = record { carrier       = domain
                     ; _≈_           = Eq a
                     ; isEquivalence = isEquivalence a
@@ -48,32 +48,32 @@ record OFE : Set1 where
 
   -- The set of predecessors of a.
 
-  ↓ : carrier -> Pred carrier
-  ↓ a = \a' -> a' < a
+  ↓ : carrier → Pred carrier
+  ↓ a = λ a' → a' < a
 
   -- The intersection of all the equivalences.
 
   _≅_ : Rel domain
-  x ≅ y = forall a -> Eq a x y
+  x ≅ y = ∀ a → Eq a x y
 
-  Family : Pred carrier -> Set
-  Family I = forall x -> x ∈ I -> domain
+  Family : Pred carrier → Set
+  Family I = ∀ x → x ∈ I → domain
 
-  lift : forall {I} -> (carrier -> domain) -> Family I
-  lift P = \x _ -> P x
+  lift : ∀ {I} → (carrier → domain) → Family I
+  lift P = λ x _ → P x
 
-  IsCoherent : forall {I} -> Family I -> Set
-  IsCoherent {I} fam = forall {a' a}
-    (a'∈I : a' ∈ I) (a∈I : a ∈ I) -> a' < a ->
+  IsCoherent : ∀ {I} → Family I → Set
+  IsCoherent {I} fam = ∀ {a' a}
+    (a'∈I : a' ∈ I) (a∈I : a ∈ I) → a' < a →
     Eq a' (fam a' a'∈I) (fam a a∈I)
 
-  IsLimit : forall {I} -> Family I -> domain -> Set
-  IsLimit {I} fam y = forall {a'}
-    (a'∈I : a' ∈ I) -> Eq a' (fam a' a'∈I) y
+  IsLimit : ∀ {I} → Family I → domain → Set
+  IsLimit {I} fam y = ∀ {a'}
+    (a'∈I : a' ∈ I) → Eq a' (fam a' a'∈I) y
 
-  IsContractive : (domain -> domain) -> Set
-  IsContractive F = forall {x y a} ->
-    (forall {a'} -> a' < a -> Eq a' x y) -> Eq a (F x) (F y)
+  IsContractive : (domain → domain) → Set
+  IsContractive F = ∀ {x y a} →
+    (∀ {a'} → a' < a → Eq a' x y) → Eq a (F x) (F y)
 
 -- Complete ordered families of equivalences.
 
@@ -84,14 +84,14 @@ record COFE : Set1 where
   open OFE ofe
 
   field
-    limU     : (carrier -> domain) -> domain
-    isLimitU : forall {fam} ->
-               IsCoherent {U} (lift fam) ->
+    limU     : (carrier → domain) → domain
+    isLimitU : ∀ {fam} →
+               IsCoherent {U} (lift fam) →
                IsLimit {U} (lift fam) (limU fam)
 
-    lim↓     : forall a -> Family (↓ a) -> domain
-    isLimit↓ : forall a {fam : Family (↓ a)} ->
-               IsCoherent fam -> IsLimit fam (lim↓ a fam)
+    lim↓     : ∀ a → Family (↓ a) → domain
+    isLimit↓ : ∀ a {fam : Family (↓ a)} →
+               IsCoherent fam → IsLimit fam (lim↓ a fam)
 
   open OFE ofe public
 
@@ -101,15 +101,15 @@ record COFE : Set1 where
 record ContractiveFun (cofe : COFE) : Set where
   open COFE cofe
   field
-    F             : domain -> domain
+    F             : domain → domain
     isContractive : IsContractive F
 
   open EqReasoning
 
   -- The fixpoint is the limit of the following family.
 
-  fam : carrier -> domain
-  fam = wfRec (const₁ domain) (\a rec -> F (lim↓ a rec))
+  fam : carrier → domain
+  fam = wfRec (const₁ domain) (λ a rec → F (lim↓ a rec))
 
   fixpoint : domain
   fixpoint = limU fam
@@ -119,20 +119,20 @@ record ContractiveFun (cofe : COFE) : Set where
   -- central to the ideas developed here, though, so I leave it as a
   -- postulate.
 
-  postulate unfold : forall a -> fam a ≅ F (lim↓ a (lift fam))
+  postulate unfold : ∀ a → fam a ≅ F (lim↓ a (lift fam))
 
   -- The family is coherent in several ways.
 
-  fam-isCoherent-↓ : forall a -> IsCoherent {↓ a} (lift fam)
+  fam-isCoherent-↓ : ∀ a → IsCoherent {↓ a} (lift fam)
   fam-isCoherent-↓ = wfRec P step
     where
     P : Pred carrier
     P a = IsCoherent {↓ a} (lift fam)
 
-    step : forall a -> WfRec P a -> P a
+    step : ∀ a → WfRec P a → P a
     step a rec {c} {b} c<a b<a c<b = begin
       fam c                  ≈⟨ unfold c c ⟩
-      F (lim↓ c (lift fam))  ≈⟨ isContractive (\{d} d<c -> begin
+      F (lim↓ c (lift fam))  ≈⟨ isContractive (λ {d} d<c → begin
          lim↓ c (lift fam)      ≈⟨ sym $ isLimit↓ c (rec c c<a) d<c ⟩
          lift {↓ a} fam d
               (trans d<c c<a)   ≈⟨ isLimit↓ b (rec b b<a) (trans d<c c<b) ⟩
@@ -144,12 +144,12 @@ record ContractiveFun (cofe : COFE) : Set where
   fam-isCoherent-U {a'} {a} _ _ = wfRec P step a a'
     where
     P : Pred carrier
-    P a = forall a' -> a' < a -> Eq a' (fam a') (fam a)
+    P a = ∀ a' → a' < a → Eq a' (fam a') (fam a)
 
-    step : forall a -> WfRec P a -> P a
+    step : ∀ a → WfRec P a → P a
     step a rec a' a'<a = begin
       fam a'                  ≈⟨ unfold a' a' ⟩
-      F (lim↓ a' (lift fam))  ≈⟨ isContractive (\{b} b<a' -> begin
+      F (lim↓ a' (lift fam))  ≈⟨ isContractive (λ {b} b<a' → begin
          lim↓ a' (lift fam)      ≈⟨ sym $ isLimit↓ a' (fam-isCoherent-↓ a') b<a' ⟩
          fam b                   ≈⟨ isLimit↓ a (fam-isCoherent-↓ a) (trans b<a' a'<a) ⟩
          lim↓ a  (lift fam)      ∎) ⟩
@@ -162,7 +162,7 @@ record ContractiveFun (cofe : COFE) : Set where
   isFixpoint a = begin
     fixpoint               ≈⟨ sym $ isLimitU fam-isCoherent-U _ ⟩
     fam a                  ≈⟨ unfold a a ⟩
-    F (lim↓ a (lift fam))  ≈⟨ isContractive (\{a'} a'<a -> begin
+    F (lim↓ a (lift fam))  ≈⟨ isContractive (λ {a'} a'<a → begin
        lim↓ a (lift fam)      ≈⟨ sym $ isLimit↓ a (fam-isCoherent-↓ a) a'<a ⟩
        fam a'                 ≈⟨ isLimitU fam-isCoherent-U _ ⟩
        limU fam               ∎) ⟩
@@ -171,14 +171,14 @@ record ContractiveFun (cofe : COFE) : Set where
 
   -- And it is unique.
 
-  unique : forall x -> x ≅ F x -> x ≅ fixpoint
+  unique : ∀ x → x ≅ F x → x ≅ fixpoint
   unique x isFix = wfRec P step
     where
-    P = \a -> Eq a x fixpoint
+    P = λ a → Eq a x fixpoint
 
-    step : forall a -> WfRec P a -> P a
+    step : ∀ a → WfRec P a → P a
     step a rec = begin
       x           ≈⟨ isFix a ⟩
-      F x         ≈⟨ isContractive (\{a'} a'<a -> rec a' a'<a) ⟩
+      F x         ≈⟨ isContractive (λ {a'} a'<a → rec a' a'<a) ⟩
       F fixpoint  ≈⟨ sym $ isFixpoint a ⟩
       fixpoint    ∎

@@ -4,51 +4,47 @@
 
 module Tree where
 
-open import Relation.Binary.PropositionalEquality
+open import Coinduction
+import Relation.Binary.PropositionalEquality as PropEq
+open PropEq using (_≡_)
 
-mutual
+data Tree (A : Set) : Set where
+  leaf : Tree A
+  node : (l : ∞ (Tree A)) (x : A) (r : ∞ (Tree A)) → Tree A
 
-  data TreeD (A : Set) : Set where
-    leaf : TreeD A
-    node : (l : Tree A) (x : A) (r : Tree A) -> TreeD A
+map : ∀ {A B} → (A → B) → Tree A → Tree B
+map f leaf         = leaf
+map f (node l x r) = node mapˡ (f x) mapʳ
+  where
+  mapˡ ~ ♯ map f (♭ l)
+  mapʳ ~ ♯ map f (♭ r)
 
-  codata Tree (A : Set) : Set where
-    tree : (d : TreeD A) -> Tree A
+data _≈_ {A : Set} : (t₁ t₂ : Tree A) → Set where
+  leaf : leaf ≈ leaf
+  node : ∀ {l₁ l₂ x₁ x₂ r₁ r₂}
+         (l≈ : ∞ (♭ l₁ ≈ ♭ l₂)) (x≡ : x₁ ≡ x₂) (r≈ : ∞ (♭ r₁ ≈ ♭ r₂)) →
+         node l₁ x₁ r₁ ≈ node l₂ x₂ r₂
 
-destruct : forall {A} -> Tree A -> TreeD A
-destruct (tree d) = d
+refl : ∀ {A} (t : Tree A) → t ≈ t
+refl leaf         = leaf
+refl (node l x r) = node reflˡ PropEq.refl reflʳ
+  where
+  reflˡ ~ ♯ refl (♭ l)
+  reflʳ ~ ♯ refl (♭ r)
 
-map : forall {A B} -> (A -> B) -> Tree A -> Tree B
-map f (tree leaf)         ~ tree leaf
-map f (tree (node l x r)) ~ tree (node (map f l) (f x) (map f r))
+trans : ∀ {A} {t₁ t₂ t₃ : Tree A} →
+        t₁ ≈ t₂ → t₂ ≈ t₃ → t₁ ≈ t₃
+trans leaf            leaf               = leaf
+trans (node l≈ x≡ r≈) (node l≈′ x≡′ r≈′) =
+  node transˡ (PropEq.trans x≡ x≡′) transʳ
+  where
+  transˡ ~ ♯ trans (♭ l≈) (♭ l≈′)
+  transʳ ~ ♯ trans (♭ r≈) (♭ r≈′)
 
-mutual
-
-  data _≈D_ {A : Set} : (t₁ t₂ : TreeD A) -> Set where
-    leaf : leaf ≈D leaf
-    node : forall {l₁ l₂ x₁ x₂ r₁ r₂}
-           (l≈ : l₁ ≈ l₂) (x≡ : x₁ ≡ x₂) (r≈ : r₁ ≈ r₂) ->
-           node l₁ x₁ r₁ ≈D node l₂ x₂ r₂
-
-  codata _≈_ {A : Set} (t₁ t₂ : Tree A) : Set where
-    tree : (d≈ : destruct t₁ ≈D destruct t₂) -> t₁ ≈ t₂
-
-destruct≈ : forall {A} {t₁ t₂ : Tree A} ->
-            t₁ ≈ t₂ -> destruct t₁ ≈D destruct t₂
-destruct≈ (tree eq) = eq
-
-refl : forall {A} (t : Tree A) -> t ≈ t
-refl (tree leaf)         ~ tree leaf
-refl (tree (node l x r)) ~ tree (node (refl l) ≡-refl (refl r))
-
-trans : forall {A} {t₁ t₂ t₃ : Tree A} ->
-        t₁ ≈ t₂ -> t₂ ≈ t₃ -> t₁ ≈ t₃
-trans {t₁ = tree ._} {tree ._} {tree ._} (tree leaf)            (tree leaf)               ~ tree leaf
-trans {t₁ = tree ._} {tree ._} {tree ._} (tree (node l≈ x≡ r≈)) (tree (node l≈′ x≡′ r≈′)) ~
-  tree (node (trans l≈ l≈′) (≡-trans x≡ x≡′) (trans r≈ r≈′))
-
-map-cong : forall {A B} (f : A -> B) {t₁ t₂ : Tree A} ->
-           t₁ ≈ t₂ -> map f t₁ ≈ map f t₂
-map-cong f {tree ._} {tree ._} (tree leaf)            ~ tree leaf
-map-cong f {tree ._} {tree ._} (tree (node l≈ x≡ r≈)) ~
-  tree (node (map-cong f l≈) (≡-cong f x≡) (map-cong f r≈))
+map-cong : ∀ {A B} (f : A → B) {t₁ t₂ : Tree A} →
+           t₁ ≈ t₂ → map f t₁ ≈ map f t₂
+map-cong f leaf            = leaf
+map-cong f (node l≈ x≡ r≈) = node mapˡ (PropEq.cong f x≡) mapʳ
+  where
+  mapˡ ~ ♯ map-cong f (♭ l≈)
+  mapʳ ~ ♯ map-cong f (♭ r≈)

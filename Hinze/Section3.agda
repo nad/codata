@@ -11,6 +11,7 @@ open import Stream.Pointwise
 open import Hinze.Section2-4
 open import Hinze.Lemmas
 
+open import Coinduction hiding (∞)
 open import Data.Product
 open import Data.Bool
 open import Data.Vec hiding (_⋎_)
@@ -28,42 +29,48 @@ open Op (CommutativeSemiring.semiring Nat.commutativeSemiring)
 -- Definitions
 
 pot : StreamProg Bool
-pot ~ ↓ true ≺ pot ⋎ false ∞
+pot = ↓ true ≺ pot′
+  where pot′ ~ ♯₁ (pot ⋎ false ∞)
 
 msb : StreamProg ℕ
-msb ~ ↓ 1 ≺ 2 ∞ ⟨ _*_ ⟩ msb ⋎ 2 ∞ ⟨ _*_ ⟩ msb
+msb = ↓ 1 ≺ msb′
+  where msb′ ~ ♯₁ (2 ∞ ⟨ _*_ ⟩ msb ⋎ 2 ∞ ⟨ _*_ ⟩ msb)
 
 ones′ : StreamProg ℕ
-ones′ ~ ↓ 1 ≺ ones′ ⋎ ones′ ⟨ _+_ ⟩ 1 ∞
+ones′ = ↓ 1 ≺ ones″
+  where ones″ ~ ♯₁ (ones′ ⋎ ones′ ⟨ _+_ ⟩ 1 ∞)
 
 ones : StreamProg ℕ
-ones = ↓ 0 ≺ ones′
+ones = ↓ 0 ≺′ ones′
 
 carry : StreamProg ℕ
-carry ~ ↓ 0 ≺ carry ⟨ _+_ ⟩ 1 ∞ ⋎ 0 ∞
+carry = ↓ 0 ≺ carry′
+  where carry′ ~ ♯₁ (carry ⟨ _+_ ⟩ 1 ∞ ⋎ 0 ∞)
 
 carry-folded : carry ≊ 0 ∞ ⋎ carry ⟨ _+_ ⟩ 1 ∞
-carry-folded = carry ∎
+carry-folded = ≊-η carry
 
 2^carry = 2 ∞ ⟨ _^_ ⟩ carry
 
-turn-length : ℕ -> ℕ
+turn-length : ℕ → ℕ
 turn-length zero    = zero
 turn-length (suc n) = ℓ + suc ℓ
   where ℓ = turn-length n
 
-turn : (n : ℕ) -> Vec ℕ (turn-length n)
+turn : (n : ℕ) → Vec ℕ (turn-length n)
 turn zero    = []
 turn (suc n) = turn n ++ [ n ] ++ turn n
 
-tree : ℕ -> StreamProg ℕ
-tree n ~ ↓ n ≺ turn n ≺≺ tree (suc n)
+tree : ℕ → StreamProg ℕ
+tree n = ↓ n ≺ tree′
+  where tree′ ~ ♯₁ (turn n ≺≺ tree (suc n))
 
 frac : StreamProg ℕ
-frac ~ ↓ 0 ≺ frac ⋎ nat ⟨ _+_ ⟩ 1 ∞
+frac = ↓ 0 ≺ frac′
+  where frac′ ~ ♯₁ (frac ⋎ nat ⟨ _+_ ⟩ 1 ∞)
 
 frac-folded : frac ≊ nat ⋎ frac
-frac-folded = frac ∎
+frac-folded = ≊-η frac
 
 god : StreamProg ℕ
 god = (2 ∞ ⟨ _*_ ⟩ frac) ⟨ _+_ ⟩ 1 ∞
@@ -74,7 +81,7 @@ god = (2 ∞ ⟨ _*_ ⟩ frac) ⟨ _+_ ⟩ 1 ∞
 god-lemma : god ≊ 2*nat+1 ⋎ god
 god-lemma =
   god
-                                          ≡⟨ ≡-refl ⟩
+                                          ≡⟨ refl ⟩
   (2 ∞ ⟨ _*_ ⟩ (nat ⋎ frac)) ⟨ _+_ ⟩ 1 ∞
                                           ≊⟨ ⟨ _+_ ⟩-cong (2 ∞ ⟨ _*_ ⟩ (nat ⋎ frac))
                                                           (2*nat ⋎ 2 ∞ ⟨ _*_ ⟩ frac)
@@ -86,9 +93,9 @@ god-lemma =
                                           ∎
 
 carry-god-nat : 2^carry ⟨ _*_ ⟩ god ≊ tailP nat
-carry-god-nat ~
+carry-god-nat =
   2^carry ⟨ _*_ ⟩ god
-                                                           ≡⟨ ≡-refl ⟩
+                                                           ≡⟨ refl ⟩
   (2 ∞ ⟨ _^_ ⟩ (0 ∞ ⋎ carry ⟨ _+_ ⟩ 1 ∞)) ⟨ _*_ ⟩ god
                                                            ≊⟨ ⟨ _*_ ⟩-cong (2 ∞ ⟨ _^_ ⟩ (0 ∞ ⋎ carry ⟨ _+_ ⟩ 1 ∞))
                                                                            (1 ∞ ⋎ 2 ∞ ⟨ _*_ ⟩ 2^carry) lemma
@@ -98,39 +105,40 @@ carry-god-nat ~
                                                                                    (2 ∞ ⟨ _*_ ⟩ 2^carry) god) ⟩
   1 ∞ ⟨ _*_ ⟩ 2*nat+1 ⋎ (2 ∞ ⟨ _*_ ⟩ 2^carry) ⟨ _*_ ⟩ god
                                                            ≊⟨ ⋎-cong (1 ∞ ⟨ _*_ ⟩ 2*nat+1) 2*nat+1
-                                                                     (pointwise 1 (\s -> 1 ∞ ⟨ _*_ ⟩ s) (\s -> s)
+                                                                     (pointwise 1 (λ s → 1 ∞ ⟨ _*_ ⟩ s) (λ s → s)
                                                                                   (proj₁ CS.*-identity) 2*nat+1)
                                                                      ((2 ∞ ⟨ _*_ ⟩ 2^carry) ⟨ _*_ ⟩ god)
                                                                      (2 ∞ ⟨ _*_ ⟩ (2^carry ⟨ _*_ ⟩ god))
-                                                                     (pointwise 3 (\s t u -> (s ⟨ _*_ ⟩ t) ⟨ _*_ ⟩ u)
-                                                                                  (\s t u -> s ⟨ _*_ ⟩ (t ⟨ _*_ ⟩ u))
+                                                                     (pointwise 3 (λ s t u → (s ⟨ _*_ ⟩ t) ⟨ _*_ ⟩ u)
+                                                                                  (λ s t u → s ⟨ _*_ ⟩ (t ⟨ _*_ ⟩ u))
                                                                                   CS.*-assoc (2 ∞) 2^carry god) ⟩
   2*nat+1 ⋎ 2 ∞ ⟨ _*_ ⟩ (2^carry ⟨ _*_ ⟩ god)
-                                                           ≊⟨ ↓ ≡-refl ≺
-                                                              ⋎-cong (2 ∞ ⟨ _*_ ⟩ (2^carry ⟨ _*_ ⟩ god))
-                                                                     (2 ∞ ⟨ _*_ ⟩ (tailP nat))
-                                                                     (⟨ _*_ ⟩-cong (2 ∞) (2 ∞) (2 ∞ ∎)
-                                                                                   (2^carry ⟨ _*_ ⟩ god) (tailP nat)
-                                                                                   carry-god-nat)
-                                                                     (tailP 2*nat+1) (tailP 2*nat+1) (tailP 2*nat+1 ∎) ⟩
+                                                           ≊⟨ ↓ refl ≺ coih ⟩
   2*nat+1 ⋎ 2 ∞ ⟨ _*_ ⟩ tailP nat
                                                            ≊⟨ ≅-sym (tailP-cong nat (2*nat ⋎ 2*nat+1) nat-lemma₂) ⟩
   tailP nat
                                                            ∎
   where
-  lemma ~
+  coih ~ ♯₁ ⋎-cong (2 ∞ ⟨ _*_ ⟩ (2^carry ⟨ _*_ ⟩ god))
+                   (2 ∞ ⟨ _*_ ⟩ (tailP nat))
+                   (⟨ _*_ ⟩-cong (2 ∞) (2 ∞) (2 ∞ ∎)
+                                 (2^carry ⟨ _*_ ⟩ god) (tailP nat)
+                                 carry-god-nat)
+                   (tailP 2*nat+1) (tailP 2*nat+1) (tailP 2*nat+1 ∎)
+
+  lemma =
     2^carry
-                                                       ≡⟨ ≡-refl ⟩
+                                                       ≡⟨ refl ⟩
     2 ∞ ⟨ _^_ ⟩ (0 ∞ ⋎ carry ⟨ _+_ ⟩ 1 ∞)
                                                        ≊⟨ zip-const-⋎ _^_ 2 (0 ∞) (carry ⟨ _+_ ⟩ 1 ∞) ⟩
     2 ∞ ⟨ _^_ ⟩ 0 ∞ ⋎ 2 ∞ ⟨ _^_ ⟩ (carry ⟨ _+_ ⟩ 1 ∞)
                                                        ≊⟨ ⋎-cong (2 ∞ ⟨ _^_ ⟩ 0 ∞) (1 ∞)
-                                                                 (pointwise 0 (2 ∞ ⟨ _^_ ⟩ 0 ∞) (1 ∞) ≡-refl)
+                                                                 (pointwise 0 (2 ∞ ⟨ _^_ ⟩ 0 ∞) (1 ∞) refl)
                                                                  (2 ∞ ⟨ _^_ ⟩ (carry ⟨ _+_ ⟩ 1 ∞))
                                                                  (2 ∞ ⟨ _*_ ⟩ 2^carry)
-                                                                 (pointwise 1 (\s -> 2 ∞ ⟨ _^_ ⟩ (s ⟨ _+_ ⟩ 1 ∞))
-                                                                              (\s -> 2 ∞ ⟨ _*_ ⟩ (2 ∞ ⟨ _^_ ⟩ s))
-                                                                              (\x -> ≡-cong (_^_ 2) (CS.+-comm x 1))
+                                                                 (pointwise 1 (λ s → 2 ∞ ⟨ _^_ ⟩ (s ⟨ _+_ ⟩ 1 ∞))
+                                                                              (λ s → 2 ∞ ⟨ _*_ ⟩ (2 ∞ ⟨ _^_ ⟩ s))
+                                                                              (λ x → cong (_^_ 2) (CS.+-comm x 1))
                                                                               carry) ⟩
     1 ∞ ⋎ 2 ∞ ⟨ _*_ ⟩ 2^carry
                                                        ∎

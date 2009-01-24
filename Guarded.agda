@@ -31,35 +31,35 @@ record Productive : Set1 where
     -- The type of value producers ("right-hand sides"), parameterised
     -- on a given seed type. A Producer may only be used in a context
     -- of matching Guardedness.
-    Producer : Set ->          -- Seed type.
-               Guardedness ->  -- Guardedness context.
+    Producer : Set →          -- Seed type.
+               Guardedness →  -- Guardedness context.
                Set
 
     -- Returns a value immediately. Can be used in any context.
-    return : forall {s g} -> T -> Producer s g
+    return : ∀ {s g} → T → Producer s g
 
     -- This stands for a corecursive occurrence of the thing being
     -- defined, possibly with a new seed. Note that rec has to be used
     -- in a guarded context.
-    rec : forall {s} -> s -> Producer s guarded
+    rec : ∀ {s} → s → Producer s guarded
 
     -- This makes it possible to use a definition which has to be
     -- guarded in an unguarded context.
-    unguard : forall {s} ->
-              (s -> Producer s unguarded) ->
-              (Producer s guarded -> Producer s unguarded)
+    unguard : ∀ {s} →
+              (s → Producer s unguarded) →
+              (Producer s guarded → Producer s unguarded)
 
     -- Given a Producer and a step function, produce a value.
-    produce : forall {s} ->
-              (s -> Producer s unguarded) ->
-              (Producer s unguarded -> T)
+    produce : ∀ {s} →
+              (s → Producer s unguarded) →
+              (Producer s unguarded → T)
 
     -- Map over the seed type.
-    smap : forall {s₁ s₂ g} -> (s₁ -> s₂) -> Producer s₁ g -> Producer s₂ g
+    smap : ∀ {s₁ s₂ g} → (s₁ → s₂) → Producer s₁ g → Producer s₂ g
 
   -- Given a step function and a seed, produce a value.
 
-  unfold : forall {s} -> (s -> Producer s unguarded) -> (s -> T)
+  unfold : ∀ {s} → (s → Producer s unguarded) → (s → T)
   unfold step s = produce step (step s)
 
 -- Note that unguard and smap can probably be removed from this record.

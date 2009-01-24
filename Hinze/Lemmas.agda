@@ -7,6 +7,7 @@ module Hinze.Lemmas where
 open import Stream.Programs
 open import Stream.Equality
 
+open import Coinduction hiding (∞)
 open import Relation.Binary.PropositionalEquality
 open import Data.Function using (_∘_; flip)
 
@@ -15,58 +16,63 @@ open import Data.Function using (_∘_; flip)
 
 -- See also Stream.Equality.≊-η.
 
-⋎-∞ : forall {A} (x : A) -> x ∞ ⋎ x ∞ ≊ x ∞
-⋎-∞ x ~ ↓ ≡-refl ≺ ⋎-∞ x
+⋎-∞ : ∀ {A} (x : A) → x ∞ ⋎ x ∞ ≊ x ∞
+⋎-∞ x = ↓ refl ≺ ⋎-∞′
+  where ⋎-∞′ ~ ♯₁ ⋎-∞ x
 
-⋎-map : forall {A B} (⊟ : A -> B) s t ->
+⋎-map : ∀ {A B} (⊟ : A → B) s t →
         ⊟ · s ⋎ ⊟ · t ≊ ⊟ · (s ⋎ t)
 ⋎-map ⊟ s t with P⇒′ s
-⋎-map ⊟ s t | x ≺ s′ ~ ↓ ≡-refl ≺ ⋎-map ⊟ t s′
+⋎-map ⊟ s t | x ≺ s′ = ↓ refl ≺ ⋎-map′
+  where ⋎-map′ ~ ♯₁ ⋎-map ⊟ t (♭₁ s′)
 
-abide-law : forall {A B C} (⊞ : A -> B -> C) s₁ s₂ t₁ t₂ ->
+abide-law : ∀ {A B C} (⊞ : A → B → C) s₁ s₂ t₁ t₂ →
             s₁ ⟨ ⊞ ⟩ s₂ ⋎ t₁ ⟨ ⊞ ⟩ t₂ ≊ (s₁ ⋎ t₁) ⟨ ⊞ ⟩ (s₂ ⋎ t₂)
 abide-law ⊞ s₁ s₂ t₁ t₂ with P⇒′ s₁ | P⇒′ s₂
-abide-law ⊞ s₁ s₂ t₁ t₂ | x₁ ≺ s₁′ | x₂ ≺ s₂′ ~
-  ↓ ≡-refl ≺ abide-law ⊞ t₁ t₂ s₁′ s₂′
+abide-law ⊞ s₁ s₂ t₁ t₂ | x₁ ≺ s₁′ | x₂ ≺ s₂′ = ↓ refl ≺ abide-law′
+  where abide-law′ ~ ♯₁ abide-law ⊞ t₁ t₂ (♭₁ s₁′) (♭₁ s₂′)
 
 ------------------------------------------------------------------------
 -- Other lemmas
 
-tailP-cong : forall {A} (xs ys : StreamProg A) ->
-             xs ≊ ys -> tailP xs ≊ tailP ys
+tailP-cong : ∀ {A} (xs ys : StreamProg A) →
+             xs ≊ ys → tailP xs ≊ tailP ys
 tailP-cong xs ys xs≈ys with P⇒′ xs | P⇒′ ys | ≅⇒≃ xs≈ys
-tailP-cong xs ys xs≈ys | x ≺ xs′ | y ≺ ys′ | x≡y ≺ xs≈ys′ = xs≈ys′
+tailP-cong xs ys xs≈ys | x ≺ xs′ | y ≺ ys′ | x≡y ≺ xs≈ys′ = ♭₁ xs≈ys′
 
-map-fusion : forall {A B C} (f : B -> C) (g : A -> B) xs ->
+map-fusion : ∀ {A B C} (f : B → C) (g : A → B) xs →
              f · g · xs ≊ (f ∘ g) · xs
 map-fusion f g xs with P⇒′ xs
-map-fusion f g xs | x ≺ xs′ ~ ↓ ≡-refl ≺ map-fusion f g xs′
+map-fusion f g xs | x ≺ xs′ = ↓ refl ≺ map-fusion′
+  where map-fusion′ ~ ♯₁ map-fusion f g (♭₁ xs′)
 
-zip-const-is-map : forall {A B C} (_∙_ : A -> B -> C) xs y ->
-                   xs ⟨ _∙_ ⟩ y ∞ ≊ (\x -> x ∙ y) · xs
+zip-const-is-map : ∀ {A B C} (_∙_ : A → B → C) xs y →
+                   xs ⟨ _∙_ ⟩ y ∞ ≊ (λ x → x ∙ y) · xs
 zip-const-is-map _∙_ xs y with P⇒′ xs
-zip-const-is-map _∙_ xs y | x ≺ xs′ ~
-  ↓ ≡-refl ≺ zip-const-is-map _∙_ xs′ y
+zip-const-is-map _∙_ xs y | x ≺ xs′ = ↓ refl ≺ zip-const-is-map′
+  where zip-const-is-map′ ~ ♯₁ zip-const-is-map _∙_ (♭₁ xs′) y
 
-zip-flip : forall {A B C} (∙ : A -> B -> C) s t ->
+zip-flip : ∀ {A B C} (∙ : A → B → C) s t →
            s ⟨ ∙ ⟩ t ≊ t ⟨ flip ∙ ⟩ s
 zip-flip ∙ s t with P⇒′ s | P⇒′ t
-zip-flip ∙ s t | x ≺ s′ | y ≺ t′ ~ ↓ ≡-refl ≺ zip-flip ∙ s′ t′
+zip-flip ∙ s t | x ≺ s′ | y ≺ t′ = ↓ refl ≺ zip-flip′
+  where zip-flip′ ~ ♯₁ zip-flip ∙ (♭₁ s′) (♭₁ t′)
 
-zip-⋎-const : forall {A B C} (∙ : A -> B -> C) s t x ->
+zip-⋎-const : ∀ {A B C} (∙ : A → B → C) s t x →
               (s ⋎ t) ⟨ ∙ ⟩ x ∞ ≊ s ⟨ ∙ ⟩ x ∞ ⋎ t ⟨ ∙ ⟩ x ∞
 zip-⋎-const _∙_ s t x =
   (s ⋎ t) ⟨ _∙_ ⟩ x ∞
-                                         ≊⟨ zip-const-is-map _ _ _ ⟩
-  (\y -> y ∙ x) · (s ⋎ t)
-                                         ≊⟨ ≅-sym (⋎-map (\y -> y ∙ x) s t) ⟩
-  (\y -> y ∙ x) · s ⋎ (\y -> y ∙ x) · t
-                                         ≊⟨ ≅-sym (⋎-cong _ _ (zip-const-is-map _ _ _)
-                                                          _ _ (zip-const-is-map _ _ _)) ⟩
+                                         ≊⟨ zip-const-is-map _ (s ⋎ t) _ ⟩
+  (λ y → y ∙ x) · (s ⋎ t)
+                                         ≊⟨ ≅-sym (⋎-map (λ y → y ∙ x) s t) ⟩
+  (λ y → y ∙ x) · s ⋎ (λ y → y ∙ x) · t
+                                         ≊⟨ ≅-sym (⋎-cong (s ⟨ _∙_ ⟩ x ∞) ((λ y → y ∙ x) · s)
+                                                          (zip-const-is-map _∙_ s x)
+                                                      _ _ (zip-const-is-map _∙_ t x)) ⟩
   s ⟨ _∙_ ⟩ x ∞ ⋎ t ⟨ _∙_ ⟩ x ∞
                                          ∎
 
-zip-const-⋎ : forall {A B C} (∙ : A -> B -> C) x s t ->
+zip-const-⋎ : ∀ {A B C} (∙ : A → B → C) x s t →
               x ∞ ⟨ ∙ ⟩ (s ⋎ t) ≊ x ∞ ⟨ ∙ ⟩ s ⋎ x ∞ ⟨ ∙ ⟩ t
 zip-const-⋎ ∙ x s t =
   x ∞ ⟨ ∙ ⟩ (s ⋎ t)
@@ -74,7 +80,8 @@ zip-const-⋎ ∙ x s t =
   (s ⋎ t) ⟨ flip ∙ ⟩ x ∞
                                        ≊⟨ zip-⋎-const (flip ∙) s t x ⟩
   s ⟨ flip ∙ ⟩ x ∞ ⋎ t ⟨ flip ∙ ⟩ x ∞
-                                       ≊⟨ ≅-sym (⋎-cong _ _ (zip-flip ∙ (x ∞) s)
-                                                        _ _ (zip-flip ∙ (x ∞) t)) ⟩
+                                       ≊⟨ ≅-sym (⋎-cong (x ∞ ⟨ ∙ ⟩ s) (s ⟨ flip ∙ ⟩ x ∞)
+                                                        (zip-flip ∙ (x ∞) s)
+                                                    _ _ (zip-flip ∙ (x ∞) t)) ⟩
   x ∞ ⟨ ∙ ⟩ s ⋎ x ∞ ⟨ ∙ ⟩ t
                                        ∎

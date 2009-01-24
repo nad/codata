@@ -5,7 +5,7 @@
 module BreadthFirst.Universe where
 
 open import Data.Product
-open import Data.Colist
+open import Data.Colist as Colist
 open import Relation.Binary
 open import Relation.Binary.Simple
 open import Relation.Binary.PropositionalEquality
@@ -20,26 +20,25 @@ data Kind : Set where
   μ : Kind -- Codata.
   ν : Kind -- Data.
 
-data U : Kind -> Set1 where
-  tree   : forall {k} -> (a : U k) -> U ν
-  stream : forall {k} (a : U k) -> U ν
-  colist : forall {k} (a : U k) -> U ν
-  _⊗_    : forall {k₁ k₂} (a : U k₁) (b : U k₂) -> U μ
-  ⌈_⌉    : (A : Set) -> U μ
+data U : Kind → Set1 where
+  tree   : ∀ {k} (a : U k) → U ν
+  stream : ∀ {k} (a : U k) → U ν
+  colist : ∀ {k} (a : U k) → U ν
+  _⊗_    : ∀ {k₁ k₂} (a : U k₁) (b : U k₂) → U μ
+  ⌈_⌉    : (A : Set) → U μ
 
-El : forall {k} -> U k -> Set
+El : ∀ {k} → U k → Set
 El (tree a)   = Tree.Tree (El a)
 El (stream a) = Stream.Stream (El a)
 El (colist a) = Colist (El a)
 El (a ⊗ b)    = El a × El b
 El ⌈ A ⌉      = A
 
--- This equality relation could be improved; it contains just what is
--- necessary for this development.
+-- This equality relation could be improved.
 
-Eq : forall {k} (a : U k) -> Rel (El a)
+Eq : ∀ {k} (a : U k) → Rel (El a)
 Eq (tree a)   = Tree._≈_
 Eq (stream a) = Stream._≈_
-Eq (colist a) = Never
+Eq (colist a) = Colist._≈_
 Eq (a ⊗ b)    = Eq a ×-Rel Eq b
 Eq ⌈ A ⌉      = _≡_

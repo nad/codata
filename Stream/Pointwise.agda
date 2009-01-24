@@ -4,6 +4,7 @@
 
 module Stream.Pointwise where
 
+open import Coinduction hiding (∞)
 open import Stream
 open import Stream.Equality
 open import Stream.Programs hiding (lift)
@@ -17,7 +18,8 @@ open import Relation.Binary
 open import Relation.Binary.PropositionalEquality
 open import Relation.Binary.PropositionalEquality1
 private
-  module IsEq {A} = IsEquivalence (≈-isEquivalence {A})
+  module IsEq {A} =
+    IsEquivalence (Setoid.isEquivalence (Stream.setoid A))
 
 ------------------------------------------------------------------------
 -- Definitions
@@ -36,18 +38,18 @@ infix  6 _⟨_⟩_
 -- so without evidence that it would be genuinely useful.
 
 data Pointwise A n : Set where
-  var   : (x : Fin n) -> Pointwise A n
-  _∞    : (x : A) -> Pointwise A n
-  _·_   : (f : A -> A) (xs : Pointwise A n) -> Pointwise A n
+  var   : (x : Fin n) → Pointwise A n
+  _∞    : (x : A) → Pointwise A n
+  _·_   : (f : A → A) (xs : Pointwise A n) → Pointwise A n
   _⟨_⟩_ : (xs : Pointwise A n)
-          (_∙_ : A -> A -> A)
-          (ys : Pointwise A n) ->
+          (_∙_ : A → A → A)
+          (ys : Pointwise A n) →
           Pointwise A n
 
 -- Stream semantics.
 
-⟦_⟧ : forall {A n} ->
-      Pointwise A n -> (Vec₁ (StreamProg A) n -> StreamProg A)
+⟦_⟧ : ∀ {A n} →
+      Pointwise A n → (Vec₁ (StreamProg A) n → StreamProg A)
 ⟦ var x ⟧         ρ = Vec1.lookup x ρ
 ⟦ x ∞ ⟧           ρ = x ∞
 ⟦ f · xs ⟧        ρ = f · ⟦ xs ⟧ ρ
@@ -55,7 +57,7 @@ data Pointwise A n : Set where
 
 -- Pointwise semantics.
 
-⟪_⟫ : forall {A n} -> Pointwise A n -> (Vec A n -> A)
+⟪_⟫ : ∀ {A n} → Pointwise A n → (Vec A n → A)
 ⟪ var x ⟫         ρ = Vec.lookup x ρ
 ⟪ x ∞ ⟫           ρ = x
 ⟪ f · xs ⟫        ρ = f (⟪ xs ⟫ ρ)
@@ -68,14 +70,14 @@ private
 
   -- lookup is natural.
 
-  lookup-nat : forall {A B n} (f : A -> B) (x : Fin n) ρ ->
+  lookup-nat : ∀ {A B n} (f : A → B) (x : Fin n) ρ →
                f (Vec1.lookup x ρ) ≡ Vec.lookup x (Vec1.map₁₀ f ρ)
-  lookup-nat f zero    (x ∷ ρ) = ≡-refl
+  lookup-nat f zero    (x ∷ ρ) = refl
   lookup-nat f (suc i) (x ∷ ρ) = lookup-nat f i ρ
 
-  lookup-nat' : forall {A B : Set1} {n} (f : A -> B) (x : Fin n) ρ ->
+  lookup-nat' : ∀ {A B : Set1} {n} (f : A → B) (x : Fin n) ρ →
                 f (Vec1.lookup x ρ) ≡₁ Vec1.lookup x (Vec1.map f ρ)
-  lookup-nat' f zero    (x ∷ ρ) = ≡₁-refl
+  lookup-nat' f zero    (x ∷ ρ) = refl
   lookup-nat' f (suc i) (x ∷ ρ) = lookup-nat' f i ρ
 
 ------------------------------------------------------------------------
@@ -85,34 +87,35 @@ private
 
   -- Lifts a pointwise function to a function on stream programs.
 
-  lift : forall {A B n} ->
-         (Vec A n -> B) -> Vec₁ (StreamProg A) n -> StreamProg B
-  lift f xs ~ ↓ f (Vec1.map₁₀ headP xs) ≺ lift f (Vec1.map tailP xs)
+  lift : ∀ {A B n} →
+         (Vec A n → B) → Vec₁ (StreamProg A) n → StreamProg B
+  lift f xs = ↓ f (Vec1.map₁₀ headP xs) ≺ lift′
+    where lift′ ~ ♯₁ lift f (Vec1.map tailP xs)
 
   -- lift is a congruence in its first argument.
 
-  lift-cong : forall {A B n} {f g : Vec A n -> B} ->
-              (forall ρ -> f ρ ≡ g ρ) ->
-              forall ρ -> lift f ρ ≊ lift g ρ
-  lift-cong hyp ρ ~
-    ↓ hyp (Vec1.map₁₀ headP ρ) ≺ lift-cong hyp (Vec1.map tailP ρ)
+  lift-cong : ∀ {A B n} {f g : Vec A n → B} →
+              (∀ ρ → f ρ ≡ g ρ) →
+              ∀ ρ → lift f ρ ≊ lift g ρ
+  lift-cong hyp ρ = ↓ hyp (Vec1.map₁₀ headP ρ) ≺ lift-cong′
+    where lift-cong′ ~ ♯₁ lift-cong hyp (Vec1.map tailP ρ)
 
   -- unfold xs ρ is the one-step unfolding of ⟦ xs ⟧ ρ. Note the
   -- similarity to lift.
 
-  unfold : forall {A n} (xs : Pointwise A n) ρ -> StreamProg A
-  unfold xs ρ = ↓ ⟪ xs ⟫ (Vec1.map₁₀ headP ρ) ≺
+  unfold : ∀ {A n} (xs : Pointwise A n) ρ → StreamProg A
+  unfold xs ρ = ↓ ⟪ xs ⟫ (Vec1.map₁₀ headP ρ) ≺′
                   ⟦ xs ⟧ (Vec1.map   tailP ρ)
 
-  unfold-lemma : forall {A n} (xs : Pointwise A n) ρ ->
+  unfold-lemma : ∀ {A n} (xs : Pointwise A n) ρ →
                  ⟦ xs ⟧ ρ ≊ unfold xs ρ
   unfold-lemma (var x) ρ =
     Vec1.lookup x ρ
       ≊⟨ ≊-η (Vec1.lookup x ρ) ⟩
-    ↓ headP (Vec1.lookup x ρ) ≺ tailP (Vec1.lookup x ρ)
+    ↓ headP (Vec1.lookup x ρ) ≺′ tailP (Vec1.lookup x ρ)
       ≊⟨ ↓ lookup-nat headP x ρ ≺
-         ≈⇒≅ (IsEq.reflexive (≡₁₀-cong P⇒ (lookup-nat' tailP x ρ))) ⟩
-    ↓ Vec.lookup x (Vec1.map₁₀ headP ρ) ≺
+         ♯₁ ≈⇒≅ (IsEq.reflexive (cong₁₀ P⇒ (lookup-nat' tailP x ρ))) ⟩
+    ↓ Vec.lookup x (Vec1.map₁₀ headP ρ) ≺′
     Vec1.lookup x (Vec1.map tailP ρ)
       ≊⟨ ≅-sym (≊-η (unfold (var x) ρ)) ⟩
     unfold (var x) ρ
@@ -132,17 +135,18 @@ private
 
   -- The two semantics are related.
 
-  main-lemma : forall {A n} (xs : Pointwise A n) ->
-               forall ρ -> ⟦ xs ⟧ ρ ≊ lift ⟪ xs ⟫ ρ
-  main-lemma xs ρ ~
+  main-lemma : ∀ {A n} (xs : Pointwise A n) →
+               ∀ ρ → ⟦ xs ⟧ ρ ≊ lift ⟪ xs ⟫ ρ
+  main-lemma xs ρ =
     ⟦ xs ⟧ ρ
       ≊⟨ unfold-lemma xs ρ ⟩
     unfold xs ρ
       ≊⟨ ≊-η (unfold xs ρ) ⟩
-    ↓ ⟪ xs ⟫ (Vec1.map₁₀ headP ρ) ≺ ⟦ xs ⟧ (Vec1.map tailP ρ)
-      ≊⟨ ↓ ≡-refl ≺ main-lemma xs (Vec1.map tailP ρ) ⟩
+    ↓ ⟪ xs ⟫ (Vec1.map₁₀ headP ρ) ≺′ ⟦ xs ⟧ (Vec1.map tailP ρ)
+      ≊⟨ ↓ refl ≺ coih ⟩
     lift ⟪ xs ⟫ ρ
       ∎
+    where coih ~ ♯₁ main-lemma xs (Vec1.map tailP ρ)
 
 ------------------------------------------------------------------------
 -- To prove that two streams which are defined pointwise are equal, it
@@ -152,9 +156,9 @@ private
 -- up with a suitable environment manually. The alternative function
 -- lift-pointwise below may be slightly easier to use.
 
-pointwise' : forall {A n} (xs ys : Pointwise A n) ->
-             (forall ρ -> ⟪ xs ⟫ ρ ≡ ⟪ ys ⟫ ρ) ->
-             (forall ρ -> ⟦ xs ⟧ ρ ≊ ⟦ ys ⟧ ρ)
+pointwise' : ∀ {A n} (xs ys : Pointwise A n) →
+             (∀ ρ → ⟪ xs ⟫ ρ ≡ ⟪ ys ⟫ ρ) →
+             (∀ ρ → ⟦ xs ⟧ ρ ≊ ⟦ ys ⟧ ρ)
 pointwise' xs ys hyp ρ =
   ⟦ xs ⟧ ρ
     ≊⟨ main-lemma xs ρ ⟩
@@ -170,8 +174,8 @@ import Data.Vec.N-ary1 as N1
 
 -- Applies the function to all possible variables.
 
-app : forall {A} n ->
-      N-ary n (Pointwise A n) (Pointwise A n) -> Pointwise A n
+app : ∀ {A} n →
+      N-ary n (Pointwise A n) (Pointwise A n) → Pointwise A n
 app n f = f $ⁿ Vec.map var (Vec.allFin n)
 
 -- The type signature of this function may be a bit daunting, but once
@@ -179,8 +183,8 @@ app n f = f $ⁿ Vec.map var (Vec.allFin n)
 -- remaining type evaluates nicely.
 
 pointwise
-  : forall {A} n (f g : N-ary n (Pointwise A n) (Pointwise A n)) ->
-    Eq    n _≡_ (   curryⁿ ⟪ app n f ⟫) (   curryⁿ ⟪ app n g ⟫) ->
+  : ∀ {A} n (f g : N-ary n (Pointwise A n) (Pointwise A n)) →
+    Eq    n _≡_ (   curryⁿ ⟪ app n f ⟫) (   curryⁿ ⟪ app n g ⟫) →
     N1.Eq n _≊_ (N1.curryⁿ ⟦ app n f ⟧) (N1.curryⁿ ⟦ app n g ⟧)
 pointwise n f g hyp =
   N1.curryⁿ-pres ⟦ app n f ⟧ ⟦ app n g ⟧
@@ -193,17 +197,17 @@ pointwise n f g hyp =
 private
 
   example₁ : suc · 0 ∞ ≊ 1 ∞
-  example₁ = pointwise 0 (suc · 0 ∞) (1 ∞) ≡-refl
+  example₁ = pointwise 0 (suc · 0 ∞) (1 ∞) refl
 
-  example₂ : forall s -> suc · s ≊ 1 ∞ ⟨ _+_ ⟩ s
-  example₂ = pointwise 1 (\s -> suc · s)
-                         (\s -> 1 ∞ ⟨ _+_ ⟩ s)
-                         (\_ -> ≡-refl)
+  example₂ : ∀ s → suc · s ≊ 1 ∞ ⟨ _+_ ⟩ s
+  example₂ = pointwise 1 (λ s → suc · s)
+                         (λ s → 1 ∞ ⟨ _+_ ⟩ s)
+                         (λ _ → refl)
 
-  example₃ : forall s t u ->
+  example₃ : ∀ s t u →
              (s ⟨ _+_ ⟩ t) ⟨ _+_ ⟩ u ≊ s ⟨ _+_ ⟩ (t ⟨ _+_ ⟩ u)
-  example₃ = pointwise 3 (\s t u -> (s ⟨ _+_ ⟩ t) ⟨ _+_ ⟩ u)
-                         (\s t u ->  s ⟨ _+_ ⟩ (t ⟨ _+_ ⟩ u))
+  example₃ = pointwise 3 (λ s t u → (s ⟨ _+_ ⟩ t) ⟨ _+_ ⟩ u)
+                         (λ s t u →  s ⟨ _+_ ⟩ (t ⟨ _+_ ⟩ u))
                          +-assoc
     where
     open import Data.Nat.Properties

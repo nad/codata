@@ -4,64 +4,57 @@
 
 module BreadthFirst where
 
+open import Coinduction
 open import Data.Function
 open import Data.Unit
 open import Data.List.NonEmpty using (List⁺; [_]; _∷_)
-open import Relation.Binary.PropositionalEquality
-open import Relation.Binary.PropositionalEquality1
+import Relation.Binary.PropositionalEquality as PropEq
 
 open import BreadthFirst.Universe
 open import BreadthFirst.Programs
 open import Tree
 open import Stream using (Stream; _≺_)
 
-module R {A B} (t : Tree A) (ls : Stream B) where
+r : ∀ {k B} {a : U k} (t : Prog (tree a)) (ls : Stream B) →
+    Prog (tree ⌈ B ⌉ ⊗ stream ⌈ Stream B ⌉)
+r t ls = lab t (↓ ⌈ ls ⌉ ≺ snd‿r)
+  where snd‿r ~ ♯₁ snd (r t ls)
 
-  t′ : Prog (tree ⌈ A ⌉)
-  t′ = ⇒P (tree ⌈ A ⌉) t
+label : ∀ {A B} → Tree A → Stream B → Tree B
+label t ls = P⇒ (fst (r (⇒P (tree ⌈ _ ⌉) t) ls))
 
-  r : Prog (tree ⌈ B ⌉ ⊗ stream ⌈ Stream B ⌉)
-  r ~ lab t′ (↓ ⌈ ls ⌉ ≺ snd r)
-
-label : forall {A B} -> Tree A -> Stream B -> Tree B
-label t ls = P⇒ (fst (R.r t ls))
-
-⇒W⇒-lemma : forall {A} (t : Tree A) ->
-            map (const tt) (W⇒ (⇒W (tree ⌈ A ⌉) t)) ≈ map (const tt) t
-⇒W⇒-lemma (tree leaf)         ~ tree leaf
-⇒W⇒-lemma (tree (node l x r)) ~
-  tree (node (⇒W⇒-lemma l) ≡-refl (⇒W⇒-lemma r))
+⇒W⇒-lemma : ∀ {A} (t : Tree A) → W⇒ (⇒W (tree ⌈ A ⌉) t) ≈ t
+⇒W⇒-lemma leaf         = leaf
+⇒W⇒-lemma (node l x r) = node l′ PropEq.refl r′
+  where
+  l′ ~ ♯ ⇒W⇒-lemma (♭ l)
+  r′ ~ ♯ ⇒W⇒-lemma (♭ r)
 
 shape-preserved′
-  : forall {k} {a : U k} {B}
-    (t : Prog (tree a)) (lss : Prog (stream ⌈ Stream B ⌉)) ->
-    map (const tt) (P⇒  (fst (lab t lss))) ≈ map (const tt) (P⇒ t)
+  : ∀ {k} {a : U k} {B}
+    (t : Prog (tree a)) (lss : Prog (stream ⌈ Stream B ⌉)) →
+    map (const tt) (P⇒ (fst (lab t lss))) ≈ map (const tt) (P⇒ t)
 shape-preserved′ t lss with P⇒W t
-shape-preserved′ t lss | leaf       ~ tree leaf
+shape-preserved′ t lss | leaf       = leaf
 shape-preserved′ t lss | node l _ r with P⇒W lss
-shape-preserved′ t lss | node l _ r | ⌈ x ≺ ls ⌉ ≺ lss′ ~
-  tree (node (shape-preserved′ l lss′) ≡-refl (shape-preserved′ r _))
-
--- shape-preserved pattern matches in order to force R.r to evaluate
--- sufficiently.
+shape-preserved′ t lss | node l _ r | ⌈ x ≺ ls ⌉ ≺ lss′ =
+  node l′ PropEq.refl r′
+  where
+  l′ ~ ♯ shape-preserved′ (♭₁ l) (♭₁ lss′)
+  r′ ~ ♯ shape-preserved′ (♭₁ r) _
 
 shape-preserved
-  : forall {A B} (t : Tree A) (ls : Stream B) ->
+  : ∀ {A B} (t : Tree A) (ls : Stream B) →
     map (const tt) (label t ls) ≈ map (const tt) t
-shape-preserved {A} (tree leaf)         ls        = tree leaf
-shape-preserved {A} (tree (node l x r)) (l′ ≺ ls) =
-  tree (destruct≈ (trans
-    (shape-preserved′ (⇒P (tree ⌈ A ⌉) t) (↓ ⌈ lls ⌉ ≺ snd (R.r t lls)))
-    (⇒W⇒-lemma t)))
-  where
-  t   = tree (node l x r)
-  lls = l′ ≺ ls
+shape-preserved t ls =
+  trans (shape-preserved′ (⇒P (tree ⌈ _ ⌉) t) _)
+        (map-cong (const tt) (⇒W⇒-lemma t))
 
-concat : forall {A} -> Prog (colist ⌈ List⁺ A ⌉) -> Prog (colist ⌈ A ⌉)
+concat : ∀ {A} → Prog (colist ⌈ List⁺ A ⌉) → Prog (colist ⌈ A ⌉)
 concat xss with P⇒W xss
-concat xss | []                ~ ↓ []
-concat xss | ⌈ [ x ] ⌉  ∷ xss′ ~ ↓ ⌈ x ⌉ ∷ concat xss′
-concat xss | ⌈ x ∷ xs ⌉ ∷ xss′ ~ ↓ ⌈ x ⌉ ∷ concat (↓ ⌈ xs ⌉ ∷ xss′)
+concat xss | []                = ↓ []
+concat xss | ⌈ [ x ] ⌉  ∷ xss′ = ↓ ⌈ x ⌉ ∷ concat′ where concat′ ~ ♯₁ concat (♭₁ xss′)
+concat xss | ⌈ x ∷ xs ⌉ ∷ xss′ = ↓ ⌈ x ⌉ ∷ concat′ where concat′ ~ ♯₁ concat (↓ ⌈ xs ⌉ ∷ xss′)
 
 -- TODO:
 --
