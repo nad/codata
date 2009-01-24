@@ -1,4 +1,0 @@
-Various developments related to codata and coinduction.
-
-In order to type check/run the code here you need to use recent (at
-the time of writing) versions of Agda and the Agda standard libraries.
