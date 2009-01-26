@@ -10,6 +10,7 @@ open import Relation.Binary
 open import Relation.Binary.Simple
 open import Relation.Binary.PropositionalEquality
 open import Relation.Binary.Product.Pointwise
+open import Coinduction
 
 import Tree
 import Stream
@@ -42,3 +43,13 @@ Eq (stream a) = Stream._≈_
 Eq (colist a) = Colist._≈_
 Eq (a ⊗ b)    = Eq a ×-Rel Eq b
 Eq ⌈ A ⌉      = _≡_
+
+-- Conditional coinduction.
+
+∞? : Kind → Set1 → Set1
+∞? μ = λ A → A
+∞? ν = ∞₁
+
+♭? : ∀ k {A} → ∞? k A → A
+♭? μ x = x
+♭? ν x = ♭₁ x
