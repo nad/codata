@@ -7,7 +7,8 @@ module Stream.Pointwise where
 open import Coinduction hiding (∞)
 open import Stream
 open import Stream.Equality
-open import Stream.Programs hiding (lift)
+import Stream.Programs as Prog
+open Prog hiding (lift; ⟦_⟧)
 open import Data.Nat
 open import Data.Fin using (Fin; zero; suc)
 import Data.Vec  as Vec
@@ -48,8 +49,7 @@ data Pointwise A n : Set where
 
 -- Stream semantics.
 
-⟦_⟧ : ∀ {A n} →
-      Pointwise A n → (Vec₁ (StreamProg A) n → StreamProg A)
+⟦_⟧ : ∀ {A n} → Pointwise A n → (Vec₁ (Prog A) n → Prog A)
 ⟦ var x ⟧         ρ = Vec1.lookup x ρ
 ⟦ x ∞ ⟧           ρ = x ∞
 ⟦ f · xs ⟧        ρ = f · ⟦ xs ⟧ ρ
@@ -88,7 +88,7 @@ private
   -- Lifts a pointwise function to a function on stream programs.
 
   lift : ∀ {A B n} →
-         (Vec A n → B) → Vec₁ (StreamProg A) n → StreamProg B
+         (Vec A n → B) → Vec₁ (Prog A) n → Prog B
   lift f xs = ↓ f (Vec1.map₁₀ headP xs) ≺ lift′
     where lift′ ~ ♯₁ lift f (Vec1.map tailP xs)
 
@@ -103,7 +103,7 @@ private
   -- unfold xs ρ is the one-step unfolding of ⟦ xs ⟧ ρ. Note the
   -- similarity to lift.
 
-  unfold : ∀ {A n} (xs : Pointwise A n) ρ → StreamProg A
+  unfold : ∀ {A n} (xs : Pointwise A n) ρ → Prog A
   unfold xs ρ = ↓ ⟪ xs ⟫ (Vec1.map₁₀ headP ρ) ≺′
                   ⟦ xs ⟧ (Vec1.map   tailP ρ)
 
@@ -114,7 +114,8 @@ private
       ≊⟨ ≊-η (Vec1.lookup x ρ) ⟩
     ↓ headP (Vec1.lookup x ρ) ≺′ tailP (Vec1.lookup x ρ)
       ≊⟨ ↓ lookup-nat headP x ρ ≺
-         ♯₁ ≈⇒≅ (IsEq.reflexive (cong₁₀ P⇒ (lookup-nat' tailP x ρ))) ⟩
+         ♯₁ ≈⇒≅ (IsEq.reflexive
+                   (cong₁₀ Prog.⟦_⟧ (lookup-nat' tailP x ρ))) ⟩
     ↓ Vec.lookup x (Vec1.map₁₀ headP ρ) ≺′
     Vec1.lookup x (Vec1.map tailP ρ)
       ≊⟨ ≅-sym (≊-η (unfold (var x) ρ)) ⟩

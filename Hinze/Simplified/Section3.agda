@@ -36,22 +36,22 @@ open Op (CommutativeSemiring.semiring Nat.commutativeSemiring)
 ------------------------------------------------------------------------
 -- Definitions
 
-pot : StreamProg Bool
+pot : Prog Bool
 pot = ↓ true ≺ pot′
   where pot′ ~ ♯₁ (pot ⋎ false ∞)
 
-msb : StreamProg ℕ
+msb : Prog ℕ
 msb = ↓ 1 ≺ msb′
   where msb′ ~ ♯₁ (2* · msb ⋎ 2* · msb)
 
-ones′ : StreamProg ℕ
+ones′ : Prog ℕ
 ones′ = ↓ 1 ≺ ones″
   where ones″ ~ ♯₁ (ones′ ⋎ 1+ · ones′)
 
-ones : StreamProg ℕ
+ones : Prog ℕ
 ones = ↓ 0 ≺ ♯₁ ones′
 
-carry : StreamProg ℕ
+carry : Prog ℕ
 carry = ↓ 0 ≺ carry′
   where carry′ ~ ♯₁ (1+ · carry ⋎ 0 ∞)
 
@@ -67,18 +67,18 @@ turn : (n : ℕ) → Vec ℕ (turn-length n)
 turn 0      = []
 turn (1+ n) = turn n ++ [ n ] ++ turn n
 
-tree : ℕ → StreamProg ℕ
+tree : ℕ → Prog ℕ
 tree n = ↓ n ≺ tree′
   where tree′ ~ ♯₁ (turn n ≺≺ tree (1+ n))
 
-frac : StreamProg ℕ
+frac : Prog ℕ
 frac = ↓ 0 ≺ frac′
   where frac′ ~ ♯₁ (frac ⋎ 1+ · nat)
 
 frac-folded : frac ≊ nat ⋎ frac
 frac-folded = ≊-η frac
 
-god : StreamProg ℕ
+god : Prog ℕ
 god = 1+2* · frac
 
 ------------------------------------------------------------------------

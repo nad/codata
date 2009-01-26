@@ -6,7 +6,7 @@ module Hinze.Simplified.Section2-4 where
 
 open import Stream.Programs
 open import Stream.Equality
-open import Stream.Pointwise
+open import Stream.Pointwise hiding (⟦_⟧)
 open import Hinze.Lemmas
 
 open import Coinduction hiding (∞)
@@ -35,19 +35,19 @@ open import Data.Product
 ------------------------------------------------------------------------
 -- Definitions
 
-nat : StreamProg ℕ
+nat : Prog ℕ
 nat = ↓ 0 ≺ nat′
   where nat′ ~ ♯₁ (1+ · nat)
 
-fac : StreamProg ℕ
+fac : Prog ℕ
 fac = ↓ 1 ≺ fac′
   where fac′ ~ ♯₁ (1+ · nat ⟨ _*_ ⟩ fac)
 
-fib : StreamProg ℕ
+fib : Prog ℕ
 fib = ↓ 0 ≺ fib′
   where fib′ ~ ♯₁ (fib ⟨ _+_ ⟩ (↓ 1 ≺ ♯₁ fib))
 
-bin : StreamProg ℕ
+bin : Prog ℕ
 bin = ↓ 0 ≺ bin′
   where bin′ ~ ♯₁ (1+2* · bin ⋎ 2+2* · bin)
 
@@ -137,7 +137,7 @@ iterate-fusion h f₁ f₂ hyp x =
   ↓ h x ≺′ h · iterate f₁ (f₁ x)
                                   ≊⟨ ↓ refl ≺ coih ⟩
   ↓ h x ≺′ iterate f₂ (h (f₁ x))
-                                  ≡⟨ cong (λ y → P⇒ (↓ h x ≺′ iterate f₂ y)) (hyp x) ⟩
+                                  ≡⟨ cong (λ y → ⟦ ↓ h x ≺′ iterate f₂ y ⟧) (hyp x) ⟩
   ↓ h x ≺′ iterate f₂ (f₂ (h x))
                                   ≡⟨ refl ⟩
   iterate f₂ (h x)

@@ -21,64 +21,59 @@ infix  4 ↓_
 
 mutual
 
-  data Stream′ A : Set1 where
-    _≺_ : (x : A) (xs : ∞₁ (StreamProg A)) → Stream′ A
+  data WHNF A : Set1 where
+    _≺_ : (x : A) (xs : ∞₁ (Prog A)) → WHNF A
 
-  data StreamProg (A : Set) : Set1 where
-    ↓_      : (xs : Stream′ A) → StreamProg A
-    _∞      : (x : A) → StreamProg A
-    _·_     : ∀ {B}
-              (f : B → A) (xs : StreamProg B) → StreamProg A
-    _⟨_⟩_   : ∀ {B C}
-              (xs : StreamProg B)
-              (_∙_ : B → C → A)
-              (ys : StreamProg C) →
-              StreamProg A
-    _⋎_     : (xs ys : StreamProg A) → StreamProg A
-    iterate : (f : A → A) (x : A) → StreamProg A
-    _≺≺_    : ∀ {n} (xs : Vec A n) (ys : StreamProg A) →
-              StreamProg A
+  data Prog (A : Set) : Set1 where
+    ↓_      : (xs : WHNF A) → Prog A
+    _∞      : (x : A) → Prog A
+    _·_     : ∀ {B} (f : B → A) (xs : Prog B) → Prog A
+    _⟨_⟩_   : ∀ {B C} (xs : Prog B) (_∙_ : B → C → A) (ys : Prog C) →
+              Prog A
+    _⋎_     : (xs ys : Prog A) → Prog A
+    iterate : (f : A → A) (x : A) → Prog A
+    _≺≺_    : ∀ {n} (xs : Vec A n) (ys : Prog A) → Prog A
 
-_≺′_ : ∀ {A} → A → StreamProg A → Stream′ A
+_≺′_ : ∀ {A} → A → Prog A → WHNF A
 x ≺′ xs = x ≺ ♯₁ xs
 
 ------------------------------------------------------------------------
 -- Conversion
 
-P⇒′ : ∀ {A} → StreamProg A → Stream′ A
-P⇒′ (↓ xs)           = xs
-P⇒′ (x ∞)            = x ≺′ x ∞
-P⇒′ (f · xs)         with P⇒′ xs
-P⇒′ (f · xs)         | x ≺ xs′ = f x ≺′ f · ♭₁ xs′
-P⇒′ (xs ⟨ _∙_ ⟩ ys)  with P⇒′ xs | P⇒′ ys
-P⇒′ (xs ⟨ _∙_ ⟩ ys)  | x ≺ xs′ | y ≺ ys′ = (x ∙ y) ≺′ ♭₁ xs′ ⟨ _∙_ ⟩ ♭₁ ys′
-P⇒′ (xs ⋎ ys)        with P⇒′ xs
-P⇒′ (xs ⋎ ys)        | x ≺ xs′ = x ≺′ ys ⋎ ♭₁ xs′
-P⇒′ (iterate f x)    = x ≺′ iterate f (f x)
-P⇒′ ([]       ≺≺ ys) = P⇒′ ys
-P⇒′ ((x ∷ xs) ≺≺ ys) = x ≺′ xs ≺≺ ys
+whnf : ∀ {A} → Prog A → WHNF A
+whnf (↓ xs)           = xs
+whnf (x ∞)            = x ≺′ x ∞
+whnf (f · xs)         with whnf xs
+whnf (f · xs)         | x ≺ xs′ = f x ≺′ f · ♭₁ xs′
+whnf (xs ⟨ _∙_ ⟩ ys)  with whnf xs | whnf ys
+whnf (xs ⟨ _∙_ ⟩ ys)  | x ≺ xs′ | y ≺ ys′ = (x ∙ y) ≺′ ♭₁ xs′ ⟨ _∙_ ⟩ ♭₁ ys′
+whnf (xs ⋎ ys)        with whnf xs
+whnf (xs ⋎ ys)        | x ≺ xs′ = x ≺′ ys ⋎ ♭₁ xs′
+whnf (iterate f x)    = x ≺′ iterate f (f x)
+whnf ([]       ≺≺ ys) = whnf ys
+whnf ((x ∷ xs) ≺≺ ys) = x ≺′ xs ≺≺ ys
 
 mutual
 
-  ′⇒ : ∀ {A} → Stream′ A → Stream A
-  ′⇒ (x ≺ xs) = x ≺ ′⇒′ where ′⇒′ ~ ♯ P⇒ (♭₁ xs)
+  value : ∀ {A} → WHNF A → Stream A
+  value (x ≺ xs) = x ≺ value′ where value′ ~ ♯ ⟦ ♭₁ xs ⟧
 
-  P⇒ : ∀ {A} → StreamProg A → Stream A
-  P⇒ xs = ′⇒ (P⇒′ xs)
+  ⟦_⟧ : ∀ {A} → Prog A → Stream A
+  ⟦ xs ⟧ = value (whnf xs)
 
-⇒P : ∀ {A} → Stream A → StreamProg A
-⇒P (x ≺ xs) = ↓ x ≺ ⇒P′ where ⇒P′ ~ ♯₁ ⇒P (♭ xs)
+fromStream : ∀ {A} → Stream A → Prog A
+fromStream (x ≺ xs) = ↓ x ≺ fromStream′
+  where fromStream′ ~ ♯₁ fromStream (♭ xs)
 
-lift : ∀ {A} →
-       (StreamProg A → StreamProg A) → Stream A → Stream A
-lift f xs = P⇒ (f (⇒P xs))
+lift : ∀ {A} → (Prog A → Prog A) → Stream A → Stream A
+lift f xs = ⟦ f (fromStream xs) ⟧
 
 ------------------------------------------------------------------------
 -- Some abbreviations
 
-headP : ∀ {A} → StreamProg A → A
-headP xs = head (P⇒ xs)
+headP : ∀ {A} → Prog A → A
+headP xs = head ⟦ xs ⟧
 
-tailP : ∀ {A} → StreamProg A → StreamProg A
-tailP xs with P⇒′ xs
+tailP : ∀ {A} → Prog A → Prog A
+tailP xs with whnf xs
 tailP xs | x ≺ xs′ = ♭₁ xs′
