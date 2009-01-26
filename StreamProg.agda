@@ -20,60 +20,47 @@ data Ord : Set where
   gt : Ord
 
 infixr 5 _≺_
-infix  4 ↓_
+
+data Prog (A : Set) : Set1 where
+  _≺_     : (x : A) (xs : ∞₁ (Prog A)) → Prog A
+  zipWith : ∀ {B C} (f : B → C → A)
+            (xs : Prog B) (ys : Prog C) → Prog A
+  map     : ∀ {B} (f : B → A) (xs : Prog B) → Prog A
+  merge   : (cmp : A → A → Ord)
+            (xs : Prog A) (ys : Prog A) → Prog A
+
+data WHNF A : Set1 where
+  _≺_ : (x : A) (xs : Prog A) → WHNF A
+
+whnf : ∀ {A} → Prog A → WHNF A
+whnf (x ≺ xs)          = x ≺ ♭₁ xs
+whnf (zipWith f xs ys) with whnf xs | whnf ys
+whnf (zipWith f xs ys) | x ≺ xs′ | y ≺ ys′ = f x y ≺ zipWith f xs′ ys′
+whnf (map f xs)        with whnf xs
+whnf (map f xs)        | x ≺ xs′ = f x ≺ map f xs′
+whnf (merge cmp xs ys) with whnf xs | whnf ys
+whnf (merge cmp xs ys) | x ≺ xs′ | y ≺ ys′ with cmp x y
+whnf (merge cmp xs ys) | x ≺ xs′ | y ≺ ys′ | lt = x ≺ merge cmp xs′ ys
+whnf (merge cmp xs ys) | x ≺ xs′ | y ≺ ys′ | eq = x ≺ merge cmp xs′ ys′
+whnf (merge cmp xs ys) | x ≺ xs′ | y ≺ ys′ | gt = y ≺ merge cmp xs  ys′
 
 mutual
 
-  data Stream′ A : Set1 where
-    _≺_ : (x : A) (xs : ∞₁ (StreamProg A)) → Stream′ A
+  value : ∀ {A} → WHNF A → Stream A
+  value (x ≺ xs) = x ≺ value′ where value′ ~ ♯ ⟦ xs ⟧
 
-  data StreamProg (A : Set) : Set1 where
-    ↓_      : (xs : Stream′ A) → StreamProg A
-    zipWith : ∀ {B C} (f : B → C → A)
-              (xs : StreamProg B) (ys : StreamProg C) → StreamProg A
-    map     : ∀ {B} (f : B → A) (xs : StreamProg B) → StreamProg A
-    merge   : (cmp : A → A → Ord)
-              (xs : StreamProg A) (ys : StreamProg A) → StreamProg A
-
-P⇒′ : ∀ {A} → StreamProg A → Stream′ A
-P⇒′ (↓ xs)            = xs
-P⇒′ (zipWith f xs ys) with P⇒′ xs | P⇒′ ys
-P⇒′ (zipWith f xs ys) | x ≺ xs′ | y ≺ ys′ = f x y ≺ ♯₁ zipWith f (♭₁ xs′) (♭₁ ys′)
-P⇒′ (map f xs)        with P⇒′ xs
-P⇒′ (map f xs)        | x ≺ xs′ = f x ≺ ♯₁ map f (♭₁ xs′)
-P⇒′ (merge cmp xs ys) with P⇒′ xs | P⇒′ ys
-P⇒′ (merge cmp xs ys) | x ≺ xs′ | y ≺ ys′ with cmp x y
-P⇒′ (merge cmp xs ys) | x ≺ xs′ | y ≺ ys′ | lt = x ≺ ♯₁ merge cmp (♭₁ xs′)     ys
-P⇒′ (merge cmp xs ys) | x ≺ xs′ | y ≺ ys′ | eq = x ≺ ♯₁ merge cmp (♭₁ xs′) (♭₁ ys′)
-P⇒′ (merge cmp xs ys) | x ≺ xs′ | y ≺ ys′ | gt = y ≺ ♯₁ merge cmp     xs   (♭₁ ys′)
-
-mutual
-
-  ′⇒ : ∀ {A} → Stream′ A → Stream A
-  ′⇒ (x ≺ xs) = x ≺ ′⇒′ where ′⇒′ ~ ♯ P⇒ (♭₁ xs)
-
-  P⇒ : ∀ {A} → StreamProg A → Stream A
-  P⇒ xs = ′⇒ (P⇒′ xs)
-
-------------------------------------------------------------------------
--- Lifting of stream program transformers into functions on streams
-
-⇒P : ∀ {A} → Stream A → StreamProg A
-⇒P (x ≺ xs) = ↓ x ≺ ⇒P′ where ⇒P′ ~ ♯₁ ⇒P (♭ xs)
-
-lift : ∀ {A B} →
-       (StreamProg A → StreamProg B) → Stream A → Stream B
-lift f xs = P⇒ (f (⇒P xs))
+  ⟦_⟧ : ∀ {A} → Prog A → Stream A
+  ⟦ xs ⟧ = value (whnf xs)
 
 ------------------------------------------------------------------------
 -- Examples
 
-fib : StreamProg ℕ
-fib = ↓ 0 ≺ fib′
-  where fib′ ~ ♯₁ zipWith _+_ fib (↓ 1 ≺ ♯₁ fib)
+fib : Prog ℕ
+fib = 0 ≺ fib′
+  where fib′ ~ ♯₁ zipWith _+_ fib (1 ≺ ♯₁ fib)
 
-hamming : StreamProg ℕ
-hamming = ↓ 1 ≺ hamming′
+hamming : Prog ℕ
+hamming = 1 ≺ hamming′
   where
   hamming′ ~ ♯₁ merge cmp (map (_*_ 2) hamming) (map (_*_ 3) hamming)
     where
@@ -85,4 +72,4 @@ hamming = ↓ 1 ≺ hamming′
     cmp : ℕ → ℕ → Ord
     cmp m n = toOrd (compare m n)
 
-main = S.putStream (S._⋎_ (P⇒ fib) (P⇒ hamming))
+main = S.putStream (S._⋎_ ⟦ fib ⟧ ⟦ hamming ⟧)
