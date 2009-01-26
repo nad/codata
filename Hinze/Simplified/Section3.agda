@@ -37,22 +37,22 @@ open Op (CommutativeSemiring.semiring Nat.commutativeSemiring)
 -- Definitions
 
 pot : Prog Bool
-pot = ↓ true ≺ pot′
+pot = true ≺ pot′
   where pot′ ~ ♯₁ (pot ⋎ false ∞)
 
 msb : Prog ℕ
-msb = ↓ 1 ≺ msb′
+msb = 1 ≺ msb′
   where msb′ ~ ♯₁ (2* · msb ⋎ 2* · msb)
 
 ones′ : Prog ℕ
-ones′ = ↓ 1 ≺ ones″
+ones′ = 1 ≺ ones″
   where ones″ ~ ♯₁ (ones′ ⋎ 1+ · ones′)
 
 ones : Prog ℕ
-ones = ↓ 0 ≺ ♯₁ ones′
+ones = 0 ≺♯ ones′
 
 carry : Prog ℕ
-carry = ↓ 0 ≺ carry′
+carry = 0 ≺ carry′
   where carry′ ~ ♯₁ (1+ · carry ⋎ 0 ∞)
 
 carry-folded : carry ≊ 0 ∞ ⋎ 1+ · carry
@@ -68,11 +68,11 @@ turn 0      = []
 turn (1+ n) = turn n ++ [ n ] ++ turn n
 
 tree : ℕ → Prog ℕ
-tree n = ↓ n ≺ tree′
+tree n = n ≺ tree′
   where tree′ ~ ♯₁ (turn n ≺≺ tree (1+ n))
 
 frac : Prog ℕ
-frac = ↓ 0 ≺ frac′
+frac = 0 ≺ frac′
   where frac′ ~ ♯₁ (frac ⋎ 1+ · nat)
 
 frac-folded : frac ≊ nat ⋎ frac
@@ -106,7 +106,7 @@ carry-god-nat =
            1+2* · nat
                ⋎
   2* · (2^ · carry ⟨ _*_ ⟩ god)
-                                 ≊⟨ ↓ refl ≺ coih ⟩
+                                 ≊⟨ refl ≺ coih ⟩
   1+2* · nat ⋎ 2* · tailP nat
                                  ≊⟨ ≅-sym (tailP-cong nat (2* · nat ⋎ 1+2* · nat) nat-lemma₂) ⟩
   tailP nat

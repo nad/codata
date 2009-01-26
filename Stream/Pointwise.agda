@@ -89,7 +89,7 @@ private
 
   lift : ∀ {A B n} →
          (Vec A n → B) → Vec₁ (Prog A) n → Prog B
-  lift f xs = ↓ f (Vec1.map₁₀ headP xs) ≺ lift′
+  lift f xs = f (Vec1.map₁₀ headP xs) ≺ lift′
     where lift′ ~ ♯₁ lift f (Vec1.map tailP xs)
 
   -- lift is a congruence in its first argument.
@@ -97,26 +97,26 @@ private
   lift-cong : ∀ {A B n} {f g : Vec A n → B} →
               (∀ ρ → f ρ ≡ g ρ) →
               ∀ ρ → lift f ρ ≊ lift g ρ
-  lift-cong hyp ρ = ↓ hyp (Vec1.map₁₀ headP ρ) ≺ lift-cong′
+  lift-cong hyp ρ = hyp (Vec1.map₁₀ headP ρ) ≺ lift-cong′
     where lift-cong′ ~ ♯₁ lift-cong hyp (Vec1.map tailP ρ)
 
   -- unfold xs ρ is the one-step unfolding of ⟦ xs ⟧ ρ. Note the
   -- similarity to lift.
 
   unfold : ∀ {A n} (xs : Pointwise A n) ρ → Prog A
-  unfold xs ρ = ↓ ⟪ xs ⟫ (Vec1.map₁₀ headP ρ) ≺′
-                  ⟦ xs ⟧ (Vec1.map   tailP ρ)
+  unfold xs ρ = ⟪ xs ⟫ (Vec1.map₁₀ headP ρ) ≺♯
+                ⟦ xs ⟧ (Vec1.map   tailP ρ)
 
   unfold-lemma : ∀ {A n} (xs : Pointwise A n) ρ →
                  ⟦ xs ⟧ ρ ≊ unfold xs ρ
   unfold-lemma (var x) ρ =
     Vec1.lookup x ρ
       ≊⟨ ≊-η (Vec1.lookup x ρ) ⟩
-    ↓ headP (Vec1.lookup x ρ) ≺′ tailP (Vec1.lookup x ρ)
-      ≊⟨ ↓ lookup-nat headP x ρ ≺
+    headP (Vec1.lookup x ρ) ≺♯ tailP (Vec1.lookup x ρ)
+      ≊⟨ lookup-nat headP x ρ ≺
          ♯₁ ≈⇒≅ (IsEq.reflexive
                    (cong₁₀ Prog.⟦_⟧ (lookup-nat' tailP x ρ))) ⟩
-    ↓ Vec.lookup x (Vec1.map₁₀ headP ρ) ≺′
+    Vec.lookup x (Vec1.map₁₀ headP ρ) ≺♯
     Vec1.lookup x (Vec1.map tailP ρ)
       ≊⟨ ≅-sym (≊-η (unfold (var x) ρ)) ⟩
     unfold (var x) ρ
@@ -143,8 +143,8 @@ private
       ≊⟨ unfold-lemma xs ρ ⟩
     unfold xs ρ
       ≊⟨ ≊-η (unfold xs ρ) ⟩
-    ↓ ⟪ xs ⟫ (Vec1.map₁₀ headP ρ) ≺′ ⟦ xs ⟧ (Vec1.map tailP ρ)
-      ≊⟨ ↓ refl ≺ coih ⟩
+    ⟪ xs ⟫ (Vec1.map₁₀ headP ρ) ≺♯ ⟦ xs ⟧ (Vec1.map tailP ρ)
+      ≊⟨ refl ≺ coih ⟩
     lift ⟪ xs ⟫ ρ
       ∎
     where coih ~ ♯₁ main-lemma xs (Vec1.map tailP ρ)

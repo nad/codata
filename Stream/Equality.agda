@@ -12,7 +12,6 @@ open import Relation.Binary.PropositionalEquality
 open import Data.Vec using (Vec; []; _∷_)
 
 infixr 5 _≺_
-infix  4 ↓_
 infix  3 _≃_ _≅_ _≊_ _∎
 infixr 2 _≊⟨_⟩_ _≡⟨_⟩_
 
@@ -21,12 +20,10 @@ mutual
   _≊_ : ∀ {A} (xs ys : Prog A) → Set1
   xs ≊ ys = ⟦ xs ⟧ ≅ ⟦ ys ⟧
 
-  data _≃_ {A} : (xs ys : Stream A) → Set1 where
-    _≺_ : ∀ {x y xs ys}
-          (x≡ : x ≡ y) (xs≈ : ∞₁ (♭ xs ≅ ♭ ys)) → x ≺ xs ≃ y ≺ ys
-
   data _≅_ {A} : (xs ys : Stream A) → Set1 where
-    ↓_           : ∀ {xs ys} (xs≈ : xs ≃ ys) → xs ≅ ys
+    _≺_          : ∀ {x y xs ys}
+                   (x≡ : x ≡ y) (xs≈ : ∞₁ (♭ xs ≅ ♭ ys)) →
+                   x ≺ xs ≅ y ≺ ys
     _≊⟨_⟩_       : ∀ xs {ys zs}
                    (xs≈ys : ⟦ xs ⟧ ≅ ys) (ys≈zs : ys ≅ zs) → ⟦ xs ⟧ ≅ zs
     _≡⟨_⟩_       : ∀ xs {ys zs}
@@ -47,40 +44,44 @@ mutual
                    ys ys′ (ys≈ys′ : ys ≊ ys′) →
                    xs ≺≺ ys ≊ xs′ ≺≺ ys′
 
+data _≃_ {A} : (xs ys : Stream A) → Set1 where
+  _≺_ : ∀ {x y xs ys}
+        (x≡ : x ≡ y) (xs≈ : ♭ xs ≅ ♭ ys) → x ≺ xs ≃ y ≺ ys
+
 ≅⇒≃ : ∀ {A} {xs ys : Stream A} → xs ≅ ys → xs ≃ ys
-≅⇒≃ (↓ xs≈)                    = xs≈
+≅⇒≃ (x≡ ≺ xs≈)                 = x≡ ≺ ♭₁ xs≈
 ≅⇒≃ (xs ≊⟨ xs≈ys ⟩ ys≈zs)      with whnf xs | ≅⇒≃ xs≈ys | ≅⇒≃ ys≈zs
 ≅⇒≃ (xs ≊⟨ xs≈ys ⟩ ys≈zs)      | x ≺ xs′ | x≡y ≺ xs≈ys′ | y≡z ≺ ys≈zs′ =
-                                 trans x≡y y≡z ≺ ♯₁ (♭₁ xs′ ≊⟨ ♭₁ xs≈ys′ ⟩ ♭₁ ys≈zs′)
+                                 trans x≡y y≡z ≺ (xs′ ≊⟨ xs≈ys′ ⟩ ys≈zs′)
 ≅⇒≃ (xs ≡⟨ refl ⟩ ys≈zs)       = ≅⇒≃ ys≈zs
 ≅⇒≃ (≅-sym xs≈ys)              with ≅⇒≃ xs≈ys
-≅⇒≃ (≅-sym xs≈ys)              | x≡y ≺ xs≈ys′ = sym x≡y ≺ ♯₁ ≅-sym (♭₁ xs≈ys′)
+≅⇒≃ (≅-sym xs≈ys)              | x≡y ≺ xs≈ys′ = sym x≡y ≺ ≅-sym xs≈ys′
 ≅⇒≃ (·-cong f xs ys xs≈ys)     with whnf xs | whnf ys | ≅⇒≃ xs≈ys
 ≅⇒≃ (·-cong f xs ys xs≈ys)     | x ≺ xs′ | y ≺ ys′ | x≡y ≺ xs≈ys′ =
-                                 cong f x≡y ≺ ♯₁ ·-cong f (♭₁ xs′) (♭₁ ys′) (♭₁ xs≈ys′)
+                                 cong f x≡y ≺ ·-cong f xs′ ys′ xs≈ys′
 ≅⇒≃ (⟨ ∙ ⟩-cong xs xs′ xs≈xs′
                 ys ys′ ys≈ys′) with whnf xs | whnf xs′ | ≅⇒≃ xs≈xs′
                                   | whnf ys | whnf ys′ | ≅⇒≃ ys≈ys′
 ≅⇒≃ (⟨ ∙ ⟩-cong xs xs′ xs≈xs′
-                ys ys′ ys≈ys′) | _ ≺ _   | _ ≺ _   | x≡y  ≺ xs≈ys
-                               | _ ≺ xs″ | _ ≺ ys″ | x≡y′ ≺ xs≈ys′ =
+                ys ys′ ys≈ys′) | _ ≺ _ | _ ≺ _ | x≡y  ≺ xs≈ys
+                               | _ ≺ _ | _ ≺ _ | x≡y′ ≺ xs≈ys′ =
                                  cong₂ ∙ x≡y x≡y′ ≺
-                                 ♯₁ ⟨ ∙ ⟩-cong _ _ (♭₁ xs≈ys) (♭₁ xs″) (♭₁ ys″) (♭₁ xs≈ys′)
+                                 ⟨ ∙ ⟩-cong _ _ xs≈ys _ _ xs≈ys′
 ≅⇒≃ (⋎-cong xs xs′ xs≈xs′
             ys ys′ ys≈ys′)     with whnf xs | whnf xs′ | ≅⇒≃ xs≈xs′
 ≅⇒≃ (⋎-cong xs xs′ xs≈xs′
             ys ys′ ys≈ys′)     | _ ≺ _ | _ ≺ _ | x≡y ≺ txs≈txs′ =
-                                 x≡y ≺ ♯₁ ⋎-cong ys ys′ ys≈ys′ _ _ (♭₁ txs≈txs′)
+                                 x≡y ≺ ⋎-cong _ _ ys≈ys′ _ _ txs≈txs′
 ≅⇒≃ (≺≺-cong [] [] refl
              ys ys′ ys≈ys′)    = ≅⇒≃ ys≈ys′
 ≅⇒≃ (≺≺-cong
       (x ∷ xs) .(_ ∷ _) refl
-      ys ys′ ys≈ys′)           = refl ≺ ♯₁ ≺≺-cong xs xs refl ys ys′ ys≈ys′
+      ys ys′ ys≈ys′)           = refl ≺ ≺≺-cong xs xs refl ys ys′ ys≈ys′
 
 mutual
 
   ≃⇒≈ : ∀ {A} {xs ys : Stream A} → xs ≃ ys → xs ≈ ys
-  ≃⇒≈ (refl ≺ xs≈) = _ ≺ ≃⇒≈′ where ≃⇒≈′ ~ ♯ ≅⇒≈ (♭₁ xs≈)
+  ≃⇒≈ (refl ≺ xs≈) = _ ≺ ≃⇒≈′ where ≃⇒≈′ ~ ♯ ≅⇒≈ xs≈
 
   ≅⇒≈ : ∀ {A} {xs ys : Stream A} → xs ≅ ys → xs ≈ ys
   ≅⇒≈ xs≈ = ≃⇒≈ (≅⇒≃ xs≈)
@@ -89,11 +90,11 @@ mutual
 ≊⇒≈ = ≅⇒≈
 
 ≈⇒≅ : ∀ {A} {xs ys : Stream A} → xs ≈ ys → xs ≅ ys
-≈⇒≅ (x ≺ xs≈) = ↓ refl ≺ ≈⇒≅′ where ≈⇒≅′ ~ ♯₁ ≈⇒≅ (♭ xs≈)
+≈⇒≅ (x ≺ xs≈) = refl ≺ ≈⇒≅′ where ≈⇒≅′ ~ ♯₁ ≈⇒≅ (♭ xs≈)
 
 _∎ : ∀ {A} (xs : Prog A) → xs ≊ xs
 xs ∎ = ≈⇒≅ (Setoid.refl (Stream.setoid _))
 
-≊-η : ∀ {A} (xs : Prog A) → xs ≊ ↓ headP xs ≺′ tailP xs
+≊-η : ∀ {A} (xs : Prog A) → xs ≊ headP xs ≺ ♯₁ tailP xs
 ≊-η xs with whnf xs
-≊-η xs | x ≺ xs′ = ↓ refl ≺ ♯₁ (♭₁ xs′ ∎)
+≊-η xs | x ≺ xs′ = refl ≺ ♯₁ (xs′ ∎)
