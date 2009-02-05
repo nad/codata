@@ -4,18 +4,19 @@
 
 module BreadthFirst.Universe where
 
-open import Data.Product
-open import Data.Colist as Colist
-open import Relation.Binary
-open import Relation.Binary.Simple
-open import Relation.Binary.PropositionalEquality
-open import Relation.Binary.Product.Pointwise
+open import Data.Product using (_×_; _,_)
+open import Data.Colist  using (Colist; []; _∷_)
+open import Relation.Binary.PropositionalEquality using (_≡_)
 open import Coinduction
 
-import Tree
-import Stream
+open import Tree   using (Tree; node; leaf)
+open import Stream using (Stream; _≺_)
 
+infixr 5 _≺_ _∷_
+infixr 4 _,_
 infixr 2 _⊗_
+
+-- Universe.
 
 data Kind : Set where
   μ : Kind -- Codata.
@@ -35,14 +36,36 @@ El (colist a) = Colist (El a)
 El (a ⊗ b)    = El a × El b
 El ⌈ A ⌉      = A
 
--- This equality relation could be improved.
+-- Equality.
 
-Eq : ∀ {k} (a : U k) → Rel (El a)
-Eq (tree a)   = Tree._≈_
-Eq (stream a) = Stream._≈_
-Eq (colist a) = Colist._≈_
-Eq (a ⊗ b)    = Eq a ×-Rel Eq b
-Eq ⌈ A ⌉      = _≡_
+data Eq : ∀ {k} (a : U k) → El a → El a → Set1 where
+  leaf : ∀ {k} {a : U k} → Eq (tree a) leaf leaf
+  node : ∀ {k} {a : U k} {x x′ l l′ r r′}
+         (l≈l′ : ∞₁ (Eq (tree a) (♭ l) (♭ l′)))
+         (x≈x′ :     Eq a        x     x′     )
+         (r≈r′ : ∞₁ (Eq (tree a) (♭ r) (♭ r′))) →
+         Eq (tree a) (node l x r) (node l′ x′ r′)
+  _≺_  : ∀ {k} {a : U k} {x x′ xs xs′}
+         (x≈x′   :     Eq a              x      x′  )
+         (xs≈xs′ : ∞₁ (Eq (stream a) (♭ xs) (♭ xs′))) →
+         Eq (stream a) (x ≺ xs) (x′ ≺ xs′)
+  []   : ∀ {k} {a : U k} → Eq (colist a) [] []
+  _∷_  : ∀ {k} {a : U k} {x x′ xs xs′}
+         (x≈x′   :     Eq a              x      x′  )
+         (xs≈xs′ : ∞₁ (Eq (colist a) (♭ xs) (♭ xs′))) →
+         Eq (colist a) (x ∷ xs) (x′ ∷ xs′)
+  _,_  : ∀ {k₁ k₂} {a : U k₁} {b : U k₂} {x x′ y y′}
+         (x≈x′ : Eq a x x′) (y≈y′ : Eq b y y′) →
+         Eq (a ⊗ b) (x , y) (x′ , y′)
+  ⌈_⌉  : ∀ {A} {x x′} (x≡x′ : x ≡ x′) → Eq ⌈ A ⌉ x x′
+
+-- PrefixOf a xs ys is inhabited iff xs is a prefix of ys.
+
+data PrefixOf {k} (a : U k) : Colist (El a) → Stream (El a) → Set1 where
+  []  : ∀ {ys} → PrefixOf a [] ys
+  _∷_ : ∀ {x y xs ys}
+        (x≈y : Eq a x y) (p : ∞₁ (PrefixOf a (♭ xs) (♭ ys))) →
+        PrefixOf a (x ∷ xs) (y ≺ ys)
 
 -- Conditional coinduction.
 

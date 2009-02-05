@@ -6,15 +6,16 @@
 module BreadthFirst.Programs where
 
 open import Coinduction
-open import Data.List.NonEmpty
-open import Data.Colist hiding ([_]; _++_)
+open import Data.List.NonEmpty using (List⁺; [_])
+                               renaming (_++_ to _++⁺_)
+open import Data.Colist hiding ([_])
 open import Data.Product
 
 open import BreadthFirst.Universe
 open import Tree
-open import Stream hiding (_++_)
+open import Stream hiding (zipWith)
 
-infixr 5 _∷_ _≺_ _⊕⊕_
+infixr 5 _∷_ _≺_
 infixr 4 _,_
 infix  3 ↓_
 
@@ -43,20 +44,18 @@ mutual
 
   data Prog : ∀ {k} → U k → Set1 where
     ↓_          : ∀ {k} {a : U k} (w : ∞? k (WHNF a)) → Prog a
-    lab         : ∀ {k} {a : U k} {B}
-                  (t : Prog (tree a)) (lss : Prog (stream ⌈ Stream B ⌉)) →
-                  Prog (tree ⌈ B ⌉ ⊗ stream ⌈ Stream B ⌉)
     fst         : ∀ {k₁ k₂} {a : U k₁} {b : U k₂}
                   (p : Prog (a ⊗ b)) → Prog a
     snd         : ∀ {k₁ k₂} {a : U k₁} {b : U k₂}
                   (p : Prog (a ⊗ b)) → Prog b
+    lab         : ∀ {k} {a : U k} {B}
+                  (t : Prog (tree a)) (lss : Prog (stream ⌈ Stream B ⌉)) →
+                  Prog (tree ⌈ B ⌉ ⊗ stream ⌈ Stream B ⌉)
     longZipWith : ∀ {A}
                   (f : A → A → A) (xs ys : Prog (colist ⌈ A ⌉)) →
                   Prog (colist ⌈ A ⌉)
     flatten     : ∀ {A}
                   (t : Prog (tree ⌈ A ⌉)) → Prog (colist ⌈ List⁺ A ⌉)
-    _⊕⊕_        : ∀ {k} {a : U k}
-                  (xs ys : Prog (colist a)) → Prog (colist a)
 
 infixl 9 _·_ _⊛_
 
@@ -84,8 +83,6 @@ mutual
     ⟦_∣_⟧⁻¹ν : (a : U ν) → El a → Prog a
     ⟦ a ∣ x ⟧⁻¹ν = ↓ ⟦∣⟧⁻¹ν′ where ⟦∣⟧⁻¹ν′ ~ ♯₁ reify a x
 
--- Note: I have not proved that this is an inverse of ⟦_⟧.
-
 ⟦_∣_⟧⁻¹ : ∀ {k} (a : U k) → El a → Prog a
 ⟦_∣_⟧⁻¹ {μ} = λ a x → ↓ (reify a x)
 ⟦_∣_⟧⁻¹ {ν} = ⟦_∣_⟧⁻¹ν
@@ -93,18 +90,12 @@ mutual
 whnf : ∀ {k} {a : U k} → Prog a → WHNF a
 whnf (↓_ {k} w) = ♭? k w
 
-whnf (longZipWith f xs ys) with whnf xs | whnf ys
-... | x ∷ xs′ | y ∷ ys′ = f · x ⊛ y ∷ longZipWith f xs′ ys′
-... | xs′     | []      = xs′
-... | []      | ys′     = ys′
+-- Note: Sharing is lost here.
+whnf (fst p) with whnf p
+... | (x , y) = x
 
-whnf (flatten t) with whnf t
-... | leaf       = []
-... | node l x r = [_] · x ∷ longZipWith _++_ (flatten l) (flatten r)
-
-whnf (xs ⊕⊕ ys) with whnf xs
-... | []      = whnf ys
-... | x ∷ xs′ = x ∷ xs′ ⊕⊕ ys
+whnf (snd p) with whnf p
+... | (x , y) = y
 
 -- Uses the n-th stream to label the n-th level in the tree. Returns
 -- the remaining stream elements (for every level).
@@ -117,11 +108,14 @@ whnf (lab t lss) with whnf t
   l′,lss″ = lab l lss′
   r′,lss‴ = lab r (snd l′,lss″)
 
--- Note: Sharing is lost here.
-whnf (fst p) with whnf p
-... | (x , y) = x
-whnf (snd p) with whnf p
-... | (x , y) = y
+whnf (longZipWith f xs ys) with whnf xs | whnf ys
+... | x ∷ xs′ | y ∷ ys′ = f · x ⊛ y ∷ longZipWith f xs′ ys′
+... | xs′     | []      = xs′
+... | []      | ys′     = ys′
+
+whnf (flatten t) with whnf t
+... | leaf       = []
+... | node l x r = [_] · x ∷ longZipWith _++⁺_ (flatten l) (flatten r)
 
 mutual
 
@@ -131,10 +125,14 @@ mutual
                              where l′ ~ ♯ ⟦ l ⟧
                                    r′ ~ ♯ ⟦ r ⟧
   reflect {ν} []           = []
-  reflect {ν} (x ∷ xs)     = reflect x ∷ xs′ where xs′ ~ ♯ ⟦ xs ⟧
-  reflect {ν} (x ≺ xs)     = reflect x ≺ xs′ where xs′ ~ ♯ ⟦ xs ⟧
+  reflect {ν} (x ∷ xs)     = reflect x ∷ reflect′ where reflect′ ~ ♯ ⟦ xs ⟧
+  reflect {ν} (x ≺ xs)     = reflect x ≺ reflect′ where reflect′ ~ ♯ ⟦ xs ⟧
   reflect {μ} (x , y)      = (reflect x , reflect y)
   reflect {μ} ⌈ x ⌉        = x
 
   ⟦_⟧ : ∀ {k} {a : U k} → Prog a → El a
   ⟦ p ⟧ = reflect (whnf p)
+
+lift : ∀ {k₁ k₂} {a : U k₁} {b : U k₂} →
+       (Prog a → Prog b) → El a → El b
+lift f x = ⟦ f ⟦ _ ∣ x ⟧⁻¹ ⟧
