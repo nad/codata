@@ -10,6 +10,7 @@ open import Coinduction
 import Stream as S
 open S using (Stream; _≺_)
 open import Data.Nat
+import IO
 
 ------------------------------------------------------------------------
 -- Stream programs
@@ -72,4 +73,4 @@ hamming = 1 ≺ hamming′
     cmp : ℕ → ℕ → Ord
     cmp m n = toOrd (compare m n)
 
-main = S.putStream (S._⋎_ ⟦ fib ⟧ ⟦ hamming ⟧)
+main = IO.run (S.putStream (S._⋎_ ⟦ fib ⟧ ⟦ hamming ⟧))
