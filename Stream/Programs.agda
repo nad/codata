@@ -50,14 +50,13 @@ whnf ((x ∷ xs) ≺≺ ys) = x ≺ xs ≺≺ ys
 mutual
 
   value : ∀ {A} → WHNF A → Stream A
-  value (x ≺ xs) = x ≺ value′ where value′ ~ ♯ ⟦ xs ⟧
+  value (x ≺ xs) = x ≺ ♯ ⟦ xs ⟧
 
   ⟦_⟧ : ∀ {A} → Prog A → Stream A
   ⟦ xs ⟧ = value (whnf xs)
 
 fromStream : ∀ {A} → Stream A → Prog A
-fromStream (x ≺ xs) = x ≺ fromStream′
-  where fromStream′ ~ ♯₁ fromStream (♭ xs)
+fromStream (x ≺ xs) = x ≺ ♯₁ fromStream (♭ xs)
 
 lift : ∀ {A} → (Prog A → Prog A) → Stream A → Stream A
 lift f xs = ⟦ f (fromStream xs) ⟧

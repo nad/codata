@@ -89,16 +89,15 @@ private
 
   lift : ∀ {A B n} →
          (Vec A n → B) → Vec₁ (Prog A) n → Prog B
-  lift f xs = f (Vec1.map₁₀ headP xs) ≺ lift′
-    where lift′ ~ ♯₁ lift f (Vec1.map tailP xs)
+  lift f xs = f (Vec1.map₁₀ headP xs) ≺ ♯₁ lift f (Vec1.map tailP xs)
 
   -- lift is a congruence in its first argument.
 
   lift-cong : ∀ {A B n} {f g : Vec A n → B} →
               (∀ ρ → f ρ ≡ g ρ) →
               ∀ ρ → lift f ρ ≊ lift g ρ
-  lift-cong hyp ρ = hyp (Vec1.map₁₀ headP ρ) ≺ lift-cong′
-    where lift-cong′ ~ ♯₁ lift-cong hyp (Vec1.map tailP ρ)
+  lift-cong hyp ρ = hyp (Vec1.map₁₀ headP ρ) ≺
+                    ♯₁ lift-cong hyp (Vec1.map tailP ρ)
 
   -- unfold xs ρ is the one-step unfolding of ⟦ xs ⟧ ρ. Note the
   -- similarity to lift.
@@ -118,7 +117,7 @@ private
                    (cong₁₀ Prog.⟦_⟧ (lookup-nat' tailP x ρ))) ⟩
     Vec.lookup x (Vec1.map₁₀ headP ρ) ≺♯
     Vec1.lookup x (Vec1.map tailP ρ)
-      ≊⟨ ≅-sym (≊-η (unfold (var x) ρ)) ⟩
+      ≡⟨ refl ⟩
     unfold (var x) ρ
       ∎
   unfold-lemma (x ∞)    ρ = x ∞ ∎
@@ -142,12 +141,11 @@ private
     ⟦ xs ⟧ ρ
       ≊⟨ unfold-lemma xs ρ ⟩
     unfold xs ρ
-      ≊⟨ ≊-η (unfold xs ρ) ⟩
+      ≡⟨ refl ⟩
     ⟪ xs ⟫ (Vec1.map₁₀ headP ρ) ≺♯ ⟦ xs ⟧ (Vec1.map tailP ρ)
-      ≊⟨ refl ≺ coih ⟩
+      ≊⟨ refl ≺ ♯₁ main-lemma xs (Vec1.map tailP ρ) ⟩
     lift ⟪ xs ⟫ ρ
       ∎
-    where coih ~ ♯₁ main-lemma xs (Vec1.map tailP ρ)
 
 ------------------------------------------------------------------------
 -- To prove that two streams which are defined pointwise are equal, it

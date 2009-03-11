@@ -48,7 +48,7 @@ whnf (merge cmp xs ys) | x ≺ xs′ | y ≺ ys′ | gt = y ≺ merge cmp xs  ys
 mutual
 
   value : ∀ {A} → WHNF A → Stream A
-  value (x ≺ xs) = x ≺ value′ where value′ ~ ♯ ⟦ xs ⟧
+  value (x ≺ xs) = x ≺ ♯ ⟦ xs ⟧
 
   ⟦_⟧ : ∀ {A} → Prog A → Stream A
   ⟦ xs ⟧ = value (whnf xs)
@@ -57,20 +57,17 @@ mutual
 -- Examples
 
 fib : Prog ℕ
-fib = 0 ≺ fib′
-  where fib′ ~ ♯₁ zipWith _+_ fib (1 ≺ ♯₁ fib)
+fib = 0 ≺ ♯₁ zipWith _+_ fib (1 ≺ ♯₁ fib)
 
 hamming : Prog ℕ
-hamming = 1 ≺ hamming′
+hamming = 1 ≺ ♯₁ merge cmp (map (_*_ 2) hamming) (map (_*_ 3) hamming)
   where
-  hamming′ ~ ♯₁ merge cmp (map (_*_ 2) hamming) (map (_*_ 3) hamming)
-    where
-    toOrd : ∀ {m n} → Ordering m n → Ord
-    toOrd (less _ _)    = lt
-    toOrd (equal _)     = eq
-    toOrd (greater _ _) = gt
+  toOrd : ∀ {m n} → Ordering m n → Ord
+  toOrd (less _ _)    = lt
+  toOrd (equal _)     = eq
+  toOrd (greater _ _) = gt
 
-    cmp : ℕ → ℕ → Ord
-    cmp m n = toOrd (compare m n)
+  cmp : ℕ → ℕ → Ord
+  cmp m n = toOrd (compare m n)
 
 main = IO.run (S.putStream (S._⋎_ ⟦ fib ⟧ ⟦ hamming ⟧))

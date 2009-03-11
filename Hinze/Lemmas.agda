@@ -17,20 +17,18 @@ open import Data.Function using (_∘_; flip)
 -- See also Stream.Equality.≊-η.
 
 ⋎-∞ : ∀ {A} (x : A) → x ∞ ⋎ x ∞ ≊ x ∞
-⋎-∞ x = refl ≺ ⋎-∞′
-  where ⋎-∞′ ~ ♯₁ ⋎-∞ x
+⋎-∞ x = refl ≺ ♯₁ ⋎-∞ x
 
 ⋎-map : ∀ {A B} (⊟ : A → B) s t →
         ⊟ · s ⋎ ⊟ · t ≊ ⊟ · (s ⋎ t)
 ⋎-map ⊟ s t with whnf s
-⋎-map ⊟ s t | x ≺ s′ = refl ≺ ⋎-map′
-  where ⋎-map′ ~ ♯₁ ⋎-map ⊟ t s′
+⋎-map ⊟ s t | x ≺ s′ = refl ≺ ♯₁ ⋎-map ⊟ t s′
 
 abide-law : ∀ {A B C} (⊞ : A → B → C) s₁ s₂ t₁ t₂ →
             s₁ ⟨ ⊞ ⟩ s₂ ⋎ t₁ ⟨ ⊞ ⟩ t₂ ≊ (s₁ ⋎ t₁) ⟨ ⊞ ⟩ (s₂ ⋎ t₂)
 abide-law ⊞ s₁ s₂ t₁ t₂ with whnf s₁ | whnf s₂
-abide-law ⊞ s₁ s₂ t₁ t₂ | x₁ ≺ s₁′ | x₂ ≺ s₂′ = refl ≺ abide-law′
-  where abide-law′ ~ ♯₁ abide-law ⊞ t₁ t₂ s₁′ s₂′
+abide-law ⊞ s₁ s₂ t₁ t₂ | x₁ ≺ s₁′ | x₂ ≺ s₂′ =
+  refl ≺ ♯₁ abide-law ⊞ t₁ t₂ s₁′ s₂′
 
 ------------------------------------------------------------------------
 -- Other lemmas
@@ -43,20 +41,18 @@ tailP-cong xs ys xs≈ys | x ≺ xs′ | y ≺ ys′ | x≡y ≺ xs≈ys′ = xs
 map-fusion : ∀ {A B C} (f : B → C) (g : A → B) xs →
              f · g · xs ≊ (f ∘ g) · xs
 map-fusion f g xs with whnf xs
-map-fusion f g xs | x ≺ xs′ = refl ≺ map-fusion′
-  where map-fusion′ ~ ♯₁ map-fusion f g xs′
+map-fusion f g xs | x ≺ xs′ = refl ≺ ♯₁ map-fusion f g xs′
 
 zip-const-is-map : ∀ {A B C} (_∙_ : A → B → C) xs y →
                    xs ⟨ _∙_ ⟩ y ∞ ≊ (λ x → x ∙ y) · xs
 zip-const-is-map _∙_ xs y with whnf xs
-zip-const-is-map _∙_ xs y | x ≺ xs′ = refl ≺ zip-const-is-map′
-  where zip-const-is-map′ ~ ♯₁ zip-const-is-map _∙_ xs′ y
+zip-const-is-map _∙_ xs y | x ≺ xs′ =
+  refl ≺ ♯₁ zip-const-is-map _∙_ xs′ y
 
 zip-flip : ∀ {A B C} (∙ : A → B → C) s t →
            s ⟨ ∙ ⟩ t ≊ t ⟨ flip ∙ ⟩ s
 zip-flip ∙ s t with whnf s | whnf t
-zip-flip ∙ s t | x ≺ s′ | y ≺ t′ = refl ≺ zip-flip′
-  where zip-flip′ ~ ♯₁ zip-flip ∙ s′ t′
+zip-flip ∙ s t | x ≺ s′ | y ≺ t′ = refl ≺ ♯₁ zip-flip ∙ s′ t′
 
 zip-⋎-const : ∀ {A B C} (∙ : A → B → C) s t x →
               (s ⋎ t) ⟨ ∙ ⟩ x ∞ ≊ s ⟨ ∙ ⟩ x ∞ ⋎ t ⟨ ∙ ⟩ x ∞

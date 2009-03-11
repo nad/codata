@@ -21,7 +21,7 @@ data Ord : Set where
   eq : Ord
   gt : Ord
 
-infixr 5 _≺≺_
+infixr 5 _≺_ _≺≺_
 
 -- Prog A m n encodes programs generating streams in chunks of (at
 -- least) m, with (at least) n elements in the first chunk. A more
@@ -68,8 +68,8 @@ whnf (merge cmp xs ys) | (x ∷ []) ≺≺ xs″ | (y ∷ []) ≺≺ ys″ with 
 mutual
 
   value : ∀ {A m n} → WHNF A (suc m) (suc n) → Stream A
-  value ((x ∷ [])        ≺≺ ys) = x ≺ value′ where value′ ~ ♯ ⟦ ys ⟧
-  value ((x ∷ (x' ∷ xs)) ≺≺ ys) = x ≺ (♯ value ((x' ∷ xs) ≺≺ ys))
+  value ((x ∷ [])        ≺≺ ys) = x ≺ ♯ ⟦ ys ⟧
+  value ((x ∷ (x' ∷ xs)) ≺≺ ys) = x ≺ ♯ value ((x' ∷ xs) ≺≺ ys)
 
   ⟦_⟧ : ∀ {A m n} → Prog A (suc m) (suc n) → Stream A
   ⟦ xs ⟧ = value (whnf xs)
@@ -86,13 +86,11 @@ mutual
 -- forgets.
 
 fib : Prog ℕ 1 1
-fib = (0 ∷ []) ≺≺ fib′
-  where fib′ ~ ♯₁ 1 ≺ zipWith _+_ (forget fib) (tail fib)
+fib = (0 ∷ []) ≺≺ ♯₁ (1 ≺ zipWith _+_ (forget fib) (tail fib))
 
 hamming : Prog ℕ 1 1
-hamming = (1 ∷ []) ≺≺ hamming′
-  where
-  hamming′ ~ ♯₁ merge cmp (map (_*_ 2) hamming) (map (_*_ 3) hamming)
+hamming = (1 ∷ []) ≺≺ ♯₁ merge cmp (map (_*_ 2) hamming)
+                                   (map (_*_ 3) hamming)
     where
     toOrd : ∀ {m n} → Ordering m n → Ord
     toOrd (less _ _)    = lt

@@ -29,26 +29,22 @@ open Op (CommutativeSemiring.semiring Nat.commutativeSemiring)
 -- Definitions
 
 pot : Prog Bool
-pot = true ≺ pot′
-  where pot′ ~ ♯₁ (pot ⋎ false ∞)
+pot = true ≺ ♯₁ (pot ⋎ false ∞)
 
 msb : Prog ℕ
-msb = 1 ≺ msb′
-  where msb′ ~ ♯₁ (2 ∞ ⟨ _*_ ⟩ msb ⋎ 2 ∞ ⟨ _*_ ⟩ msb)
+msb = 1 ≺ ♯₁ (2 ∞ ⟨ _*_ ⟩ msb ⋎ 2 ∞ ⟨ _*_ ⟩ msb)
 
 ones′ : Prog ℕ
-ones′ = 1 ≺ ones″
-  where ones″ ~ ♯₁ (ones′ ⋎ ones′ ⟨ _+_ ⟩ 1 ∞)
+ones′ = 1 ≺ ♯₁ (ones′ ⋎ ones′ ⟨ _+_ ⟩ 1 ∞)
 
 ones : Prog ℕ
 ones = 0 ≺♯ ones′
 
 carry : Prog ℕ
-carry = 0 ≺ carry′
-  where carry′ ~ ♯₁ (carry ⟨ _+_ ⟩ 1 ∞ ⋎ 0 ∞)
+carry = 0 ≺ ♯₁ (carry ⟨ _+_ ⟩ 1 ∞ ⋎ 0 ∞)
 
 carry-folded : carry ≊ 0 ∞ ⋎ carry ⟨ _+_ ⟩ 1 ∞
-carry-folded = ≊-η carry
+carry-folded = carry ∎
 
 2^carry = 2 ∞ ⟨ _^_ ⟩ carry
 
@@ -62,15 +58,13 @@ turn zero    = []
 turn (suc n) = turn n ++ [ n ] ++ turn n
 
 tree : ℕ → Prog ℕ
-tree n = n ≺ tree′
-  where tree′ ~ ♯₁ (turn n ≺≺ tree (suc n))
+tree n = n ≺ ♯₁ (turn n ≺≺ tree (suc n))
 
 frac : Prog ℕ
-frac = 0 ≺ frac′
-  where frac′ ~ ♯₁ (frac ⋎ nat ⟨ _+_ ⟩ 1 ∞)
+frac = 0 ≺ ♯₁ (frac ⋎ nat ⟨ _+_ ⟩ 1 ∞)
 
 frac-folded : frac ≊ nat ⋎ frac
-frac-folded = ≊-η frac
+frac-folded = frac ∎
 
 god : Prog ℕ
 god = (2 ∞ ⟨ _*_ ⟩ frac) ⟨ _+_ ⟩ 1 ∞
@@ -119,7 +113,7 @@ carry-god-nat =
   tailP nat
                                                            ∎
   where
-  coih ~ ♯₁ ⋎-cong (2 ∞ ⟨ _*_ ⟩ (2^carry ⟨ _*_ ⟩ god))
+  coih = ♯₁ ⋎-cong (2 ∞ ⟨ _*_ ⟩ (2^carry ⟨ _*_ ⟩ god))
                    (2 ∞ ⟨ _*_ ⟩ (tailP nat))
                    (⟨ _*_ ⟩-cong (2 ∞) (2 ∞) (2 ∞ ∎)
                                  (2^carry ⟨ _*_ ⟩ god) (tailP nat)

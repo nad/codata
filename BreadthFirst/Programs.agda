@@ -81,7 +81,7 @@ mutual
   private
 
     ⟦_∣_⟧⁻¹ν : (a : U ν) → El a → Prog a
-    ⟦ a ∣ x ⟧⁻¹ν = ↓ ⟦∣⟧⁻¹ν′ where ⟦∣⟧⁻¹ν′ ~ ♯₁ reify a x
+    ⟦ a ∣ x ⟧⁻¹ν = ↓ ♯₁ reify a x
 
 ⟦_∣_⟧⁻¹ : ∀ {k} (a : U k) → El a → Prog a
 ⟦_∣_⟧⁻¹ {μ} = λ a x → ↓ (reify a x)
@@ -121,12 +121,10 @@ mutual
 
   reflect : ∀ {k} {a : U k} → WHNF a → El a
   reflect {ν} leaf         = leaf
-  reflect {ν} (node l x r) = node l′ (reflect x) r′
-                             where l′ ~ ♯ ⟦ l ⟧
-                                   r′ ~ ♯ ⟦ r ⟧
+  reflect {ν} (node l x r) = node (♯ ⟦ l ⟧) (reflect x) (♯ ⟦ r ⟧)
   reflect {ν} []           = []
-  reflect {ν} (x ∷ xs)     = reflect x ∷ reflect′ where reflect′ ~ ♯ ⟦ xs ⟧
-  reflect {ν} (x ≺ xs)     = reflect x ≺ reflect′ where reflect′ ~ ♯ ⟦ xs ⟧
+  reflect {ν} (x ∷ xs)     = reflect x ∷ ♯ ⟦ xs ⟧
+  reflect {ν} (x ≺ xs)     = reflect x ≺ ♯ ⟦ xs ⟧
   reflect {μ} (x , y)      = (reflect x , reflect y)
   reflect {μ} ⌈ x ⌉        = x
 

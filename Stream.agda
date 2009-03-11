@@ -26,9 +26,9 @@ data Ord : Set where
 
 merge : ∀ {A} → (A → A → Ord) → Stream A → Stream A → Stream A
 merge cmp (x ≺ xs) (y ≺ ys) with cmp x y
-merge cmp (x ≺ xs) (y ≺ ys) | lt = x ≺ merge′ where merge′ ~ ♯ merge cmp (♭ xs)   (y ≺ ys)
-merge cmp (x ≺ xs) (y ≺ ys) | eq = x ≺ merge′ where merge′ ~ ♯ merge cmp (♭ xs)   (♭ ys)
-merge cmp (x ≺ xs) (y ≺ ys) | gt = y ≺ merge′ where merge′ ~ ♯ merge cmp (x ≺ xs) (♭ ys)
+merge cmp (x ≺ xs) (y ≺ ys) | lt = x ≺ ♯ merge cmp (♭ xs)   (y ≺ ys)
+merge cmp (x ≺ xs) (y ≺ ys) | eq = x ≺ ♯ merge cmp (♭ xs)   (♭ ys)
+merge cmp (x ≺ xs) (y ≺ ys) | gt = y ≺ ♯ merge cmp (x ≺ xs) (♭ ys)
 
 ------------------------------------------------------------------------
 -- Outputting streams

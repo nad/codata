@@ -62,11 +62,11 @@ private
   unguard (rec x)     = step x
 
   produce : LProd s unguarded → L
-  produce (return xs) ~ xs
-  produce ε           ~ ε
-  produce (term c)    ~ term c
-  produce (p₁ ∣ p₂)   ~ produce (unguard p₁) ∣ produce (unguard p₂)
-  produce (p₁ ⊛ p₂)   ~ produce (unguard p₁) ⊛ produce (unguard p₂)
+  produce (return xs) = xs
+  produce ε           = ε
+  produce (term c)    = term c
+  produce (p₁ ∣ p₂)   = produce (unguard p₁) ∣ produce (unguard p₂)
+  produce (p₁ ⊛ p₂)   = produce (unguard p₁) ⊛ produce (unguard p₂)
 
 open Dummy public
 

@@ -57,8 +57,7 @@ open OFE ofe
 private
 
   limU : (ℕ → Stream A) → Stream A
-  limU s = head (s 0) ≺ limU′
-    where limU′ ~ ♯ limU (tail ∘ s ∘ suc)
+  limU s = head (s 0) ≺ ♯ limU (tail ∘ s ∘ suc)
 
   η : ∀ {n} {xs : Stream A} → Eq n xs (head xs ≺ ♯ tail xs)
   η {xs = x ≺ xs} = refl

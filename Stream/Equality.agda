@@ -81,7 +81,7 @@ data _≃_ {A} : (xs ys : Stream A) → Set1 where
 mutual
 
   ≃⇒≈ : ∀ {A} {xs ys : Stream A} → xs ≃ ys → xs ≈ ys
-  ≃⇒≈ (refl ≺ xs≈) = _ ≺ ≃⇒≈′ where ≃⇒≈′ ~ ♯ ≅⇒≈ xs≈
+  ≃⇒≈ (refl ≺ xs≈) = _ ≺ ♯ ≅⇒≈ xs≈
 
   ≅⇒≈ : ∀ {A} {xs ys : Stream A} → xs ≅ ys → xs ≈ ys
   ≅⇒≈ xs≈ = ≃⇒≈ (≅⇒≃ xs≈)
@@ -90,7 +90,7 @@ mutual
 ≊⇒≈ = ≅⇒≈
 
 ≈⇒≅ : ∀ {A} {xs ys : Stream A} → xs ≈ ys → xs ≅ ys
-≈⇒≅ (x ≺ xs≈) = refl ≺ ≈⇒≅′ where ≈⇒≅′ ~ ♯₁ ≈⇒≅ (♭ xs≈)
+≈⇒≅ (x ≺ xs≈) = refl ≺ ♯₁ ≈⇒≅ (♭ xs≈)
 
 _∎ : ∀ {A} (xs : Prog A) → xs ≊ xs
 xs ∎ = ≈⇒≅ (Setoid.refl (Stream.setoid _))

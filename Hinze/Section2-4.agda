@@ -31,24 +31,20 @@ open import Data.Product
 -- Definitions
 
 nat : Prog ℕ
-nat = 0 ≺ nat′
-  where nat′ ~ ♯₁ (nat ⟨ _+_ ⟩ 1 ∞)
+nat = 0 ≺ ♯₁ (nat ⟨ _+_ ⟩ 1 ∞)
 
 2*nat   = 2 ∞ ⟨ _*_ ⟩ nat
 2*nat+1 = 2*nat ⟨ _+_ ⟩ 1 ∞
 
 fac : Prog ℕ
-fac = 1 ≺ fac′
-  where fac′ ~ ♯₁ ((nat ⟨ _+_ ⟩ 1 ∞) ⟨ _*_ ⟩ fac)
+fac = 1 ≺ ♯₁ ((nat ⟨ _+_ ⟩ 1 ∞) ⟨ _*_ ⟩ fac)
 
 fib : Prog ℕ
-fib = 0 ≺ fib′
-  where fib′ ~ ♯₁ (fib ⟨ _+_ ⟩ (1 ≺ ♯₁ fib))
+fib = 0 ≺ ♯₁ (fib ⟨ _+_ ⟩ (1 ≺ ♯₁ fib))
 
 bin : Prog ℕ
-bin = 0 ≺ bin′
-  where bin′ ~ ♯₁ ((2 ∞ ⟨ _*_ ⟩ bin) ⟨ _+_ ⟩ 1 ∞ ⋎
-                   (2 ∞ ⟨ _*_ ⟩ bin) ⟨ _+_ ⟩ 2 ∞)
+bin = 0 ≺ ♯₁ ((2 ∞ ⟨ _*_ ⟩ bin) ⟨ _+_ ⟩ 1 ∞ ⋎
+              (2 ∞ ⟨ _*_ ⟩ bin) ⟨ _+_ ⟩ 2 ∞)
 
 ------------------------------------------------------------------------
 -- Laws and properties
@@ -59,12 +55,11 @@ const-is-∞ {x = x} {xs} eq =
   xs
             ≊⟨ eq ⟩
   x ≺♯ xs
-            ≊⟨ refl ≺ coih ⟩
+            ≊⟨ refl ≺ ♯₁ const-is-∞ eq ⟩
   x ≺♯ x ∞
             ≡⟨ refl ⟩
   x ∞
             ∎
-  where coih ~ ♯₁ const-is-∞ eq
 
 nat-lemma₁ : 0 ≺♯ 2*nat+1 ⋎ 2*nat ⟨ _+_ ⟩ 2 ∞ ≊ 2*nat ⋎ 2*nat+1
 nat-lemma₁ =
@@ -93,9 +88,10 @@ nat-lemma₁ =
 nat-lemma₂ : nat ≊ 2*nat ⋎ 2*nat+1
 nat-lemma₂ =
   nat
-                                      ≊⟨ ≊-η nat ⟩
+                                      ≡⟨ refl ⟩
   0 ≺♯ nat ⟨ _+_ ⟩ 1 ∞
-                                      ≊⟨ refl ≺ coih ⟩
+                                      ≊⟨ refl ≺ ♯₁ ⟨ _+_ ⟩-cong nat (2*nat ⋎ 2*nat+1) nat-lemma₂
+                                                                (1 ∞) (1 ∞) (1 ∞ ∎) ⟩
   0 ≺♯ (2*nat ⋎ 2*nat+1) ⟨ _+_ ⟩ 1 ∞
                                       ≊⟨ refl ≺ ♯₁ zip-⋎-const _+_ 2*nat 2*nat+1 1 ⟩
   0 ≺♯ 2*nat+1 ⋎ 2*nat+1 ⟨ _+_ ⟩ 1 ∞
@@ -107,9 +103,6 @@ nat-lemma₂ =
   2*nat ⋎ 2*nat+1
                                       ∎
   where
-  coih ~ ♯₁ ⟨ _+_ ⟩-cong nat (2*nat ⋎ 2*nat+1) nat-lemma₂
-                         (1 ∞) (1 ∞) (1 ∞ ∎)
-
   lemma : ∀ s → (s ⟨ _+_ ⟩ 1 ∞) ⟨ _+_ ⟩ 1 ∞ ≊ s ⟨ _+_ ⟩ 2 ∞
   lemma = pointwise 1 (λ s → (s ⟨ _+_ ⟩ 1 ∞) ⟨ _+_ ⟩ 1 ∞)
                       (λ s → s ⟨ _+_ ⟩ 2 ∞)
@@ -125,11 +118,11 @@ nat≊bin =
                                         ≊⟨ refl ≺ coih ⟩
   0 ≺♯ (2 ∞ ⟨ _*_ ⟩ bin) ⟨ _+_ ⟩ 1 ∞ ⋎
        (2 ∞ ⟨ _*_ ⟩ bin) ⟨ _+_ ⟩ 2 ∞
-                                        ≊⟨ ≅-sym (≊-η bin) ⟩
+                                        ≡⟨ refl ⟩
   bin
                                         ∎
   where
-  coih ~ ♯₁ ⋎-cong 2*nat+1 ((2 ∞ ⟨ _*_ ⟩ bin) ⟨ _+_ ⟩ 1 ∞)
+  coih = ♯₁ ⋎-cong 2*nat+1 ((2 ∞ ⟨ _*_ ⟩ bin) ⟨ _+_ ⟩ 1 ∞)
                    (⟨ _+_ ⟩-cong 2*nat (2 ∞ ⟨ _*_ ⟩ bin)
                                  (⟨ _*_ ⟩-cong (2 ∞) (2 ∞) (2 ∞ ∎)
                                                nat bin nat≊bin)
@@ -149,28 +142,26 @@ iterate-fusion h f₁ f₂ hyp x =
   h · iterate f₁ x
                                 ≡⟨ refl ⟩
   h x ≺♯ h · iterate f₁ (f₁ x)
-                                ≊⟨ refl ≺ coih ⟩
+                                ≊⟨ refl ≺ ♯₁ iterate-fusion h f₁ f₂ hyp (f₁ x) ⟩
   h x ≺♯ iterate f₂ (h (f₁ x))
                                 ≡⟨ cong (λ y → ⟦ h x ≺♯ iterate f₂ y ⟧) (hyp x) ⟩
   h x ≺♯ iterate f₂ (f₂ (h x))
                                 ≡⟨ refl ⟩
   iterate f₂ (h x)
                                 ∎
-  where coih ~ ♯₁ iterate-fusion h f₁ f₂ hyp (f₁ x)
 
 nat-iterate : nat ≊ iterate suc 0
 nat-iterate =
   nat
-                            ≊⟨ ≊-η nat ⟩
+                            ≡⟨ refl ⟩
   0 ≺♯ nat ⟨ _+_ ⟩ 1 ∞
                             ≊⟨ refl ≺ ♯₁ pointwise 1 (λ s → s ⟨ _+_ ⟩ 1 ∞) (_·_ suc)
                                                      (λ x → CS.+-comm x 1) nat ⟩
   0 ≺♯ suc · nat
-                            ≊⟨ refl ≺ coih ⟩
+                            ≊⟨ refl ≺ ♯₁ ·-cong suc nat (iterate suc 0) nat-iterate ⟩
   0 ≺♯ suc · iterate suc 0
                             ≊⟨ refl ≺ ♯₁ iterate-fusion suc suc suc (λ _ → refl) 0 ⟩
   0 ≺♯ iterate suc 1
                             ≡⟨ refl ⟩
   iterate suc 0
                             ∎
-  where coih ~ ♯₁ ·-cong suc nat (iterate suc 0) nat-iterate

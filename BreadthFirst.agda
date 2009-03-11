@@ -23,8 +23,7 @@ open import Stream using (Stream; _≺_)
 
 label′ : ∀ {k} {a : U k} {B} → Prog (tree a) → Stream B →
          Prog (tree ⌈ B ⌉ ⊗ stream ⌈ Stream B ⌉)
-label′ t ls = lab t (↓ lss)
-  where lss ~ ♯₁ (⌈ ls ⌉ ≺ snd (label′ t ls))
+label′ t ls = lab t (↓ ♯₁ (⌈ ls ⌉ ≺ snd (label′ t ls)))
 
 label : ∀ {A B} → Tree A → Stream B → Tree B
 label {A} t ls = ⟦ fst (label′ ⟦ tree ⌈ A ⌉ ∣ t ⟧⁻¹ ls) ⟧
@@ -39,10 +38,9 @@ shape-preserved′ : ∀ {k} {a : U k} {B} (t : Prog (tree a))
 shape-preserved′ t lss with whnf t
 ... | leaf       = leaf
 ... | node l _ r with whnf lss
-...              | ⌈ x ≺ ls ⌉ ≺ lss′ = node l′ ⌈ ≡-refl ⌉ r′
-  where
-  l′ ~ ♯₁ shape-preserved′ l lss′
-  r′ ~ ♯₁ shape-preserved′ r _
+...              | ⌈ x ≺ ls ⌉ ≺ lss′ =
+  node (♯₁ shape-preserved′ l lss′) ⌈ ≡-refl ⌉
+       (♯₁ shape-preserved′ r _)
 
 shape-preserved : ∀ {A B} (t : Tree A) (ls : Stream B) →
                   Eq (tree ⌈ ⊤ ⌉) (map (const tt) (label t ls))
@@ -66,12 +64,7 @@ invariant t lss with whnf t
 ... | leaf       = ⟦ lss ⟧ ∎
 ... | node l _ r with whnf lss
 ...              | ⌈ x ≺ ls ⌉ ≺ lss′ =
-  (⌈ ≡-refl ⌉ ≺ ♯₁ refl (♭ ls)) ≺ invariant′
-  where
-  l′ = lab l lss′
-  r′ = lab r (snd l′)
-
-  invariant′ ~ ♯₁ (
+  (⌈ ≡-refl ⌉ ≺ ♯₁ refl (♭ ls)) ≺ ♯₁ (
     ⟦ lss′ ⟧                                    ≊⟨ invariant l lss′ ⟩
     zipWith _⁺++∞_ ⟦ flatten (fst l′) ⟧
                    ⟦ snd l′ ⟧                   ≊⟨ zipWith-cong ⁺++∞-cong
@@ -87,6 +80,9 @@ invariant t lss with whnf t
       ⟦ longZipWith _++⁺_ (flatten (fst l′))
                           (flatten (fst r′)) ⟧
       ⟦ snd r′ ⟧                                ∎)
+  where
+  l′ = lab l lss′
+  r′ = lab r (snd l′)
 
 prefix-lemma : ∀ {k} {a : U k} xs xss yss →
                Eq (stream (stream a))
@@ -95,23 +91,21 @@ prefix-lemma : ∀ {k} {a : U k} xs xss yss →
 prefix-lemma xs xss         []         _            = []
 prefix-lemma xs (xs′ ≺ xss) (ys ∷ yss) (xs≈ ≺ xss≈) =
   concat (ys ∷ yss)      ≋⟨ concat-lemma ys yss ⟩
-  ys ⁺++ concat (♭ yss)  ⊑⟨ ⁺++-mono ys coih ⟩
+  ys ⁺++ concat (♭ yss)  ⊑⟨ ⁺++-mono ys (♯₁ prefix-lemma xs′ (♭ xss) (♭ yss) ⟦ lemma ⟧≈) ⟩
   ys ⁺++∞ xs′            ≈⟨ sym xs≈ ⟩
   xs                     ∎
   where
   lemma =
-    xs′ ≺ ♯ ♭ xss                   ≈⟨ refl xs′ ≺ ♯₁ refl (♭ xss) ⟩
+    xs′ ≺ _ {- ♯ ♭ xss -}           ≈⟨ refl xs′ ≺ ♯₁ refl (♭ xss) ⟩
     xs′ ≺ xss                       ≈⟨ ♭₁ xss≈ ⟩
     zipWith _⁺++∞_ (♭ yss) (♭ xss)  ∎
-
-  coih ~ ♯₁ prefix-lemma xs′ (♭ xss) (♭ yss) ⟦ lemma ⟧≈
 
 is-prefix : ∀ {A B} (t : Tree A) (ls : Stream B) →
             PrefixOf ⌈ B ⌉ (concat (lift flatten (label t ls))) ls
 is-prefix {A} {B} t ls = ⟦
   concat ⟦ flatten fst-l  ⟧  ≋⟨ concat-cong ⟦ flatten-cong fst-l (fst l) (right-inverse ⟦ fst l ⟧) ⟧≈ ⟩
   concat ⟦ flatten (fst l)⟧  ⊑⟨ prefix-lemma ls ⟦ snd l ⟧ ⟦ flatten (fst l) ⟧
-                                  ⟦ ls ≺ ♯ ⟦ snd l ⟧                              ≈⟨ refl ls ≺ ♯₁ refl ⟦ snd l ⟧ ⟩
+                                  ⟦ ls ≺ _ {- ♯ ⟦ snd l ⟧ -}                      ≈⟨ refl ls ≺ ♯₁ refl ⟦ snd l ⟧ ⟩
                                     ⟦ ↓_ {a = stream ⌈ Stream B ⌉}
                                          (♯₁ (⌈ ls ⌉ ≺ snd (label′ t′ ls))) ⟧     ≊⟨ invariant t′ _ ⟩
                                     zipWith _⁺++∞_ ⟦ flatten (fst l) ⟧ ⟦ snd l ⟧  ∎ ⟧≈ ⟩

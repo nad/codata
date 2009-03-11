@@ -52,8 +52,8 @@ private
   -- corecursion for streams.
 
   produce : StreamProd a seed unguarded → Stream a
-  produce (return xs) ~ xs
-  produce (x ∷ xs)    ~ x ∷ produce (unguard xs)
+  produce (return xs) = xs
+  produce (x ∷ xs)    = x ∷ produce (unguard xs)
 
 open Dummy public
 
