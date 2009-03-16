@@ -49,6 +49,12 @@ import BreadthFirst.Universe
 import BreadthFirst.Programs
 import BreadthFirst
 
+-- Formalisation of subtyping for recursive types, partly based on
+-- "Coinductive Axiomatization of Recursive Type Equality and
+-- Subtyping" by Michael Brandt and Fritz Henglein.
+
+import RecursiveTypes
+
 -- An implementation of "A Unifying Approach to Recursive and
 -- Co-recursive Definitions" by Pietro Di Gianantonio and Marino
 -- Miculan.
