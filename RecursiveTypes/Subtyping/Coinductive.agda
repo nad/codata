@@ -87,3 +87,9 @@ mutual
 
   ⟦_⟧≤∞ : ∀ {m n} {σ : Tree m} {τ : Tree n} → σ ≤∞Prog τ → σ ≤∞ τ
   ⟦ σ≤τ ⟧≤∞ = value (whnf σ≤τ)
+
+prog : ∀ {m n} {σ : Tree m} {τ : Tree n} → σ ≤∞ τ → σ ≤∞Prog τ
+prog ⊥               = ⊥
+prog ⊤               = ⊤
+prog var             = var
+prog (τ₁≤σ₁ ⟶ σ₂≤τ₂) = ♯ prog (♭ τ₁≤σ₁) ⟶ ♯ prog (♭ σ₂≤τ₂)
