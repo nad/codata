@@ -153,7 +153,7 @@ private
 
 -- This function is a bit awkward to use, since the user has to come
 -- up with a suitable environment manually. The alternative function
--- lift-pointwise below may be slightly easier to use.
+-- pointwise below may be slightly easier to use.
 
 pointwise' : ∀ {A n} (xs ys : Pointwise A n) →
              (∀ ρ → ⟪ xs ⟫ ρ ≡ ⟪ ys ⟫ ρ) →
