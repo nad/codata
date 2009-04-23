@@ -6,8 +6,7 @@
 module BreadthFirst.Programs where
 
 open import Coinduction
-open import Data.List.NonEmpty using (List⁺; [_])
-                               renaming (_++_ to _++⁺_)
+open import Data.List.NonEmpty using (List⁺; [_]; _⁺++⁺_)
 open import Data.Colist hiding ([_])
 open import Data.Product
 
@@ -115,7 +114,7 @@ whnf (longZipWith f xs ys) with whnf xs | whnf ys
 
 whnf (flatten t) with whnf t
 ... | leaf       = []
-... | node l x r = [_] · x ∷ longZipWith _++⁺_ (flatten l) (flatten r)
+... | node l x r = [_] · x ∷ longZipWith _⁺++⁺_ (flatten l) (flatten r)
 
 mutual
 

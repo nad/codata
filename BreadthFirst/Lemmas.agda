@@ -7,7 +7,7 @@ module BreadthFirst.Lemmas where
 open import Coinduction
 open import Data.Function
 import Data.List.NonEmpty as List⁺
-open List⁺ using (List⁺; [_]; _∷_) renaming (_++_ to _++⁺_)
+open List⁺ using (List⁺; [_]; _∷_; _⁺++⁺_)
 import Data.Vec as Vec
 import Data.Colist as Colist
 open Colist using (Colist; []; _∷_; concat; _++_)
@@ -285,7 +285,7 @@ flatten-cong t₁ t₂ ()                    | leaf             | node _ _ _
 flatten-cong t₁ t₂ ()                    | node _ _ _       | leaf
 flatten-cong t₁ t₂ (node l ⌈ ≡-refl ⌉ r) | node l′ ⌈ _ ⌉ r′ | node l″ ⌈ ._ ⌉ r″ =
   ⌈ ≡-refl ⌉ ∷ ♯₁
-    longZipWith-cong _++⁺_ _ _ (flatten r′) (flatten r″)
+    longZipWith-cong _⁺++⁺_ _ _ (flatten r′) (flatten r″)
                      (flatten-cong l′ l″ (♭₁ l))
                      (flatten-cong r′ r″ (♭₁ r))
 
@@ -319,14 +319,14 @@ right-inverse {μ} x = reflect-reify _ x
 right-inverse {ν} x = reflect-reify _ x
 
 ++-assoc : ∀ {k} {a : U k} xs ys zs →
-           Eq (stream a) (xs ⁺++∞ (ys ⁺++∞ zs)) ((xs ++⁺ ys) ⁺++∞ zs)
+           Eq (stream a) (xs ⁺++∞ (ys ⁺++∞ zs)) ((xs ⁺++⁺ ys) ⁺++∞ zs)
 ++-assoc [ x ]    ys zs = refl x ≺ ♯₁ refl (ys ⁺++∞ zs)
 ++-assoc (x ∷ xs) ys zs = refl x ≺ ♯₁ ++-assoc xs ys zs
 
 zip-++-assoc : ∀ {k} {a : U k} xss yss (zss : Stream (Stream (El a))) →
                Eq (stream (stream a))
                   (zipWith _⁺++∞_ ⟦ xss ⟧ (zipWith _⁺++∞_ ⟦ yss ⟧ zss))
-                  (zipWith _⁺++∞_ ⟦ longZipWith _++⁺_ xss yss ⟧ zss)
+                  (zipWith _⁺++∞_ ⟦ longZipWith _⁺++⁺_ xss yss ⟧ zss)
 zip-++-assoc xss yss (zs ≺ zss) with whnf xss | whnf yss
 ... | []            | []            = refl _
 ... | []            | ys     ∷ yss′ = refl _

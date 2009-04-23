@@ -7,7 +7,7 @@ module BreadthFirst where
 open import Coinduction
 open import Data.Function
 open import Data.Unit
-open import Data.List.NonEmpty using () renaming (_++_ to _++⁺_)
+open import Data.List.NonEmpty using (_⁺++⁺_)
 open import Data.Colist using ([]; _∷_; concat)
 import Relation.Binary.PropositionalEquality as PropEq
 open PropEq using () renaming (refl to ≡-refl)
@@ -65,21 +65,21 @@ invariant t lss with whnf t
 ... | node l _ r with whnf lss
 ...              | ⌈ x ≺ ls ⌉ ≺ lss′ =
   (⌈ ≡-refl ⌉ ≺ ♯₁ refl (♭ ls)) ≺ ♯₁ (
-    ⟦ lss′ ⟧                                    ≊⟨ invariant l lss′ ⟩
+    ⟦ lss′ ⟧                                     ≊⟨ invariant l lss′ ⟩
     zipWith _⁺++∞_ ⟦ flatten (fst l′) ⟧
-                   ⟦ snd l′ ⟧                   ≊⟨ zipWith-cong ⁺++∞-cong
-                                                     (⟦ flatten (fst l′) ⟧ ∎)
-                                                     (invariant r (snd l′)) ⟩
+                   ⟦ snd l′ ⟧                    ≊⟨ zipWith-cong ⁺++∞-cong
+                                                      (⟦ flatten (fst l′) ⟧ ∎)
+                                                      (invariant r (snd l′)) ⟩
     zipWith _⁺++∞_
       ⟦ flatten (fst l′) ⟧
       (zipWith _⁺++∞_ ⟦ flatten (fst r′) ⟧
-                      ⟦ snd r′ ⟧)               ≈⟨ zip-++-assoc (flatten (fst l′))
-                                                                (flatten (fst r′))
-                                                                ⟦ snd r′ ⟧ ⟩
+                      ⟦ snd r′ ⟧)                ≈⟨ zip-++-assoc (flatten (fst l′))
+                                                                 (flatten (fst r′))
+                                                                 ⟦ snd r′ ⟧ ⟩
     zipWith _⁺++∞_
-      ⟦ longZipWith _++⁺_ (flatten (fst l′))
-                          (flatten (fst r′)) ⟧
-      ⟦ snd r′ ⟧                                ∎)
+      ⟦ longZipWith _⁺++⁺_ (flatten (fst l′))
+                           (flatten (fst r′)) ⟧
+      ⟦ snd r′ ⟧                                 ∎)
   where
   l′ = lab l lss′
   r′ = lab r (snd l′)
