@@ -20,7 +20,7 @@ open import Relation.Binary.PropositionalEquality
 open import Algebra
 open import Algebra.Structures
 private
-  module CS = IsCommutativeSemiring _ Nat.isCommutativeSemiring
+  module CS = IsCommutativeSemiring Nat.isCommutativeSemiring
 import Algebra.Operations as Op
 open Op (CommutativeSemiring.semiring Nat.commutativeSemiring)
 

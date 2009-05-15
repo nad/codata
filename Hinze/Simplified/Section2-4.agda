@@ -17,7 +17,7 @@ open ≡-Reasoning renaming (_≡⟨_⟩_ to _=⟨_⟩_; _∎ to _QED)
 open import Algebra.Structures
 import Data.Nat.Properties as Nat
 private
-  module CS = IsCommutativeSemiring _ Nat.isCommutativeSemiring
+  module CS = IsCommutativeSemiring Nat.isCommutativeSemiring
 open import Data.Product
 
 ------------------------------------------------------------------------

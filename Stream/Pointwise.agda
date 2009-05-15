@@ -211,4 +211,4 @@ private
     where
     open import Data.Nat.Properties
     open import Algebra.Structures
-    open IsCommutativeSemiring _ isCommutativeSemiring
+    open IsCommutativeSemiring isCommutativeSemiring
