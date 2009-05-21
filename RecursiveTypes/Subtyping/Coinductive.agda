@@ -4,8 +4,12 @@
 
 module RecursiveTypes.Subtyping.Coinductive where
 
-open import Data.Fin
 open import Coinduction
+open import Data.Fin
+open import Data.Function
+open import Data.Empty using (⊥-elim)
+open import Relation.Nullary
+open import Relation.Binary.HeterogeneousEquality using (_≅_; refl)
 
 open import RecursiveTypes.Syntax
 open import RecursiveTypes.Semantics
@@ -93,3 +97,38 @@ prog ⊥               = ⊥
 prog ⊤               = ⊤
 prog var             = var
 prog (τ₁≤σ₁ ⟶ σ₂≤τ₂) = ♯ prog (♭ τ₁≤σ₁) ⟶ ♯ prog (♭ σ₂≤τ₂)
+
+------------------------------------------------------------------------
+-- Some lemmas
+
+var:≤∞⟶≅ : ∀ {m} {n} {x : Fin m} {y : Fin n} →
+           var x ≤∞ var y → var x ≅ var y
+var:≤∞⟶≅ var = refl
+
+left-proj : ∀ {m n} {σ₁ σ₂ : ∞ (Tree m)} {τ₁ τ₂ : ∞ (Tree n)} →
+            σ₁ ⟶ σ₂ ≤∞ τ₁ ⟶ τ₂ → ♭ τ₁ ≤∞ ♭ σ₁
+left-proj (τ₁≤σ₁ ⟶ σ₂≤τ₂) = ♭ τ₁≤σ₁
+
+right-proj : ∀ {m n} {σ₁ σ₂ : ∞ (Tree m)} {τ₁ τ₂ : ∞ (Tree n)} →
+             σ₁ ⟶ σ₂ ≤∞ τ₁ ⟶ τ₂ → ♭ σ₂ ≤∞ ♭ τ₂
+right-proj (τ₁≤σ₁ ⟶ σ₂≤τ₂) = ♭ σ₂≤τ₂
+
+------------------------------------------------------------------------
+-- Double-negation does not affect _≤∞_
+
+drop-¬¬ : ∀ {m n} (σ : Tree m) (τ : Tree n) → ¬ ¬ σ ≤∞ τ → σ ≤∞ τ
+drop-¬¬ ⊥         τ         ¬≰ = ⊥
+drop-¬¬ σ         ⊤         ¬≰ = ⊤
+drop-¬¬ (var x)   (var  y)  ¬≰ with var x ≅? var y
+drop-¬¬ (var x)   (var .x)  ¬≰ | yes refl = var
+drop-¬¬ (var x)   (var  y)  ¬≰ | no  x≠y  = ⊥-elim (¬≰ (x≠y ∘ var:≤∞⟶≅))
+drop-¬¬ (σ₁ ⟶ σ₂) (τ₁ ⟶ τ₂) ¬≰ =
+  ♯ drop-¬¬ (♭ τ₁) (♭ σ₁) (λ ≰ → ¬≰ (≰ ∘  left-proj)) ⟶
+  ♯ drop-¬¬ (♭ σ₂) (♭ τ₂) (λ ≰ → ¬≰ (≰ ∘ right-proj))
+drop-¬¬ ⊤         ⊥         ¬≰ = ⊥-elim (¬≰ (λ ()))
+drop-¬¬ ⊤         (var x)   ¬≰ = ⊥-elim (¬≰ (λ ()))
+drop-¬¬ ⊤         (τ₁ ⟶ τ₂) ¬≰ = ⊥-elim (¬≰ (λ ()))
+drop-¬¬ (var x)   ⊥         ¬≰ = ⊥-elim (¬≰ (λ ()))
+drop-¬¬ (var x)   (τ₁ ⟶ τ₂) ¬≰ = ⊥-elim (¬≰ (λ ()))
+drop-¬¬ (σ₁ ⟶ σ₂) ⊥         ¬≰ = ⊥-elim (¬≰ (λ ()))
+drop-¬¬ (σ₁ ⟶ σ₂) (var x)   ¬≰ = ⊥-elim (¬≰ (λ ()))
