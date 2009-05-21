@@ -8,7 +8,6 @@ open import Coinduction
 
 open import RecursiveTypes.Syntax
 open import RecursiveTypes.Substitution
-open TySubst
 
 -- The semantics of a recursive type, i.e. its possibly infinite
 -- unfolding.

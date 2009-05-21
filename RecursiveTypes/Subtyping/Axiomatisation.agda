@@ -9,7 +9,6 @@ open import Coinduction
 
 open import RecursiveTypes.Syntax
 open import RecursiveTypes.Substitution
-open TySubst
 open import RecursiveTypes.Semantics
 open import RecursiveTypes.Subtyping.Coinductive
 
