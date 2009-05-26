@@ -10,7 +10,8 @@ open import Coinduction
 open import RecursiveTypes.Syntax
 open import RecursiveTypes.Substitution
 open import RecursiveTypes.Semantics
-open import RecursiveTypes.Subtyping.Semantic.Coinductive
+open import RecursiveTypes.Subtyping.Semantic.Coinductive as Sem
+  using (_≤∞Prog_; _≤Coind_; ⟦_⟧≤∞; ⊥; ⊤; var; _⟶_; _∎; _≤⟨_⟩_)
 
 ------------------------------------------------------------------------
 -- Definition
@@ -38,9 +39,9 @@ data _≤_ : ∀ {m n} → Ty m → Ty n → Set where
         σ₁ ⟶ σ₂ ≤ τ₁ ⟶ τ₂
 
   -- Rules for folding and unfolding ν.
-  unfold : ∀ {n} (τ₁ τ₂ : Ty (suc n)) →
+  unfold : ∀ {n} {τ₁ τ₂ : Ty (suc n)} →
            let τ = ν τ₁ ⟶ τ₂ in τ ≤ τ₁ ⟶ τ₂ [0≔ τ ]
-  fold   : ∀ {n} (τ₁ τ₂ : Ty (suc n)) →
+  fold   : ∀ {n} {τ₁ τ₂ : Ty (suc n)} →
            let τ = ν τ₁ ⟶ τ₂ in τ₁ ⟶ τ₂ [0≔ τ ] ≤ τ
 
   -- Reflexivity.
@@ -60,8 +61,8 @@ sound′ : ∀ {m n} {σ : Ty m} {τ : Ty n} → σ ≤ τ → ⟦ σ ⟧ ≤∞
 sound′ ⊥                     = ⊥
 sound′ ⊤                     = ⊤
 sound′ (τ₁≤σ₁ ⟶ σ₂≤τ₂)       = ♯ sound′ (♭ τ₁≤σ₁) ⟶ ♯ sound′ (♭ σ₂≤τ₂)
-sound′ (unfold τ₁ τ₂)        = ♯ (_ ∎) ⟶ ♯ (_ ∎)
-sound′ (fold τ₁ τ₂)          = ♯ (_ ∎) ⟶ ♯ (_ ∎)
+sound′ unfold                = Sem.prog Sem.unfold
+sound′ fold                  = Sem.prog Sem.fold
 sound′ (τ ∎)                 = _ ∎
 sound′ (τ₁ ≤⟨ τ₁≤τ₂ ⟩ τ₂≤τ₃) = _ ≤⟨ sound′ τ₁≤τ₂ ⟩ sound′ τ₂≤τ₃
 
@@ -86,22 +87,22 @@ complete (σ₁ ⟶ σ₂) (τ₁ ⟶ τ₂) (τ₁≤σ₁ ⟶ σ₂≤τ₂) =
 complete (σ₁ ⟶ σ₂) (ν τ₁ ⟶ τ₂) (τ₁≤σ₁ ⟶ σ₂≤τ₂) =
   σ₁ ⟶ σ₂          ≤⟨ ♯ complete (τ₁ [0≔ τ ]) σ₁ (♭ τ₁≤σ₁) ⟶
                       ♯ complete σ₂ (τ₂ [0≔ τ ]) (♭ σ₂≤τ₂) ⟩
-  τ₁ ⟶ τ₂ [0≔ τ ]  ≤⟨ fold τ₁ τ₂ ⟩
+  τ₁ ⟶ τ₂ [0≔ τ ]  ≤⟨ fold ⟩
   τ                ∎
   where τ = ν τ₁ ⟶ τ₂
 complete (ν σ₁ ⟶ σ₂) ⊥         ()
 complete (ν σ₁ ⟶ σ₂) (var x)   ()
 complete (ν σ₁ ⟶ σ₂) (τ₁ ⟶ τ₂) (τ₁≤σ₁ ⟶ σ₂≤τ₂) =
-  σ                ≤⟨ unfold σ₁ σ₂ ⟩
+  σ                ≤⟨ unfold ⟩
   σ₁ ⟶ σ₂ [0≔ σ ]  ≤⟨ ♯ complete τ₁ (σ₁ [0≔ σ ]) (♭ τ₁≤σ₁) ⟶
                       ♯ complete (σ₂ [0≔ σ ]) τ₂ (♭ σ₂≤τ₂) ⟩
   τ₁ ⟶ τ₂          ∎
   where σ = ν σ₁ ⟶ σ₂
 complete (ν σ₁ ⟶ σ₂) (ν τ₁ ⟶ τ₂) (τ₁≤σ₁ ⟶ σ₂≤τ₂) =
-  σ                ≤⟨ unfold σ₁ σ₂ ⟩
+  σ                ≤⟨ unfold ⟩
   σ₁ ⟶ σ₂ [0≔ σ ]  ≤⟨ ♯ complete (τ₁ [0≔ τ ]) (σ₁ [0≔ σ ]) (♭ τ₁≤σ₁) ⟶
                       ♯ complete (σ₂ [0≔ σ ]) (τ₂ [0≔ τ ]) (♭ σ₂≤τ₂) ⟩
-  τ₁ ⟶ τ₂ [0≔ τ ]  ≤⟨ fold τ₁ τ₂ ⟩
+  τ₁ ⟶ τ₂ [0≔ τ ]  ≤⟨ fold ⟩
   τ                ∎
   where
   σ = ν σ₁ ⟶ σ₂

@@ -5,13 +5,15 @@
 module RecursiveTypes.Subtyping.Semantic.Coinductive where
 
 open import Coinduction
-open import Data.Fin
+open import Data.Nat using (ℕ; zero; suc)
+open import Data.Fin using (Fin)
 open import Data.Function
 open import Data.Empty using (⊥-elim)
 open import Relation.Nullary
 open import Relation.Binary.HeterogeneousEquality using (_≅_; refl)
 
 open import RecursiveTypes.Syntax
+open import RecursiveTypes.Substitution
 open import RecursiveTypes.Semantics
 
 infixr 10 _⟶_
@@ -100,6 +102,14 @@ prog (τ₁≤σ₁ ⟶ σ₂≤τ₂) = ♯ prog (♭ τ₁≤σ₁) ⟶ ♯ pr
 
 ------------------------------------------------------------------------
 -- Some lemmas
+
+unfold : ∀ {n} {τ₁ τ₂ : Ty (suc n)} →
+         let τ = ν τ₁ ⟶ τ₂ in τ ≤Coind τ₁ ⟶ τ₂ [0≔ τ ]
+unfold = ♯ ⟦ _ ∎ ⟧≤∞ ⟶ ♯ ⟦ _ ∎ ⟧≤∞
+
+fold : ∀ {n} {τ₁ τ₂ : Ty (suc n)} →
+       let τ = ν τ₁ ⟶ τ₂ in τ₁ ⟶ τ₂ [0≔ τ ] ≤Coind τ
+fold = ♯ ⟦ _ ∎ ⟧≤∞ ⟶ ♯ ⟦ _ ∎ ⟧≤∞
 
 var:≤∞⟶≅ : ∀ {m} {n} {x : Fin m} {y : Fin n} →
            var x ≤∞ var y → var x ≅ var y

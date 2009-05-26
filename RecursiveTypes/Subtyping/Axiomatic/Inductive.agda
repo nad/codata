@@ -51,9 +51,9 @@ data _⊢_≤_ (A : List Hyp) : ∀ {m n} → Ty m → Ty n → Set where
         A ⊢ σ₁ ⟶ σ₂ ≤ τ₁ ⟶ τ₂
 
   -- Rules for folding and unfolding ν.
-  unfold : ∀ {n} (τ₁ τ₂ : Ty (suc n)) →
+  unfold : ∀ {n} {τ₁ τ₂ : Ty (suc n)} →
            let τ = ν τ₁ ⟶ τ₂ in A ⊢ τ ≤ τ₁ ⟶ τ₂ [0≔ τ ]
-  fold   : ∀ {n} (τ₁ τ₂ : Ty (suc n)) →
+  fold   : ∀ {n} {τ₁ τ₂ : Ty (suc n)} →
            let τ = ν τ₁ ⟶ τ₂ in A ⊢ τ₁ ⟶ τ₂ [0≔ τ ] ≤ τ
 
   -- Reflexivity.
@@ -113,11 +113,11 @@ module Soundness where
     where
     w-s : ∀ {m n} {σ : Ty m} {τ : Ty n} →
           A ⊢ σ ≤ τ → σ ≤WHNF τ
-    w-s ⊥                     = ⊥            ↓
-    w-s ⊤                     = ⊤            ↓
-    w-s (unfold τ₁ τ₂)        = unfold τ₁ τ₂ ↓
-    w-s (fold   τ₁ τ₂)        = fold   τ₁ τ₂ ↓
-    w-s (τ ∎)                 = (τ ∎)        ↓
+    w-s ⊥                     = ⊥      ↓
+    w-s ⊤                     = ⊤      ↓
+    w-s unfold                = unfold ↓
+    w-s fold                  = fold   ↓
+    w-s (τ ∎)                 = (τ ∎)  ↓
     w-s (τ₁ ≤⟨ τ₁≤τ₂ ⟩ τ₂≤τ₃) = τ₁ ≤⟨ w-s τ₁≤τ₂ ⟩ w-s τ₂≤τ₃
     w-s (hyp σ≤τ)             = lookup σ≤τ valid
     w-s (τ₁≤σ₁ ⟶ σ₂≤τ₂)       = proof
