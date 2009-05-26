@@ -2,15 +2,15 @@
 -- The two semantical definitions of subtyping are equivalent
 ------------------------------------------------------------------------
 
-module RecursiveTypes.Subtyping.Equivalence where
+module RecursiveTypes.Subtyping.Semantic.Equivalence where
 
 open import Data.Nat
 open import Coinduction
 open import Data.Function
 
 open import RecursiveTypes.Syntax
-open import RecursiveTypes.Subtyping.Inductive
-open import RecursiveTypes.Subtyping.Coinductive
+open import RecursiveTypes.Subtyping.Semantic.Inductive
+open import RecursiveTypes.Subtyping.Semantic.Coinductive
 
 mutual
 

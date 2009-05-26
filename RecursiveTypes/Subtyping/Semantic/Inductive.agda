@@ -2,7 +2,7 @@
 -- Subtyping defined in terms of finite approximations
 ------------------------------------------------------------------------
 
-module RecursiveTypes.Subtyping.Inductive where
+module RecursiveTypes.Subtyping.Semantic.Inductive where
 
 open import Data.Nat
 open import Data.Fin

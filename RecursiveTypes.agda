@@ -23,18 +23,18 @@ import RecursiveTypes.Semantics
 -- The definition of subtyping which, in my eyes, is the most obvious.
 -- Some people may dislike coinductive definitions, though.
 
-import RecursiveTypes.Subtyping.Coinductive
+import RecursiveTypes.Subtyping.Semantic.Coinductive
 
 -- Another definition of subtyping, this time in terms of finite
 -- approximations. According to Brandt and Henglein this definition is
 -- due to Amadio and Cardelli.
 
-import RecursiveTypes.Subtyping.Inductive
+import RecursiveTypes.Subtyping.Semantic.Inductive
 
 -- The two semantical definitions of subtyping above can easily be
 -- proved equivalent.
 
-import RecursiveTypes.Subtyping.Equivalence
+import RecursiveTypes.Subtyping.Semantic.Equivalence
 
 -- An axiomatisation of subtyping which is inspired by Brandt and
 -- Henglein's. The main difference is that their axiomatisation is
@@ -45,4 +45,11 @@ import RecursiveTypes.Subtyping.Equivalence
 -- simpler than Brandt and Henglein's, but their proof includes a
 -- decision procedure for subtyping.
 
-import RecursiveTypes.Subtyping.Axiomatisation
+import RecursiveTypes.Subtyping.Axiomatic.Coinductive
+
+-- Brandt and Henglein's axiomatisation, plus a proof showing that the
+-- axiomatisation is sound with respect to the ones above. The
+-- soundness proof is different than the one given by Brandt and
+-- Henglein: it is cyclic (but productive).
+
+import RecursiveTypes.Subtyping.Axiomatic.Inductive

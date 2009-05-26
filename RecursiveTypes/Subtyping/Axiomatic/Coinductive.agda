@@ -2,7 +2,7 @@
 -- Coinductive axiomatisation of subtyping
 ------------------------------------------------------------------------
 
-module RecursiveTypes.Subtyping.Axiomatisation where
+module RecursiveTypes.Subtyping.Axiomatic.Coinductive where
 
 open import Data.Nat using (ℕ; zero; suc)
 open import Coinduction
@@ -10,7 +10,7 @@ open import Coinduction
 open import RecursiveTypes.Syntax
 open import RecursiveTypes.Substitution
 open import RecursiveTypes.Semantics
-open import RecursiveTypes.Subtyping.Coinductive
+open import RecursiveTypes.Subtyping.Semantic.Coinductive
 
 ------------------------------------------------------------------------
 -- Definition

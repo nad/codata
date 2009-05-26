@@ -2,7 +2,7 @@
 -- Coinductive definition of subtyping
 ------------------------------------------------------------------------
 
-module RecursiveTypes.Subtyping.Coinductive where
+module RecursiveTypes.Subtyping.Semantic.Coinductive where
 
 open import Coinduction
 open import Data.Fin
