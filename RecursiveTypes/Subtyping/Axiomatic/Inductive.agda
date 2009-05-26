@@ -1,3 +1,5 @@
+{-# OPTIONS --no-termination-check #-}
+
 ------------------------------------------------------------------------
 -- Inductive axiomatisation of subtyping
 ------------------------------------------------------------------------
@@ -5,17 +7,24 @@
 module RecursiveTypes.Subtyping.Axiomatic.Inductive where
 
 open import Coinduction
+open import Data.Empty using (⊥-elim)
+open import Data.Function
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.List using (List; []; _∷_)
-open import Data.List.Any as Any using (_∈_; here; there)
-open import Data.List.All as All using (All; []; _∷_; lookup)
-open import Relation.Unary using (Pred; _⊆_)
+open import Data.List.Any as Any using (_∈_; _∉_)
+open import Data.List.All as All using (All; []; _∷_)
+open import Data.Sum as Sum using (_⊎_; inj₁; inj₂)
+open import Relation.Nullary
+open import Relation.Unary using (Pred)
+open import Relation.Binary.HeterogeneousEquality
+open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 
 open import RecursiveTypes.Syntax
 open import RecursiveTypes.Substitution
-open import RecursiveTypes.Semantics
-open import RecursiveTypes.Subtyping.Axiomatic.Coinductive
-  hiding (sound; complete)
+open import RecursiveTypes.Subtyping.Semantic.Coinductive as Sem
+  using (_≤Coind_)
+open import RecursiveTypes.Subtyping.Axiomatic.Coinductive as Ax
+  using (_≤_; ⊥; ⊤; _⟶_; unfold; fold; _∎; _≤⟨_⟩_)
 
 ------------------------------------------------------------------------
 -- Definition
@@ -68,7 +77,7 @@ data _⊢_≤_ (A : List Hyp) : ∀ {m n} → Ty m → Ty n → Set where
         (σ≤τ : σ ≲ τ ∈ A) → A ⊢ σ ≤ τ
 
 ------------------------------------------------------------------------
--- Correctness
+-- Soundness
 
 -- A hypothesis is valid if there is a corresponding proof.
 
@@ -119,7 +128,7 @@ module Soundness where
     w-s fold                  = fold   ↓
     w-s (τ ∎)                 = (τ ∎)  ↓
     w-s (τ₁ ≤⟨ τ₁≤τ₂ ⟩ τ₂≤τ₃) = τ₁ ≤⟨ w-s τ₁≤τ₂ ⟩ w-s τ₂≤τ₃
-    w-s (hyp σ≤τ)             = lookup σ≤τ valid
+    w-s (hyp σ≤τ)             = All.lookup σ≤τ valid
     w-s (τ₁≤σ₁ ⟶ σ₂≤τ₂)       = proof
       where proof = ♯ sound (proof ∷ valid) τ₁≤σ₁ ⟶
                     ♯ sound (proof ∷ valid) σ₂≤τ₂
@@ -144,3 +153,92 @@ sound : ∀ {A m n} {σ : Ty m} {τ : Ty n} →
         A ⊢ σ ≤ τ → All (Valid _≤_) A → σ ≤ τ
 sound σ≤τ valid = ⟦ S.sound (All.map _↓ valid) σ≤τ ⟧≤
   where open module S = Soundness
+
+------------------------------------------------------------------------
+-- The relation is decidable
+
+module Decidable where
+
+  _≲?_ : ∀ {n₁ n₂} (σ₁ : Ty n₁) (σ₂ : Ty n₂) A → Dec (σ₁ ≲ σ₂ ∈ A)
+  σ₁ ≲? σ₂ = Any.dec (helper σ₁ σ₂)
+    where
+    helper : ∀ {n₁ n₂} (σ₁ : Ty n₁) (σ₂ : Ty n₂) hyp →
+             Dec (σ₁ ≲ σ₂ ≡ hyp)
+    helper σ₁          σ₂          h with σ₁ ≅? Hyp.σ₁ h
+                                        | σ₂ ≅? Hyp.σ₂ h
+    helper .(Hyp.σ₁ h) .(Hyp.σ₂ h) h | yes refl | yes refl = yes refl
+    helper σ₁ σ₂ h | no σ₁≇ | _ = no (σ₁≇ ∘ cong Hyp.σ₁ ∘ ≡-to-≅)
+    helper σ₁ σ₂ h | _ | no σ₂≇ = no (σ₂≇ ∘ cong Hyp.σ₂ ∘ ≡-to-≅)
+
+  -- The proof below can perhaps be optimised (see Gapeyev, Levin and
+  -- Pierce's "Recursive Subtyping Revealed" from ICFP '00).
+
+  mutual
+
+   dec : ∀ {m n} (σ : Ty m) (τ : Ty n) A → A ⊢ σ ≤ τ ⊎ (¬ σ ≤Coind τ)
+   dec σ τ A with (σ ≲? τ) A
+   ... | yes σ≤τ = inj₁ (hyp σ≤τ)
+   ... | no  _   = dec′ σ τ A
+
+   dec′ : ∀ {m n} (σ : Ty m) (τ : Ty n) A → A ⊢ σ ≤ τ ⊎ (¬ σ ≤Coind τ)
+   dec′ ⊥ τ A = inj₁ ⊥
+   dec′ σ ⊤ A = inj₁ ⊤
+
+   dec′ (var x) (var  y) A with var x ≅? var y
+   dec′ (var x) (var .x) A | yes refl = inj₁ (var x ∎)
+   dec′ (var x) (var  y) A | no  x≠y  = inj₂ (x≠y ∘ Sem.var:≤∞⟶≅)
+
+   dec′ (σ₁ ⟶ σ₂) (τ₁ ⟶ τ₂) A with dec τ₁ σ₁ (H ∷ A) | dec σ₂ τ₂ (H ∷ A)
+     where H = σ₁ ⟶ σ₂ ≲ τ₁ ⟶ τ₂
+   ... | inj₂ ≰  | _       = inj₂ (≰ ∘  Sem.left-proj)
+   ... | _       | inj₂ ≰  = inj₂ (≰ ∘ Sem.right-proj)
+   ... | inj₁ ≤₁ | inj₁ ≤₂ = inj₁ (≤₁ ⟶ ≤₂)
+
+   dec′ (ν σ₁ ⟶ σ₂) τ A =
+     Sum.map (λ ≤τ → σ                ≤⟨ unfold ⟩
+                     σ₁ ⟶ σ₂ [0≔ σ ]  ≤⟨ ≤τ ⟩
+                     τ                ∎)
+             (λ ≰τ ≤τ → ≰τ (Sem.trans Sem.fold ≤τ))
+             (dec (σ₁ ⟶ σ₂ [0≔ σ ]) τ A)
+     where σ = ν σ₁ ⟶ σ₂
+   dec′ σ (ν τ₁ ⟶ τ₂) A =
+     Sum.map (λ σ≤ → σ                ≤⟨ σ≤ ⟩
+                     τ₁ ⟶ τ₂ [0≔ τ ]  ≤⟨ fold ⟩
+                     τ                ∎)
+             (λ σ≰ σ≤ → σ≰ (Sem.trans σ≤ Sem.unfold))
+             (dec σ (τ₁ ⟶ τ₂ [0≔ τ ]) A)
+     where τ = ν τ₁ ⟶ τ₂
+
+   dec′ ⊤         ⊥         A = inj₂ (λ ())
+   dec′ ⊤         (var x)   A = inj₂ (λ ())
+   dec′ ⊤         (τ₁ ⟶ τ₂) A = inj₂ (λ ())
+   dec′ (var x)   ⊥         A = inj₂ (λ ())
+   dec′ (var x)   (τ₁ ⟶ τ₂) A = inj₂ (λ ())
+   dec′ (σ₁ ⟶ σ₂) ⊥         A = inj₂ (λ ())
+   dec′ (σ₁ ⟶ σ₂) (var x)   A = inj₂ (λ ())
+
+-- The definition above is decidable (when the set of assumptions is
+-- empty).
+
+dec : ∀ {m n} (σ : Ty m) (τ : Ty n) → Dec ([] ⊢ σ ≤ τ)
+dec σ τ with Decidable.dec σ τ []
+... | inj₁ σ≤τ = yes σ≤τ
+... | inj₂ σ≰τ = no (σ≰τ ∘ Ax.sound ∘ flip sound [])
+
+-- The other relations are also decidable.
+
+≤-dec : ∀ {m n} (σ : Ty m) (τ : Ty n) → Dec (σ ≤ τ)
+≤-dec σ τ with Decidable.dec σ τ []
+... | inj₁ σ≤τ = yes (sound σ≤τ [])
+... | inj₂ σ≰τ = no (σ≰τ ∘ Ax.sound)
+
+------------------------------------------------------------------------
+-- Completeness
+
+-- The definition above is complete with respect to the others.
+
+complete : ∀ {A m n} {σ : Ty m} {τ : Ty n} →
+           σ ≤ τ → A ⊢ σ ≤ τ
+complete {A} {σ = σ} {τ} σ≤τ with Decidable.dec σ τ A
+... | inj₁ ⊢σ≤τ = ⊢σ≤τ
+... | inj₂ σ≰τ  = ⊥-elim (σ≰τ (Ax.sound σ≤τ))

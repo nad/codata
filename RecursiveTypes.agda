@@ -47,9 +47,11 @@ import RecursiveTypes.Subtyping.Semantic.Equivalence
 
 import RecursiveTypes.Subtyping.Axiomatic.Coinductive
 
--- Brandt and Henglein's axiomatisation, plus a proof showing that the
--- axiomatisation is sound with respect to the ones above. The
--- soundness proof is different than the one given by Brandt and
--- Henglein: it is cyclic (but productive).
+-- Brandt and Henglein's axiomatisation, plus some proofs:
+-- • A proof showing that the axiomatisation is sound with respect to
+--   the ones above. The soundness proof is different than the one
+--   given by Brandt and Henglein: it is cyclic (but productive).
+-- • Partial proofs of decidability and completeness, based on Brandt
+--   and Henglein's algorithm.
 
 import RecursiveTypes.Subtyping.Axiomatic.Inductive
