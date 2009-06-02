@@ -60,10 +60,8 @@ data _⊢_≤_ (A : List Hyp) : ∀ {m n} → Ty m → Ty n → Set where
         A ⊢ σ₁ ⟶ σ₂ ≤ τ₁ ⟶ τ₂
 
   -- Rules for folding and unfolding ν.
-  unfold : ∀ {n} {τ₁ τ₂ : Ty (suc n)} →
-           let τ = ν τ₁ ⟶ τ₂ in A ⊢ τ ≤ τ₁ ⟶ τ₂ [0≔ τ ]
-  fold   : ∀ {n} {τ₁ τ₂ : Ty (suc n)} →
-           let τ = ν τ₁ ⟶ τ₂ in A ⊢ τ₁ ⟶ τ₂ [0≔ τ ] ≤ τ
+  unfold : ∀ {n} {τ₁ τ₂ : Ty (suc n)} → A ⊢ ν τ₁ ⟶ τ₂ ≤ unfold[ν τ₁ ⟶ τ₂ ]
+  fold   : ∀ {n} {τ₁ τ₂ : Ty (suc n)} → A ⊢ unfold[ν τ₁ ⟶ τ₂ ] ≤ ν τ₁ ⟶ τ₂
 
   -- Reflexivity.
   _∎ : ∀ {n} (τ : Ty n) → A ⊢ τ ≤ τ
@@ -197,19 +195,17 @@ module Decidable where
    ... | inj₁ ≤₁ | inj₁ ≤₂ = inj₁ (≤₁ ⟶ ≤₂)
 
    A ⊢ ν σ₁ ⟶ σ₂ ≤?′ τ =
-     Sum.map (λ ≤τ → σ                ≤⟨ unfold ⟩
-                     σ₁ ⟶ σ₂ [0≔ σ ]  ≤⟨ ≤τ ⟩
-                     τ                ∎)
+     Sum.map (λ ≤τ → ν σ₁ ⟶ σ₂           ≤⟨ unfold ⟩
+                     unfold[ν σ₁ ⟶ σ₂ ]  ≤⟨ ≤τ ⟩
+                     τ                   ∎)
              (λ ≰τ ≤τ → ≰τ (Sem.trans Sem.fold ≤τ))
-             (A ⊢ σ₁ ⟶ σ₂ [0≔ σ ] ≤? τ)
-     where σ = ν σ₁ ⟶ σ₂
+             (A ⊢ unfold[ν σ₁ ⟶ σ₂ ] ≤? τ)
    A ⊢ σ ≤?′ ν τ₁ ⟶ τ₂ =
-     Sum.map (λ σ≤ → σ                ≤⟨ σ≤ ⟩
-                     τ₁ ⟶ τ₂ [0≔ τ ]  ≤⟨ fold ⟩
-                     τ                ∎)
+     Sum.map (λ σ≤ → σ                   ≤⟨ σ≤ ⟩
+                     unfold[ν τ₁ ⟶ τ₂ ]  ≤⟨ fold ⟩
+                     ν τ₁ ⟶ τ₂           ∎)
              (λ σ≰ σ≤ → σ≰ (Sem.trans σ≤ Sem.unfold))
-             (A ⊢ σ ≤? τ₁ ⟶ τ₂ [0≔ τ ])
-     where τ = ν τ₁ ⟶ τ₂
+             (A ⊢ σ ≤? unfold[ν τ₁ ⟶ τ₂ ])
 
    A ⊢ ⊤       ≤?′ ⊥       = inj₂ (λ ())
    A ⊢ ⊤       ≤?′ var x   = inj₂ (λ ())

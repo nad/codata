@@ -66,6 +66,11 @@ infix 8 _[0≔_]
 _[0≔_] : ∀ {n} → Ty (suc n) → Ty n → Ty n
 σ [0≔ τ ] = σ / sub τ
 
+-- The unfolding of a fixpoint.
+
+unfold[ν_⟶_] : ∀ {n} → Ty (suc n) → Ty (suc n) → Ty n
+unfold[ν σ ⟶ τ ] = σ ⟶ τ [0≔ ν σ ⟶ τ ]
+
 -- Substitution lemmas.
 
 tyLemmas : TermLemmas Ty

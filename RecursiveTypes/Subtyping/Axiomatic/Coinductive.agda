@@ -39,10 +39,8 @@ data _≤_ : ∀ {m n} → Ty m → Ty n → Set where
         σ₁ ⟶ σ₂ ≤ τ₁ ⟶ τ₂
 
   -- Rules for folding and unfolding ν.
-  unfold : ∀ {n} {τ₁ τ₂ : Ty (suc n)} →
-           let τ = ν τ₁ ⟶ τ₂ in τ ≤ τ₁ ⟶ τ₂ [0≔ τ ]
-  fold   : ∀ {n} {τ₁ τ₂ : Ty (suc n)} →
-           let τ = ν τ₁ ⟶ τ₂ in τ₁ ⟶ τ₂ [0≔ τ ] ≤ τ
+  unfold : ∀ {n} {τ₁ τ₂ : Ty (suc n)} → ν τ₁ ⟶ τ₂ ≤ unfold[ν τ₁ ⟶ τ₂ ]
+  fold   : ∀ {n} {τ₁ τ₂ : Ty (suc n)} → unfold[ν τ₁ ⟶ τ₂ ] ≤ ν τ₁ ⟶ τ₂
 
   -- Reflexivity.
   _∎ : ∀ {n} (τ : Ty n) → τ ≤ τ
@@ -85,25 +83,20 @@ complete (σ₁ ⟶ σ₂) (var x)   ()
 complete (σ₁ ⟶ σ₂) (τ₁ ⟶ τ₂) (τ₁≤σ₁ ⟶ σ₂≤τ₂) =
   ♯ complete τ₁ σ₁ (♭ τ₁≤σ₁) ⟶ ♯ complete σ₂ τ₂ (♭ σ₂≤τ₂)
 complete (σ₁ ⟶ σ₂) (ν τ₁ ⟶ τ₂) (τ₁≤σ₁ ⟶ σ₂≤τ₂) =
-  σ₁ ⟶ σ₂          ≤⟨ ♯ complete (τ₁ [0≔ τ ]) σ₁ (♭ τ₁≤σ₁) ⟶
-                      ♯ complete σ₂ (τ₂ [0≔ τ ]) (♭ σ₂≤τ₂) ⟩
-  τ₁ ⟶ τ₂ [0≔ τ ]  ≤⟨ fold ⟩
-  τ                ∎
-  where τ = ν τ₁ ⟶ τ₂
+  σ₁ ⟶ σ₂             ≤⟨ ♯ complete _ _ (♭ τ₁≤σ₁) ⟶
+                         ♯ complete _ _ (♭ σ₂≤τ₂) ⟩
+  unfold[ν τ₁ ⟶ τ₂ ]  ≤⟨ fold ⟩
+  ν τ₁ ⟶ τ₂           ∎
 complete (ν σ₁ ⟶ σ₂) ⊥         ()
 complete (ν σ₁ ⟶ σ₂) (var x)   ()
 complete (ν σ₁ ⟶ σ₂) (τ₁ ⟶ τ₂) (τ₁≤σ₁ ⟶ σ₂≤τ₂) =
-  σ                ≤⟨ unfold ⟩
-  σ₁ ⟶ σ₂ [0≔ σ ]  ≤⟨ ♯ complete τ₁ (σ₁ [0≔ σ ]) (♭ τ₁≤σ₁) ⟶
-                      ♯ complete (σ₂ [0≔ σ ]) τ₂ (♭ σ₂≤τ₂) ⟩
-  τ₁ ⟶ τ₂          ∎
-  where σ = ν σ₁ ⟶ σ₂
+  ν σ₁ ⟶ σ₂           ≤⟨ unfold ⟩
+  unfold[ν σ₁ ⟶ σ₂ ]  ≤⟨ ♯ complete _ _ (♭ τ₁≤σ₁) ⟶
+                         ♯ complete _ _ (♭ σ₂≤τ₂) ⟩
+  (τ₁ ⟶ τ₂)           ∎
 complete (ν σ₁ ⟶ σ₂) (ν τ₁ ⟶ τ₂) (τ₁≤σ₁ ⟶ σ₂≤τ₂) =
-  σ                ≤⟨ unfold ⟩
-  σ₁ ⟶ σ₂ [0≔ σ ]  ≤⟨ ♯ complete (τ₁ [0≔ τ ]) (σ₁ [0≔ σ ]) (♭ τ₁≤σ₁) ⟶
-                      ♯ complete (σ₂ [0≔ σ ]) (τ₂ [0≔ τ ]) (♭ σ₂≤τ₂) ⟩
-  τ₁ ⟶ τ₂ [0≔ τ ]  ≤⟨ fold ⟩
-  τ                ∎
-  where
-  σ = ν σ₁ ⟶ σ₂
-  τ = ν τ₁ ⟶ τ₂
+  ν σ₁ ⟶ σ₂           ≤⟨ unfold ⟩
+  unfold[ν σ₁ ⟶ σ₂ ]  ≤⟨ ♯ complete _ _ (♭ τ₁≤σ₁) ⟶
+                         ♯ complete _ _ (♭ σ₂≤τ₂) ⟩
+  unfold[ν τ₁ ⟶ τ₂ ]  ≤⟨ fold ⟩
+  ν τ₁ ⟶ τ₂           ∎
