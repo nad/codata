@@ -159,8 +159,10 @@ sound σ≤τ valid = ⟦ S.sound (All.map _↓ valid) σ≤τ ⟧≤
 
 module Decidable where
 
-  _≲?_ : ∀ {n₁ n₂} (σ₁ : Ty n₁) (σ₂ : Ty n₂) A → Dec (σ₁ ≲ σ₂ ∈ A)
-  σ₁ ≲? σ₂ = Any.dec (helper σ₁ σ₂)
+  infix 4 _⊢_≲?_ _⊢_≤?_ _⊢_≤?′_
+
+  _⊢_≲?_ : ∀ A {n₁ n₂} (σ₁ : Ty n₁) (σ₂ : Ty n₂) → Dec (σ₁ ≲ σ₂ ∈ A)
+  A ⊢ σ₁ ≲? σ₂ = Any.dec (helper σ₁ σ₂) A
     where
     helper : ∀ {n₁ n₂} (σ₁ : Ty n₁) (σ₂ : Ty n₂) hyp →
              Dec (σ₁ ≲ σ₂ ≡ hyp)
@@ -175,60 +177,64 @@ module Decidable where
 
   mutual
 
-   dec : ∀ {m n} (σ : Ty m) (τ : Ty n) A → A ⊢ σ ≤ τ ⊎ (¬ σ ≤Coind τ)
-   dec σ τ A with (σ ≲? τ) A
+   _⊢_≤?_ : ∀ A {m n} (σ : Ty m) (τ : Ty n) → A ⊢ σ ≤ τ ⊎ (¬ σ ≤Coind τ)
+   A ⊢ σ ≤? τ with A ⊢ σ ≲? τ
    ... | yes σ≤τ = inj₁ (hyp σ≤τ)
-   ... | no  _   = dec′ σ τ A
+   ... | no  _   = A ⊢ σ ≤?′ τ
 
-   dec′ : ∀ {m n} (σ : Ty m) (τ : Ty n) A → A ⊢ σ ≤ τ ⊎ (¬ σ ≤Coind τ)
-   dec′ ⊥ τ A = inj₁ ⊥
-   dec′ σ ⊤ A = inj₁ ⊤
+   _⊢_≤?′_ : ∀ A {m n} (σ : Ty m) (τ : Ty n) → A ⊢ σ ≤ τ ⊎ (¬ σ ≤Coind τ)
+   A ⊢ ⊥ ≤?′ τ = inj₁ ⊥
+   A ⊢ σ ≤?′ ⊤ = inj₁ ⊤
 
-   dec′ (var x) (var  y) A with var x ≅? var y
-   dec′ (var x) (var .x) A | yes refl = inj₁ (var x ∎)
-   dec′ (var x) (var  y) A | no  x≠y  = inj₂ (x≠y ∘ Sem.var:≤∞⟶≅)
+   A ⊢ var x ≤?′ var  y with var x ≅? var y
+   A ⊢ var x ≤?′ var .x | yes refl = inj₁ (var x ∎)
+   A ⊢ var x ≤?′ var  y | no  x≠y  = inj₂ (x≠y ∘ Sem.var:≤∞⟶≅)
 
-   dec′ (σ₁ ⟶ σ₂) (τ₁ ⟶ τ₂) A with dec τ₁ σ₁ (H ∷ A) | dec σ₂ τ₂ (H ∷ A)
-     where H = σ₁ ⟶ σ₂ ≲ τ₁ ⟶ τ₂
+   A ⊢ σ₁ ⟶ σ₂ ≤?′ τ₁ ⟶ τ₂ with H ∷ A ⊢ τ₁ ≤? σ₁ | H ∷ A ⊢ σ₂ ≤? τ₂
+                           where H = σ₁ ⟶ σ₂ ≲ τ₁ ⟶ τ₂
    ... | inj₂ ≰  | _       = inj₂ (≰ ∘  Sem.left-proj)
    ... | _       | inj₂ ≰  = inj₂ (≰ ∘ Sem.right-proj)
    ... | inj₁ ≤₁ | inj₁ ≤₂ = inj₁ (≤₁ ⟶ ≤₂)
 
-   dec′ (ν σ₁ ⟶ σ₂) τ A =
+   A ⊢ ν σ₁ ⟶ σ₂ ≤?′ τ =
      Sum.map (λ ≤τ → σ                ≤⟨ unfold ⟩
                      σ₁ ⟶ σ₂ [0≔ σ ]  ≤⟨ ≤τ ⟩
                      τ                ∎)
              (λ ≰τ ≤τ → ≰τ (Sem.trans Sem.fold ≤τ))
-             (dec (σ₁ ⟶ σ₂ [0≔ σ ]) τ A)
+             (A ⊢ σ₁ ⟶ σ₂ [0≔ σ ] ≤? τ)
      where σ = ν σ₁ ⟶ σ₂
-   dec′ σ (ν τ₁ ⟶ τ₂) A =
+   A ⊢ σ ≤?′ ν τ₁ ⟶ τ₂ =
      Sum.map (λ σ≤ → σ                ≤⟨ σ≤ ⟩
                      τ₁ ⟶ τ₂ [0≔ τ ]  ≤⟨ fold ⟩
                      τ                ∎)
              (λ σ≰ σ≤ → σ≰ (Sem.trans σ≤ Sem.unfold))
-             (dec σ (τ₁ ⟶ τ₂ [0≔ τ ]) A)
+             (A ⊢ σ ≤? τ₁ ⟶ τ₂ [0≔ τ ])
      where τ = ν τ₁ ⟶ τ₂
 
-   dec′ ⊤         ⊥         A = inj₂ (λ ())
-   dec′ ⊤         (var x)   A = inj₂ (λ ())
-   dec′ ⊤         (τ₁ ⟶ τ₂) A = inj₂ (λ ())
-   dec′ (var x)   ⊥         A = inj₂ (λ ())
-   dec′ (var x)   (τ₁ ⟶ τ₂) A = inj₂ (λ ())
-   dec′ (σ₁ ⟶ σ₂) ⊥         A = inj₂ (λ ())
-   dec′ (σ₁ ⟶ σ₂) (var x)   A = inj₂ (λ ())
+   A ⊢ ⊤       ≤?′ ⊥       = inj₂ (λ ())
+   A ⊢ ⊤       ≤?′ var x   = inj₂ (λ ())
+   A ⊢ ⊤       ≤?′ τ₁ ⟶ τ₂ = inj₂ (λ ())
+   A ⊢ var x   ≤?′ ⊥       = inj₂ (λ ())
+   A ⊢ var x   ≤?′ τ₁ ⟶ τ₂ = inj₂ (λ ())
+   A ⊢ σ₁ ⟶ σ₂ ≤?′ ⊥       = inj₂ (λ ())
+   A ⊢ σ₁ ⟶ σ₂ ≤?′ var x   = inj₂ (λ ())
+
+infix 4 []⊢_≤?_ _≤?_
 
 -- The definition above is decidable (when the set of assumptions is
 -- empty).
 
-dec : ∀ {m n} (σ : Ty m) (τ : Ty n) → Dec ([] ⊢ σ ≤ τ)
-dec σ τ with Decidable.dec σ τ []
+[]⊢_≤?_ : ∀ {m n} (σ : Ty m) (τ : Ty n) → Dec ([] ⊢ σ ≤ τ)
+[]⊢ σ ≤? τ with [] ⊢ σ ≤? τ
+           where open Decidable
 ... | inj₁ σ≤τ = yes σ≤τ
 ... | inj₂ σ≰τ = no (σ≰τ ∘ Ax.sound ∘ flip sound [])
 
 -- The other relations are also decidable.
 
-≤-dec : ∀ {m n} (σ : Ty m) (τ : Ty n) → Dec (σ ≤ τ)
-≤-dec σ τ with Decidable.dec σ τ []
+_≤?_ : ∀ {m n} (σ : Ty m) (τ : Ty n) → Dec (σ ≤ τ)
+σ ≤? τ with [] ⊢ σ ≤? τ
+       where open Decidable
 ... | inj₁ σ≤τ = yes (sound σ≤τ [])
 ... | inj₂ σ≰τ = no (σ≰τ ∘ Ax.sound)
 
@@ -239,6 +245,7 @@ dec σ τ with Decidable.dec σ τ []
 
 complete : ∀ {A m n} {σ : Ty m} {τ : Ty n} →
            σ ≤ τ → A ⊢ σ ≤ τ
-complete {A} {σ = σ} {τ} σ≤τ with Decidable.dec σ τ A
+complete {A} {σ = σ} {τ} σ≤τ with A ⊢ σ ≤? τ
+                             where open Decidable
 ... | inj₁ ⊢σ≤τ = ⊢σ≤τ
 ... | inj₂ σ≰τ  = ⊥-elim (σ≰τ (Ax.sound σ≤τ))
