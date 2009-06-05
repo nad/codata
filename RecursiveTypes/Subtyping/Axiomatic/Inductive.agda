@@ -138,7 +138,8 @@ module Soundness where
            σ ≤Prog τ → σ ≤ τ
     ⟦ σ≤τ ⟧≤ = value (whnf σ≤τ)
 
--- The definition above is sound with respect to the others.
+-- The subtyping relation defined above is sound with respect to the
+-- others.
 
 sound : ∀ {n A} {σ τ : Ty n} →
         A ⊢ σ ≤ τ → All (Valid _≤_) A → σ ≤ τ
@@ -208,8 +209,8 @@ module Decidable where
 
 infix 4 []⊢_≤?_ _≤?_
 
--- The definition above is decidable (when the set of assumptions is
--- empty).
+-- The subtyping relation defined above is decidable (when the set of
+-- assumptions is empty).
 
 []⊢_≤?_ : ∀ {n} (σ τ : Ty n) → Dec ([] ⊢ σ ≤ τ)
 []⊢ σ ≤? τ with [] ⊢ σ ≤? τ
@@ -217,7 +218,7 @@ infix 4 []⊢_≤?_ _≤?_
 ... | inj₁ σ≤τ = yes σ≤τ
 ... | inj₂ σ≰τ = no (σ≰τ ∘ Ax.sound ∘ flip sound [])
 
--- The other relations are also decidable.
+-- The other subtyping relations are also decidable.
 
 _≤?_ : ∀ {n} (σ τ : Ty n) → Dec (σ ≤ τ)
 σ ≤? τ with [] ⊢ σ ≤? τ
@@ -228,7 +229,8 @@ _≤?_ : ∀ {n} (σ τ : Ty n) → Dec (σ ≤ τ)
 ------------------------------------------------------------------------
 -- Completeness
 
--- The definition above is complete with respect to the others.
+-- The subtyping relation defined above is complete with respect to
+-- the others.
 
 complete : ∀ {n A} {σ τ : Ty n} →
            σ ≤ τ → A ⊢ σ ≤ τ
