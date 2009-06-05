@@ -160,7 +160,7 @@ module Decidable where
   infix 4 _⊢_≲?_ _⊢_≤?_ _⊢_≤?′_
 
   _⊢_≲?_ : ∀ A {n₁ n₂} (σ₁ : Ty n₁) (σ₂ : Ty n₂) → Dec (σ₁ ≲ σ₂ ∈ A)
-  A ⊢ σ₁ ≲? σ₂ = Any.dec (helper σ₁ σ₂) A
+  A ⊢ σ₁ ≲? σ₂ = Any.any (helper σ₁ σ₂) A
     where
     helper : ∀ {n₁ n₂} (σ₁ : Ty n₁) (σ₂ : Ty n₂) hyp →
              Dec (σ₁ ≲ σ₂ ≡ hyp)
