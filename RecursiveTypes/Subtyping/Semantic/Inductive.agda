@@ -45,25 +45,25 @@ mutual
 
 infix 4 _≤Fin_ _≤↓_ _≤↑_ _≤Ind_
 
-data _≤Fin_ : ∀ {m n} → FinTree m → FinTree n → Set where
-  ⊥    : ∀ {m n} {τ : FinTree n} → ⊥ {m} ≤Fin τ
-  ⊤    : ∀ {m n} {σ : FinTree m} → σ ≤Fin ⊤ {n}
-  refl : ∀ {n} {τ : FinTree n} → τ ≤Fin τ
-  _⟶_  : ∀ {m n} {σ₁ σ₂ : FinTree m} {τ₁ τ₂ : FinTree n}
+data _≤Fin_ {n} : FinTree n → FinTree n → Set where
+  ⊥    : ∀ {τ} → ⊥ ≤Fin τ
+  ⊤    : ∀ {σ} → σ ≤Fin ⊤
+  refl : ∀ {τ} → τ ≤Fin τ
+  _⟶_  : ∀ {σ₁ σ₂ τ₁ τ₂}
          (τ₁≤σ₁ : τ₁ ≤Fin σ₁) (σ₂≤τ₂ : σ₂ ≤Fin τ₂) →
          σ₁ ⟶ σ₂ ≤Fin τ₁ ⟶ τ₂
 
 -- Subtyping for possibly infinite trees, defined in terms of
 -- subtyping for finite trees.
 
-_≤↓_ : ∀ {m n} → Tree m → Tree n → Set
+_≤↓_ : ∀ {n} → Tree n → Tree n → Set
 σ ≤↓ τ = ∀ k → σ ↓ k ≤Fin τ ↓ k
 
-_≤↑_ : ∀ {m n} → Tree m → Tree n → Set
+_≤↑_ : ∀ {n} → Tree n → Tree n → Set
 σ ≤↑ τ = ∀ k → σ ↑ k ≤Fin τ ↑ k
 
 -- Subtyping for recursive types, defined in terms of subtyping for
 -- possibly infinite trees.
 
-_≤Ind_ : ∀ {m n} → Ty m → Ty n → Set
+_≤Ind_ : ∀ {n} → Ty n → Ty n → Set
 σ ≤Ind τ = ⟦ σ ⟧ ≤↓ ⟦ τ ⟧

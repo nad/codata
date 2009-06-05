@@ -13,11 +13,12 @@ open import Data.Nat using (ℕ; zero; suc)
 open import Data.List using (List; []; _∷_)
 open import Data.List.Any as Any using (_∈_; _∉_)
 open import Data.List.All as All using (All; []; _∷_)
+open import Data.Product renaming (_,_ to _≲_)
 open import Data.Sum as Sum using (_⊎_; inj₁; inj₂)
 open import Relation.Nullary
 open import Relation.Unary using (Pred)
-open import Relation.Binary.HeterogeneousEquality
-open import Relation.Binary.PropositionalEquality using (_≡_; refl)
+open import Relation.Binary
+open import Relation.Binary.PropositionalEquality
 
 open import RecursiveTypes.Syntax
 open import RecursiveTypes.Substitution
@@ -30,58 +31,51 @@ open import RecursiveTypes.Subtyping.Axiomatic.Coinductive as Ax
 -- Definition
 
 infixr 10 _⟶_
-infix  6  _≲_
 infix  4  _⊢_≤_
 infixr 2  _≤⟨_⟩_
 infix  2  _∎
 
 -- Hypotheses.
 
-record Hyp : Set where
-  field
-    n₁ : ℕ
-    n₂ : ℕ
-    σ₁ : Ty n₁
-    σ₂ : Ty n₂
-
-_≲_ : ∀ {n₁ n₂} (σ₁ : Ty n₁) (σ₂ : Ty n₂) → Hyp
-σ₁ ≲ σ₂ = record { σ₁ = σ₁; σ₂ = σ₂ }
+Hyp : ℕ → Set
+Hyp n = Ty n × Ty n
 
 -- This inductive subtyping relation is parameterised on a list of
 -- hypotheses. Note Brandt and Henglein's unusual definition of _⟶_.
 
-data _⊢_≤_ (A : List Hyp) : ∀ {m n} → Ty m → Ty n → Set where
+data _⊢_≤_ {n} (A : List (Hyp n)) : Ty n → Ty n → Set where
   -- Structural rules.
-  ⊥   : ∀ {m n} {τ : Ty n} → A ⊢ ⊥ {m} ≤ τ
-  ⊤   : ∀ {m n} {σ : Ty m} → A ⊢ σ ≤ ⊤ {n}
-  _⟶_ : ∀ {m n} {σ₁ σ₂ : Ty m} {τ₁ τ₂ : Ty n} →
+  ⊥   : ∀ {τ} → A ⊢ ⊥ ≤ τ
+  ⊤   : ∀ {σ} → A ⊢ σ ≤ ⊤
+  _⟶_ : ∀ {σ₁ σ₂ τ₁ τ₂} →
         let H = σ₁ ⟶ σ₂ ≲ τ₁ ⟶ τ₂ in
         (τ₁≤σ₁ : H ∷ A ⊢ τ₁ ≤ σ₁) (σ₂≤τ₂ : H ∷ A ⊢ σ₂ ≤ τ₂) →
         A ⊢ σ₁ ⟶ σ₂ ≤ τ₁ ⟶ τ₂
 
   -- Rules for folding and unfolding ν.
-  unfold : ∀ {n} {τ₁ τ₂ : Ty (suc n)} → A ⊢ ν τ₁ ⟶ τ₂ ≤ unfold[ν τ₁ ⟶ τ₂ ]
-  fold   : ∀ {n} {τ₁ τ₂ : Ty (suc n)} → A ⊢ unfold[ν τ₁ ⟶ τ₂ ] ≤ ν τ₁ ⟶ τ₂
+  unfold : ∀ {τ₁ τ₂} → A ⊢ ν τ₁ ⟶ τ₂ ≤ unfold[ν τ₁ ⟶ τ₂ ]
+  fold   : ∀ {τ₁ τ₂} → A ⊢ unfold[ν τ₁ ⟶ τ₂ ] ≤ ν τ₁ ⟶ τ₂
 
   -- Reflexivity.
-  _∎ : ∀ {n} (τ : Ty n) → A ⊢ τ ≤ τ
+  _∎ : ∀ τ → A ⊢ τ ≤ τ
 
   -- Transitivity.
-  _≤⟨_⟩_ : ∀ {m n k} (τ₁ : Ty m) {τ₂ : Ty n} {τ₃ : Ty k}
+  _≤⟨_⟩_ : ∀ τ₁ {τ₂ τ₃}
            (τ₁≤τ₂ : A ⊢ τ₁ ≤ τ₂) (τ₂≤τ₃ : A ⊢ τ₂ ≤ τ₃) → A ⊢ τ₁ ≤ τ₃
 
   -- Hypothesis.
-  hyp : ∀ {m n} {σ : Ty m} {τ : Ty n}
-        (σ≤τ : σ ≲ τ ∈ A) → A ⊢ σ ≤ τ
+  hyp : ∀ {σ τ} (σ≤τ : (σ ≲ τ) ∈ A) → A ⊢ σ ≤ τ
 
 ------------------------------------------------------------------------
 -- Soundness
 
 -- A hypothesis is valid if there is a corresponding proof.
+--
+-- This definition is lazy in order to simplify the definition of
+-- sound below.
 
-Valid : (∀ {m n} → Ty m → Ty n → Set) → Pred Hyp
-Valid _≤_ σ₁≲σ₂ = σ₁ ≤ σ₂
-  where open Hyp σ₁≲σ₂
+Valid : ∀ {n} → (Ty n → Ty n → Set) → Pred (Hyp n)
+Valid _≤_ σ₁≲σ₂ = proj₁ σ₁≲σ₂ ≤ proj₂ σ₁≲σ₂
 
 module Soundness where
 
@@ -94,8 +88,8 @@ module Soundness where
 
     -- Soundness proof programs.
 
-    data _≤Prog_ : ∀ {m n} → Ty m → Ty n → Set where
-      sound : ∀ {A m n} {σ : Ty m} {τ : Ty n} →
+    data _≤Prog_ {n} : Ty n → Ty n → Set where
+      sound : ∀ {A σ τ} →
               (valid : All (Valid _≤WHNF_) A) (σ≤τ : A ⊢ σ ≤ τ) →
               σ ≤Prog τ
 
@@ -103,23 +97,22 @@ module Soundness where
     -- _⟶_ takes (suspended) /programs/ as arguments, while _≤⟨_⟩_
     -- takes /WHNFs/.
 
-    data _≤WHNF_ : ∀ {m n} → Ty m → Ty n → Set where
-      _↓     : ∀ {m n} {σ : Ty m} {τ : Ty n} (σ≤τ : σ ≤ τ) → σ ≤WHNF τ
-      _⟶_    : ∀ {m n} {σ₁ σ₂ : Ty m} {τ₁ τ₂ : Ty n}
+    data _≤WHNF_ {n} : Ty n → Ty n → Set where
+      _↓     : ∀ {σ τ} (σ≤τ : σ ≤ τ) → σ ≤WHNF τ
+      _⟶_    : ∀ {σ₁ σ₂ τ₁ τ₂}
                (τ₁≤σ₁ : ∞ (τ₁ ≤Prog σ₁)) (σ₂≤τ₂ : ∞ (σ₂ ≤Prog τ₂)) →
                σ₁ ⟶ σ₂ ≤WHNF τ₁ ⟶ τ₂
-      _≤⟨_⟩_ : ∀ {m n k} (τ₁ : Ty m) {τ₂ : Ty n} {τ₃ : Ty k}
+      _≤⟨_⟩_ : ∀ τ₁ {τ₂ τ₃}
                (τ₁≤τ₂ : τ₁ ≤WHNF τ₂) (τ₂≤τ₃ : τ₂ ≤WHNF τ₃) → τ₁ ≤WHNF τ₃
 
   -- Computes the WHNF of a soundness program. Note the circular, but
   -- productive, definition of proof below.
 
-  whnf : ∀ {m n} {σ : Ty m} {τ : Ty n} →
+  whnf : ∀ {n} {σ τ : Ty n} →
          σ ≤Prog τ → σ ≤WHNF τ
   whnf (sound {A} valid σ≤τ) = w-s σ≤τ
     where
-    w-s : ∀ {m n} {σ : Ty m} {τ : Ty n} →
-          A ⊢ σ ≤ τ → σ ≤WHNF τ
+    w-s : ∀ {σ τ} → A ⊢ σ ≤ τ → σ ≤WHNF τ
     w-s ⊥                     = ⊥      ↓
     w-s ⊤                     = ⊤      ↓
     w-s unfold                = unfold ↓
@@ -135,19 +128,19 @@ module Soundness where
 
   mutual
 
-    value : ∀ {m n} {σ : Ty m} {τ : Ty n} →
+    value : ∀ {n} {σ τ : Ty n} →
             σ ≤WHNF τ → σ ≤ τ
     value (σ≤τ ↓)               = σ≤τ
     value (τ₁≤σ₁ ⟶ σ₂≤τ₂)       = ♯ ⟦ ♭ τ₁≤σ₁ ⟧≤ ⟶ ♯ ⟦ ♭ σ₂≤τ₂ ⟧≤
     value (τ₁ ≤⟨ τ₁≤τ₂ ⟩ τ₂≤τ₃) = τ₁ ≤⟨ value τ₁≤τ₂ ⟩ value τ₂≤τ₃
 
-    ⟦_⟧≤ : ∀ {m n} {σ : Ty m} {τ : Ty n} →
+    ⟦_⟧≤ : ∀ {n} {σ τ : Ty n} →
            σ ≤Prog τ → σ ≤ τ
     ⟦ σ≤τ ⟧≤ = value (whnf σ≤τ)
 
 -- The definition above is sound with respect to the others.
 
-sound : ∀ {A m n} {σ : Ty m} {τ : Ty n} →
+sound : ∀ {n A} {σ τ : Ty n} →
         A ⊢ σ ≤ τ → All (Valid _≤_) A → σ ≤ τ
 sound σ≤τ valid = ⟦ S.sound (All.map _↓ valid) σ≤τ ⟧≤
   where open module S = Soundness
@@ -159,34 +152,32 @@ module Decidable where
 
   infix 4 _⊢_≲?_ _⊢_≤?_ _⊢_≤?′_
 
-  _⊢_≲?_ : ∀ A {n₁ n₂} (σ₁ : Ty n₁) (σ₂ : Ty n₂) → Dec (σ₁ ≲ σ₂ ∈ A)
-  A ⊢ σ₁ ≲? σ₂ = Any.any (helper σ₁ σ₂) A
-    where
-    helper : ∀ {n₁ n₂} (σ₁ : Ty n₁) (σ₂ : Ty n₂) hyp →
-             Dec (σ₁ ≲ σ₂ ≡ hyp)
-    helper σ₁          σ₂          h with σ₁ ≅? Hyp.σ₁ h
-                                        | σ₂ ≅? Hyp.σ₂ h
-    helper .(Hyp.σ₁ h) .(Hyp.σ₂ h) h | yes refl | yes refl = yes refl
-    helper σ₁ σ₂ h | no σ₁≇ | _ = no (σ₁≇ ∘ cong Hyp.σ₁ ∘ ≡-to-≅)
-    helper σ₁ σ₂ h | _ | no σ₂≇ = no (σ₂≇ ∘ cong Hyp.σ₂ ∘ ≡-to-≅)
+  _≟_ : ∀ {n} → Decidable (_≡_ {Hyp n})
+  ( σ₁ ≲  σ₂) ≟ (τ₁ ≲ τ₂) with σ₁ ≡? τ₁ | σ₂ ≡? τ₂
+  (.τ₁ ≲ .τ₂) ≟ (τ₁ ≲ τ₂) | yes refl | yes refl = yes refl
+  ... | no σ₁≢τ₁ | _ = no (σ₁≢τ₁ ∘ cong proj₁)
+  ... | _ | no σ₂≢τ₂ = no (σ₂≢τ₂ ∘ cong proj₂)
+
+  _⊢_≲?_ : ∀ {n} A (σ₁ σ₂ : Ty n) → Dec ((σ₁ ≲ σ₂) ∈ A)
+  A ⊢ σ₁ ≲? σ₂ = Any.any (_≟_ (σ₁ ≲ σ₂)) A
 
   -- The proof below can perhaps be optimised (see Gapeyev, Levin and
   -- Pierce's "Recursive Subtyping Revealed" from ICFP '00).
 
   mutual
 
-   _⊢_≤?_ : ∀ A {m n} (σ : Ty m) (τ : Ty n) → A ⊢ σ ≤ τ ⊎ (¬ σ ≤Coind τ)
+   _⊢_≤?_ : ∀ {n} A (σ τ : Ty n) → A ⊢ σ ≤ τ ⊎ (¬ σ ≤Coind τ)
    A ⊢ σ ≤? τ with A ⊢ σ ≲? τ
    ... | yes σ≤τ = inj₁ (hyp σ≤τ)
    ... | no  _   = A ⊢ σ ≤?′ τ
 
-   _⊢_≤?′_ : ∀ A {m n} (σ : Ty m) (τ : Ty n) → A ⊢ σ ≤ τ ⊎ (¬ σ ≤Coind τ)
+   _⊢_≤?′_ : ∀ {n} A (σ τ : Ty n) → A ⊢ σ ≤ τ ⊎ (¬ σ ≤Coind τ)
    A ⊢ ⊥ ≤?′ τ = inj₁ ⊥
    A ⊢ σ ≤?′ ⊤ = inj₁ ⊤
 
-   A ⊢ var x ≤?′ var  y with var x ≅? var y
+   A ⊢ var x ≤?′ var  y with var x ≡? var y
    A ⊢ var x ≤?′ var .x | yes refl = inj₁ (var x ∎)
-   A ⊢ var x ≤?′ var  y | no  x≠y  = inj₂ (x≠y ∘ Sem.var:≤∞⟶≅)
+   A ⊢ var x ≤?′ var  y | no  x≠y  = inj₂ (x≠y ∘ Sem.var:≤∞⟶≡)
 
    A ⊢ σ₁ ⟶ σ₂ ≤?′ τ₁ ⟶ τ₂ with H ∷ A ⊢ τ₁ ≤? σ₁ | H ∷ A ⊢ σ₂ ≤? τ₂
                            where H = σ₁ ⟶ σ₂ ≲ τ₁ ⟶ τ₂
@@ -220,7 +211,7 @@ infix 4 []⊢_≤?_ _≤?_
 -- The definition above is decidable (when the set of assumptions is
 -- empty).
 
-[]⊢_≤?_ : ∀ {m n} (σ : Ty m) (τ : Ty n) → Dec ([] ⊢ σ ≤ τ)
+[]⊢_≤?_ : ∀ {n} (σ τ : Ty n) → Dec ([] ⊢ σ ≤ τ)
 []⊢ σ ≤? τ with [] ⊢ σ ≤? τ
            where open Decidable
 ... | inj₁ σ≤τ = yes σ≤τ
@@ -228,7 +219,7 @@ infix 4 []⊢_≤?_ _≤?_
 
 -- The other relations are also decidable.
 
-_≤?_ : ∀ {m n} (σ : Ty m) (τ : Ty n) → Dec (σ ≤ τ)
+_≤?_ : ∀ {n} (σ τ : Ty n) → Dec (σ ≤ τ)
 σ ≤? τ with [] ⊢ σ ≤? τ
        where open Decidable
 ... | inj₁ σ≤τ = yes (sound σ≤τ [])
@@ -239,9 +230,9 @@ _≤?_ : ∀ {m n} (σ : Ty m) (τ : Ty n) → Dec (σ ≤ τ)
 
 -- The definition above is complete with respect to the others.
 
-complete : ∀ {A m n} {σ : Ty m} {τ : Ty n} →
+complete : ∀ {n A} {σ τ : Ty n} →
            σ ≤ τ → A ⊢ σ ≤ τ
-complete {A} {σ = σ} {τ} σ≤τ with A ⊢ σ ≤? τ
+complete {A = A} {σ} {τ} σ≤τ with A ⊢ σ ≤? τ
                              where open Decidable
 ... | inj₁ ⊢σ≤τ = ⊢σ≤τ
 ... | inj₂ σ≰τ  = ⊥-elim (σ≰τ (Ax.sound σ≤τ))

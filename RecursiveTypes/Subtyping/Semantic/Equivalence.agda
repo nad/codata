@@ -14,33 +14,33 @@ open import RecursiveTypes.Subtyping.Semantic.Coinductive
 
 mutual
 
-  ≤∞⇒≤↓ : ∀ {m n} {σ : Tree m} {τ : Tree n} → σ ≤∞ τ → σ ≤↓ τ
+  ≤∞⇒≤↓ : ∀ {n} {σ τ : Tree n} → σ ≤∞ τ → σ ≤↓ τ
   ≤∞⇒≤↓ le              zero    = ⊥
   ≤∞⇒≤↓ ⊥               (suc k) = ⊥
   ≤∞⇒≤↓ ⊤               (suc k) = ⊤
   ≤∞⇒≤↓ var             (suc k) = refl
   ≤∞⇒≤↓ (τ₁≤σ₁ ⟶ σ₂≤τ₂) (suc k) = ≤∞⇒≤↑ (♭ τ₁≤σ₁) k ⟶ ≤∞⇒≤↓ (♭ σ₂≤τ₂) k
 
-  ≤∞⇒≤↑ : ∀ {m n} {σ : Tree m} {τ : Tree n} → σ ≤∞ τ → σ ≤↑ τ
+  ≤∞⇒≤↑ : ∀ {n} {σ τ : Tree n} → σ ≤∞ τ → σ ≤↑ τ
   ≤∞⇒≤↑ le              zero    = ⊤
   ≤∞⇒≤↑ ⊥               (suc k) = ⊥
   ≤∞⇒≤↑ ⊤               (suc k) = ⊤
   ≤∞⇒≤↑ var             (suc k) = refl
   ≤∞⇒≤↑ (τ₁≤σ₁ ⟶ σ₂≤τ₂) (suc k) = ≤∞⇒≤↓ (♭ τ₁≤σ₁) k ⟶ ≤∞⇒≤↑ (♭ σ₂≤τ₂) k
 
-domain : ∀ {m n} {σ₁ σ₂ : FinTree m} {τ₁ τ₂ : FinTree n} →
+domain : ∀ {n} {σ₁ σ₂ τ₁ τ₂ : FinTree n} →
          σ₁ ⟶ σ₂ ≤Fin τ₁ ⟶ τ₂ → σ₂ ≤Fin τ₂
 domain refl            = refl
 domain (τ₁≤σ₁ ⟶ σ₂≤τ₂) = σ₂≤τ₂
 
-codomain : ∀ {m n} {σ₁ σ₂ : FinTree m} {τ₁ τ₂ : FinTree n} →
+codomain : ∀ {n} {σ₁ σ₂ τ₁ τ₂ : FinTree n} →
            σ₁ ⟶ σ₂ ≤Fin τ₁ ⟶ τ₂ → τ₁ ≤Fin σ₁
 codomain refl            = refl
 codomain (τ₁≤σ₁ ⟶ σ₂≤τ₂) = τ₁≤σ₁
 
 mutual
 
-  ≤↑⇒≤∞ : ∀ {m n} (σ : Tree m) (τ : Tree n) → σ ≤↑ τ → σ ≤∞ τ
+  ≤↑⇒≤∞ : ∀ {n} (σ τ : Tree n) → σ ≤↑ τ → σ ≤∞ τ
   ≤↑⇒≤∞ ⊥ _ le = ⊥
   ≤↑⇒≤∞ _ ⊤ le = ⊤
   ≤↑⇒≤∞ ⊤ ⊥ le with le 1
@@ -63,7 +63,7 @@ mutual
     ♯ ≤↓⇒≤∞ (♭ σ₂) (♭ σ₁) (codomain ∘ le ∘ suc) ⟶
     ♯ ≤↑⇒≤∞ (♭ τ₁) (♭ τ₂) (domain   ∘ le ∘ suc)
 
-  ≤↓⇒≤∞ : ∀ {m n} (σ : Tree m) (τ : Tree n) → σ ≤↓ τ → σ ≤∞ τ
+  ≤↓⇒≤∞ : ∀ {n} (σ τ : Tree n) → σ ≤↓ τ → σ ≤∞ τ
   ≤↓⇒≤∞ ⊥ _ le = ⊥
   ≤↓⇒≤∞ _ ⊤ le = ⊤
   ≤↓⇒≤∞ ⊤ ⊥ le with le 1
@@ -86,8 +86,8 @@ mutual
     ♯ ≤↑⇒≤∞ (♭ σ₂) (♭ σ₁) (codomain ∘ le ∘ suc) ⟶
     ♯ ≤↓⇒≤∞ (♭ τ₁) (♭ τ₂) (domain   ∘ le ∘ suc)
 
-Ind⇒Coind : ∀ {m n} {σ : Ty m} {τ : Ty n} → σ ≤Ind τ → σ ≤Coind τ
+Ind⇒Coind : ∀ {n} {σ τ : Ty n} → σ ≤Ind τ → σ ≤Coind τ
 Ind⇒Coind = ≤↓⇒≤∞ _ _
 
-Coind⇒Ind : ∀ {m n} {σ : Ty m} {τ : Ty n} → σ ≤Coind τ → σ ≤Ind τ
+Coind⇒Ind : ∀ {n} {σ τ : Ty n} → σ ≤Coind τ → σ ≤Ind τ
 Coind⇒Ind = ≤∞⇒≤↓

@@ -30,24 +30,22 @@ infix  4  _≤_
 infixr 2  _≤⟨_⟩_
 infix  2  _∎
 
-data _≤_ : ∀ {m n} → Ty m → Ty n → Set where
+data _≤_ {n} : Ty n → Ty n → Set where
   -- Structural rules. Note that the rule for _⟶_ is coinductive.
-  ⊥   : ∀ {m n} {τ : Ty n} → ⊥ {m} ≤ τ
-  ⊤   : ∀ {m n} {σ : Ty m} → σ ≤ ⊤ {n}
-  _⟶_ : ∀ {m n} {σ₁ σ₂ : Ty m} {τ₁ τ₂ : Ty n}
-        (τ₁≤σ₁ : ∞ (τ₁ ≤ σ₁)) (σ₂≤τ₂ : ∞ (σ₂ ≤ τ₂)) →
+  ⊥   : ∀ {τ} → ⊥ ≤ τ
+  ⊤   : ∀ {σ} → σ ≤ ⊤
+  _⟶_ : ∀ {σ₁ σ₂ τ₁ τ₂} (τ₁≤σ₁ : ∞ (τ₁ ≤ σ₁)) (σ₂≤τ₂ : ∞ (σ₂ ≤ τ₂)) →
         σ₁ ⟶ σ₂ ≤ τ₁ ⟶ τ₂
 
   -- Rules for folding and unfolding ν.
-  unfold : ∀ {n} {τ₁ τ₂ : Ty (suc n)} → ν τ₁ ⟶ τ₂ ≤ unfold[ν τ₁ ⟶ τ₂ ]
-  fold   : ∀ {n} {τ₁ τ₂ : Ty (suc n)} → unfold[ν τ₁ ⟶ τ₂ ] ≤ ν τ₁ ⟶ τ₂
+  unfold : ∀ {τ₁ τ₂} → ν τ₁ ⟶ τ₂ ≤ unfold[ν τ₁ ⟶ τ₂ ]
+  fold   : ∀ {τ₁ τ₂} → unfold[ν τ₁ ⟶ τ₂ ] ≤ ν τ₁ ⟶ τ₂
 
   -- Reflexivity.
-  _∎ : ∀ {n} (τ : Ty n) → τ ≤ τ
+  _∎ : ∀ τ → τ ≤ τ
 
   -- Transitivity.
-  _≤⟨_⟩_ : ∀ {m n k} (τ₁ : Ty m) {τ₂ : Ty n} {τ₃ : Ty k}
-           (τ₁≤τ₂ : τ₁ ≤ τ₂) (τ₂≤τ₃ : τ₂ ≤ τ₃) → τ₁ ≤ τ₃
+  _≤⟨_⟩_ : ∀ τ₁ {τ₂ τ₃} (τ₁≤τ₂ : τ₁ ≤ τ₂) (τ₂≤τ₃ : τ₂ ≤ τ₃) → τ₁ ≤ τ₃
 
 ------------------------------------------------------------------------
 -- Equivalence
@@ -55,7 +53,7 @@ data _≤_ : ∀ {m n} → Ty m → Ty n → Set where
 -- The axiomatisation is equivalent to the semantic definitions of
 -- subtyping.
 
-sound′ : ∀ {m n} {σ : Ty m} {τ : Ty n} → σ ≤ τ → ⟦ σ ⟧ ≤∞Prog ⟦ τ ⟧
+sound′ : ∀ {n} {σ τ : Ty n} → σ ≤ τ → ⟦ σ ⟧ ≤∞Prog ⟦ τ ⟧
 sound′ ⊥                     = ⊥
 sound′ ⊤                     = ⊤
 sound′ (τ₁≤σ₁ ⟶ σ₂≤τ₂)       = ♯ sound′ (♭ τ₁≤σ₁) ⟶ ♯ sound′ (♭ σ₂≤τ₂)
@@ -64,10 +62,10 @@ sound′ fold                  = Sem.prog Sem.fold
 sound′ (τ ∎)                 = _ ∎
 sound′ (τ₁ ≤⟨ τ₁≤τ₂ ⟩ τ₂≤τ₃) = _ ≤⟨ sound′ τ₁≤τ₂ ⟩ sound′ τ₂≤τ₃
 
-sound : ∀ {m n} {σ : Ty m} {τ : Ty n} → σ ≤ τ → σ ≤Coind τ
+sound : ∀ {n} {σ τ : Ty n} → σ ≤ τ → σ ≤Coind τ
 sound σ≤τ = ⟦ sound′ σ≤τ ⟧≤∞
 
-complete : ∀ {m n} (σ : Ty m) (τ : Ty n) → σ ≤Coind τ → σ ≤ τ
+complete : ∀ {n} (σ τ : Ty n) → σ ≤Coind τ → σ ≤ τ
 complete ⊥         _         _ = ⊥
 complete _         ⊤         _ = ⊤
 complete ⊤         ⊥         ()
