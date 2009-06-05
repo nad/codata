@@ -86,27 +86,27 @@ tyLemmas = record
     open Lifted lift₂ using () renaming (_↑✶_ to _↑✶₂_; _/✶_ to _/✶₂_)
 
     /✶-↑✶ : ∀ {m n} (ρs₁ : Subs T₁ m n) (ρs₂ : Subs T₂ m n) →
-            (∀ k {x} → var x /✶₁ ρs₁ ↑✶₁ k ≡ var x /✶₂ ρs₂ ↑✶₂ k) →
-            ∀ k {t} → t /✶₁ ρs₁ ↑✶₁ k ≡ t /✶₂ ρs₂ ↑✶₂ k
-    /✶-↑✶ ρs₁ ρs₂ hyp k {⊥} = begin
+            (∀ k x → var x /✶₁ ρs₁ ↑✶₁ k ≡ var x /✶₂ ρs₂ ↑✶₂ k) →
+            ∀ k t → t /✶₁ ρs₁ ↑✶₁ k ≡ t /✶₂ ρs₂ ↑✶₂ k
+    /✶-↑✶ ρs₁ ρs₂ hyp k ⊥ = begin
       ⊥ /✶₁ ρs₁ ↑✶₁ k  ≡⟨ TyApp.⊥-/✶-↑✶ _ k ρs₁ ⟩
       ⊥                ≡⟨ sym (TyApp.⊥-/✶-↑✶ _ k ρs₂) ⟩
       ⊥ /✶₂ ρs₂ ↑✶₂ k  ∎
-    /✶-↑✶ ρs₁ ρs₂ hyp k {⊤} = begin
+    /✶-↑✶ ρs₁ ρs₂ hyp k ⊤ = begin
       ⊤ /✶₁ ρs₁ ↑✶₁ k  ≡⟨ TyApp.⊤-/✶-↑✶ _ k ρs₁ ⟩
       ⊤                ≡⟨ sym (TyApp.⊤-/✶-↑✶ _ k ρs₂) ⟩
       ⊤ /✶₂ ρs₂ ↑✶₂ k  ∎
-    /✶-↑✶ ρs₁ ρs₂ hyp k {var x} = hyp k
-    /✶-↑✶ ρs₁ ρs₂ hyp k {σ ⟶ τ} = begin
+    /✶-↑✶ ρs₁ ρs₂ hyp k (var x) = hyp k x
+    /✶-↑✶ ρs₁ ρs₂ hyp k (σ ⟶ τ) = begin
       σ ⟶ τ /✶₁ ρs₁ ↑✶₁ k                    ≡⟨ TyApp.⟶-/✶-↑✶ _ k ρs₁ ⟩
-      (σ /✶₁ ρs₁ ↑✶₁ k) ⟶ (τ /✶₁ ρs₁ ↑✶₁ k)  ≡⟨ cong₂ _⟶_ (/✶-↑✶ ρs₁ ρs₂ hyp k)
-                                                          (/✶-↑✶ ρs₁ ρs₂ hyp k) ⟩
+      (σ /✶₁ ρs₁ ↑✶₁ k) ⟶ (τ /✶₁ ρs₁ ↑✶₁ k)  ≡⟨ cong₂ _⟶_ (/✶-↑✶ ρs₁ ρs₂ hyp k σ)
+                                                          (/✶-↑✶ ρs₁ ρs₂ hyp k τ) ⟩
       (σ /✶₂ ρs₂ ↑✶₂ k) ⟶ (τ /✶₂ ρs₂ ↑✶₂ k)  ≡⟨ sym (TyApp.⟶-/✶-↑✶ _ k ρs₂) ⟩
       σ ⟶ τ /✶₂ ρs₂ ↑✶₂ k                    ∎
-    /✶-↑✶ ρs₁ ρs₂ hyp k {ν σ ⟶ τ} = begin
+    /✶-↑✶ ρs₁ ρs₂ hyp k (ν σ ⟶ τ) = begin
       ν σ ⟶ τ /✶₁ ρs₁ ↑✶₁ k                            ≡⟨ TyApp.ν⟶-/✶-↑✶ _ k ρs₁ ⟩
-      ν (σ /✶₁ ρs₁ ↑✶₁ suc k) ⟶ (τ /✶₁ ρs₁ ↑✶₁ suc k)  ≡⟨ cong₂ ν_⟶_ (/✶-↑✶ ρs₁ ρs₂ hyp (suc k))
-                                                                     (/✶-↑✶ ρs₁ ρs₂ hyp (suc k)) ⟩
+      ν (σ /✶₁ ρs₁ ↑✶₁ suc k) ⟶ (τ /✶₁ ρs₁ ↑✶₁ suc k)  ≡⟨ cong₂ ν_⟶_ (/✶-↑✶ ρs₁ ρs₂ hyp (suc k) σ)
+                                                                     (/✶-↑✶ ρs₁ ρs₂ hyp (suc k) τ) ⟩
       ν (σ /✶₂ ρs₂ ↑✶₂ suc k) ⟶ (τ /✶₂ ρs₂ ↑✶₂ suc k)  ≡⟨ sym (TyApp.ν⟶-/✶-↑✶ _ k ρs₂) ⟩
       ν σ ⟶ τ /✶₂ ρs₂ ↑✶₂ k                            ∎
 
