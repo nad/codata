@@ -119,7 +119,7 @@ module Soundness where
     w-s fold                  = fold   ↓
     w-s (τ ∎)                 = (τ ∎)  ↓
     w-s (τ₁ ≤⟨ τ₁≤τ₂ ⟩ τ₂≤τ₃) = τ₁ ≤⟨ w-s τ₁≤τ₂ ⟩ w-s τ₂≤τ₃
-    w-s (hyp σ≤τ)             = All.lookup σ≤τ valid
+    w-s (hyp σ≤τ)             = All.lookup valid σ≤τ
     w-s (τ₁≤σ₁ ⟶ σ₂≤τ₂)       = proof
       where proof = ♯ sound (proof ∷ valid) τ₁≤σ₁ ⟶
                     ♯ sound (proof ∷ valid) σ₂≤τ₂
