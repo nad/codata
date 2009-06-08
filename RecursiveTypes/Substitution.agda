@@ -6,7 +6,9 @@ module RecursiveTypes.Substitution where
 
 open import Data.Fin.Substitution
 open import Data.Fin.Substitution.Lemmas
+import Data.Fin.Substitution.List as ListSubst
 open import Data.Nat
+open import Data.List
 open import Data.Vec
 open import Relation.Binary.PropositionalEquality as PropEq
   using (_≡_; refl; sym; cong₂)
@@ -111,3 +113,16 @@ tyLemmas = record
       ν σ ⟶ τ /✶₂ ρs₂ ↑✶₂ k                            ∎
 
 open TermLemmas tyLemmas public hiding (var)
+
+module // where
+
+  private
+    open module LS = ListSubst lemmas₄ public hiding (_//_)
+
+  -- _//_ is redefined in order to make it bind weaker than
+  -- RecursiveTypes.Subterm._∗, which binds weaker than _/_.
+
+  infixl 6 _//_
+
+  _//_ : ∀ {m n} → List (Ty m) → Sub Ty m n → List (Ty n)
+  _//_ = LS._//_

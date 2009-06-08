@@ -55,3 +55,8 @@ import RecursiveTypes.Subtyping.Axiomatic.Coinductive
 --   and Henglein's algorithm.
 
 import RecursiveTypes.Subtyping.Axiomatic.Inductive
+
+-- Brandt and Henglein's subterm relation. (Will be used to complete
+-- the partial proofs mentioned above.)
+
+import RecursiveTypes.Subterm
