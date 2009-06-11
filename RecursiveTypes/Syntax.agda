@@ -22,21 +22,19 @@ private
 -- Types
 
 infixr 10 _⟶_
-infix  10 ν_⟶_
+infix  10 μ_⟶_
 
--- Recursive types, indexed on the maximum number of free variables. I
--- use the character ν rather than μ because the (unfoldings of the)
--- types can be infinite.
+-- Recursive types, indexed on the maximum number of free variables.
 
 -- Note that no attempt is made to ensure that the variable bound in
--- ν_⟶_ is actually used.
+-- μ_⟶_ is actually used.
 
 data Ty (n : ℕ) : Set where
   ⊥    : Ty n
   ⊤    : Ty n
   var  : (x : Fin n) → Ty n
   _⟶_  : (τ₁ τ₂ : Ty n) → Ty n
-  ν_⟶_ : (τ₁ τ₂ : Ty (suc n)) → Ty n
+  μ_⟶_ : (τ₁ τ₂ : Ty (suc n)) → Ty n
 
 -- Potentially infinite trees.
 
@@ -62,13 +60,13 @@ private
            (Ty n ∶ σ₁ ⟶ σ₂) ≡ τ₁ ⟶ τ₂ → σ₂ ≡ τ₂
   drop⟶ʳ refl = refl
 
-  dropν⟶ˡ : ∀ {n σ₁ σ₂ τ₁ τ₂} →
-            (Ty n ∶ ν σ₁ ⟶ σ₂) ≡ ν τ₁ ⟶ τ₂ → σ₁ ≡ τ₁
-  dropν⟶ˡ refl = refl
+  dropμ⟶ˡ : ∀ {n σ₁ σ₂ τ₁ τ₂} →
+            (Ty n ∶ μ σ₁ ⟶ σ₂) ≡ μ τ₁ ⟶ τ₂ → σ₁ ≡ τ₁
+  dropμ⟶ˡ refl = refl
 
-  dropν⟶ʳ : ∀ {n σ₁ σ₂ τ₁ τ₂} →
-            (Ty n ∶ ν σ₁ ⟶ σ₂) ≡ ν τ₁ ⟶ τ₂ → σ₂ ≡ τ₂
-  dropν⟶ʳ refl = refl
+  dropμ⟶ʳ : ∀ {n σ₁ σ₂ τ₁ τ₂} →
+            (Ty n ∶ μ σ₁ ⟶ σ₂) ≡ μ τ₁ ⟶ τ₂ → σ₂ ≡ τ₂
+  dropμ⟶ʳ refl = refl
 
 infix 4 _≡?_
 
@@ -77,17 +75,17 @@ _≡?_ : ∀ {n} (σ τ : Ty n) → Dec (σ ≡ τ)
 ⊥         ≡? ⊤           = no (λ ())
 ⊥         ≡? var y       = no (λ ())
 ⊥         ≡? τ₁ ⟶ τ₂     = no (λ ())
-⊥         ≡? ν τ₁ ⟶ τ₂   = no (λ ())
+⊥         ≡? μ τ₁ ⟶ τ₂   = no (λ ())
 ⊤         ≡? ⊥           = no (λ ())
 ⊤         ≡? ⊤           = yes refl
 ⊤         ≡? var y       = no (λ ())
 ⊤         ≡? τ₁ ⟶ τ₂     = no (λ ())
-⊤         ≡? ν τ₁ ⟶ τ₂   = no (λ ())
+⊤         ≡? μ τ₁ ⟶ τ₂   = no (λ ())
 var x     ≡? ⊥           = no (λ ())
 var x     ≡? ⊤           = no (λ ())
 var x     ≡? var  y      = Dec.map (cong var , drop-var) (x ≟F y)
 var x     ≡? τ₁ ⟶ τ₂     = no (λ ())
-var x     ≡? ν τ₁ ⟶ τ₂   = no (λ ())
+var x     ≡? μ τ₁ ⟶ τ₂   = no (λ ())
 σ₁ ⟶ σ₂   ≡? ⊥           = no (λ ())
 σ₁ ⟶ σ₂   ≡? ⊤           = no (λ ())
 σ₁ ⟶ σ₂   ≡? var y       = no (λ ())
@@ -95,15 +93,15 @@ var x     ≡? ν τ₁ ⟶ τ₂   = no (λ ())
 σ₁ ⟶ σ₂   ≡? .σ₁ ⟶ .σ₂   | yes refl | yes refl = yes refl
 σ₁ ⟶ σ₂   ≡?  τ₁ ⟶  τ₂   | no σ₁≢τ₁ | _        = no (σ₁≢τ₁ ∘ drop⟶ˡ)
 σ₁ ⟶ σ₂   ≡?  τ₁ ⟶  τ₂   | _        | no σ₂≢τ₂ = no (σ₂≢τ₂ ∘ drop⟶ʳ)
-σ₁ ⟶ σ₂   ≡? ν τ₁ ⟶ τ₂   = no (λ ())
-ν σ₁ ⟶ σ₂ ≡? ⊥           = no (λ ())
-ν σ₁ ⟶ σ₂ ≡? ⊤           = no (λ ())
-ν σ₁ ⟶ σ₂ ≡? var y       = no (λ ())
-ν σ₁ ⟶ σ₂ ≡? τ₁ ⟶ τ₂     = no (λ ())
-ν σ₁ ⟶ σ₂ ≡? ν  τ₁ ⟶  τ₂ with σ₁ ≡? τ₁ | σ₂ ≡? τ₂
-ν σ₁ ⟶ σ₂ ≡? ν .σ₁ ⟶ .σ₂ | yes refl | yes refl = yes refl
-ν σ₁ ⟶ σ₂ ≡? ν  τ₁ ⟶  τ₂ | no σ₁≢τ₁ | _        = no (σ₁≢τ₁ ∘ dropν⟶ˡ)
-ν σ₁ ⟶ σ₂ ≡? ν  τ₁ ⟶  τ₂ | _        | no σ₂≢τ₂ = no (σ₂≢τ₂ ∘ dropν⟶ʳ)
+σ₁ ⟶ σ₂   ≡? μ τ₁ ⟶ τ₂   = no (λ ())
+μ σ₁ ⟶ σ₂ ≡? ⊥           = no (λ ())
+μ σ₁ ⟶ σ₂ ≡? ⊤           = no (λ ())
+μ σ₁ ⟶ σ₂ ≡? var y       = no (λ ())
+μ σ₁ ⟶ σ₂ ≡? τ₁ ⟶ τ₂     = no (λ ())
+μ σ₁ ⟶ σ₂ ≡? μ  τ₁ ⟶  τ₂ with σ₁ ≡? τ₁ | σ₂ ≡? τ₂
+μ σ₁ ⟶ σ₂ ≡? μ .σ₁ ⟶ .σ₂ | yes refl | yes refl = yes refl
+μ σ₁ ⟶ σ₂ ≡? μ  τ₁ ⟶  τ₂ | no σ₁≢τ₁ | _        = no (σ₁≢τ₁ ∘ dropμ⟶ˡ)
+μ σ₁ ⟶ σ₂ ≡? μ  τ₁ ⟶  τ₂ | _        | no σ₂≢τ₂ = no (σ₂≢τ₂ ∘ dropμ⟶ʳ)
 
 ------------------------------------------------------------------------
 -- Hypotheses

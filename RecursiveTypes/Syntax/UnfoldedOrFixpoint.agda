@@ -18,19 +18,19 @@ data Unfolded {n} : Ty n → Set where
   var : ∀ x → Unfolded (var x)
   _⟶_ : (τ₁ τ₂ : Ty n) → Unfolded (τ₁ ⟶ τ₂)
 
--- A view of types as either unfolded (U) or fixpoints (Ν).
+-- A view of types as either unfolded (U) or fixpoints (Μ).
 
-data U∨Ν {n} : Ty n → Set where
-  unfolded : ∀ {σ} (u : Unfolded σ) → U∨Ν σ
-  fixpoint : ∀ {τ₁ τ₂} (u : U∨Ν unfold[ν τ₁ ⟶ τ₂ ]) → U∨Ν (ν τ₁ ⟶ τ₂)
+data U∨Μ {n} : Ty n → Set where
+  unfolded : ∀ {σ} (u : Unfolded σ) → U∨Μ σ
+  fixpoint : ∀ {τ₁ τ₂} (u : U∨Μ unfold[μ τ₁ ⟶ τ₂ ]) → U∨Μ (μ τ₁ ⟶ τ₂)
 
-u∨ν : ∀ {n} (σ : Ty n) → U∨Ν σ
-u∨ν ⊥           = unfolded ⊥
-u∨ν ⊤           = unfolded ⊤
-u∨ν (var x)     = unfolded (var x)
-u∨ν (τ₁ ⟶ τ₂)   = unfolded (τ₁ ⟶ τ₂)
-u∨ν (ν τ₁ ⟶ τ₂) =
-  fixpoint (unfolded ((τ₁ [0≔ ν τ₁ ⟶ τ₂ ]) ⟶ (τ₂ [0≔ ν τ₁ ⟶ τ₂ ])))
+u∨μ : ∀ {n} (σ : Ty n) → U∨Μ σ
+u∨μ ⊥           = unfolded ⊥
+u∨μ ⊤           = unfolded ⊤
+u∨μ (var x)     = unfolded (var x)
+u∨μ (τ₁ ⟶ τ₂)   = unfolded (τ₁ ⟶ τ₂)
+u∨μ (μ τ₁ ⟶ τ₂) =
+  fixpoint (unfolded ((τ₁ [0≔ μ τ₁ ⟶ τ₂ ]) ⟶ (τ₂ [0≔ μ τ₁ ⟶ τ₂ ])))
 
-u∨ν⁻¹ : ∀ {n} {σ : Ty n} → U∨Ν σ → Ty n
-u∨ν⁻¹ {σ = σ} _ = σ
+u∨μ⁻¹ : ∀ {n} {σ : Ty n} → U∨Μ σ → Ty n
+u∨μ⁻¹ {σ = σ} _ = σ

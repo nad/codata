@@ -37,9 +37,9 @@ data _≤_ {n} : Ty n → Ty n → Set where
   _⟶_ : ∀ {σ₁ σ₂ τ₁ τ₂} (τ₁≤σ₁ : ∞ (τ₁ ≤ σ₁)) (σ₂≤τ₂ : ∞ (σ₂ ≤ τ₂)) →
         σ₁ ⟶ σ₂ ≤ τ₁ ⟶ τ₂
 
-  -- Rules for folding and unfolding ν.
-  unfold : ∀ {τ₁ τ₂} → ν τ₁ ⟶ τ₂ ≤ unfold[ν τ₁ ⟶ τ₂ ]
-  fold   : ∀ {τ₁ τ₂} → unfold[ν τ₁ ⟶ τ₂ ] ≤ ν τ₁ ⟶ τ₂
+  -- Rules for folding and unfolding μ.
+  unfold : ∀ {τ₁ τ₂} → μ τ₁ ⟶ τ₂ ≤ unfold[μ τ₁ ⟶ τ₂ ]
+  fold   : ∀ {τ₁ τ₂} → unfold[μ τ₁ ⟶ τ₂ ] ≤ μ τ₁ ⟶ τ₂
 
   -- Reflexivity.
   _∎ : ∀ τ → τ ≤ τ
@@ -71,30 +71,30 @@ complete _         ⊤         _ = ⊤
 complete ⊤         ⊥         ()
 complete ⊤         (var x)   ()
 complete ⊤         (σ ⟶ τ)   ()
-complete ⊤         (ν σ ⟶ τ) ()
+complete ⊤         (μ σ ⟶ τ) ()
 complete (var x)   ⊥         ()
 complete (var x)   (var .x)  var = var x ∎
 complete (var x)   (σ ⟶ τ)   ()
-complete (var x)   (ν σ ⟶ τ) ()
+complete (var x)   (μ σ ⟶ τ) ()
 complete (σ₁ ⟶ σ₂) ⊥         ()
 complete (σ₁ ⟶ σ₂) (var x)   ()
 complete (σ₁ ⟶ σ₂) (τ₁ ⟶ τ₂) (τ₁≤σ₁ ⟶ σ₂≤τ₂) =
   ♯ complete τ₁ σ₁ (♭ τ₁≤σ₁) ⟶ ♯ complete σ₂ τ₂ (♭ σ₂≤τ₂)
-complete (σ₁ ⟶ σ₂) (ν τ₁ ⟶ τ₂) (τ₁≤σ₁ ⟶ σ₂≤τ₂) =
+complete (σ₁ ⟶ σ₂) (μ τ₁ ⟶ τ₂) (τ₁≤σ₁ ⟶ σ₂≤τ₂) =
   σ₁ ⟶ σ₂             ≤⟨ ♯ complete _ _ (♭ τ₁≤σ₁) ⟶
                          ♯ complete _ _ (♭ σ₂≤τ₂) ⟩
-  unfold[ν τ₁ ⟶ τ₂ ]  ≤⟨ fold ⟩
-  ν τ₁ ⟶ τ₂           ∎
-complete (ν σ₁ ⟶ σ₂) ⊥         ()
-complete (ν σ₁ ⟶ σ₂) (var x)   ()
-complete (ν σ₁ ⟶ σ₂) (τ₁ ⟶ τ₂) (τ₁≤σ₁ ⟶ σ₂≤τ₂) =
-  ν σ₁ ⟶ σ₂           ≤⟨ unfold ⟩
-  unfold[ν σ₁ ⟶ σ₂ ]  ≤⟨ ♯ complete _ _ (♭ τ₁≤σ₁) ⟶
+  unfold[μ τ₁ ⟶ τ₂ ]  ≤⟨ fold ⟩
+  μ τ₁ ⟶ τ₂           ∎
+complete (μ σ₁ ⟶ σ₂) ⊥         ()
+complete (μ σ₁ ⟶ σ₂) (var x)   ()
+complete (μ σ₁ ⟶ σ₂) (τ₁ ⟶ τ₂) (τ₁≤σ₁ ⟶ σ₂≤τ₂) =
+  μ σ₁ ⟶ σ₂           ≤⟨ unfold ⟩
+  unfold[μ σ₁ ⟶ σ₂ ]  ≤⟨ ♯ complete _ _ (♭ τ₁≤σ₁) ⟶
                          ♯ complete _ _ (♭ σ₂≤τ₂) ⟩
   (τ₁ ⟶ τ₂)           ∎
-complete (ν σ₁ ⟶ σ₂) (ν τ₁ ⟶ τ₂) (τ₁≤σ₁ ⟶ σ₂≤τ₂) =
-  ν σ₁ ⟶ σ₂           ≤⟨ unfold ⟩
-  unfold[ν σ₁ ⟶ σ₂ ]  ≤⟨ ♯ complete _ _ (♭ τ₁≤σ₁) ⟶
+complete (μ σ₁ ⟶ σ₂) (μ τ₁ ⟶ τ₂) (τ₁≤σ₁ ⟶ σ₂≤τ₂) =
+  μ σ₁ ⟶ σ₂           ≤⟨ unfold ⟩
+  unfold[μ σ₁ ⟶ σ₂ ]  ≤⟨ ♯ complete _ _ (♭ τ₁≤σ₁) ⟶
                          ♯ complete _ _ (♭ σ₂≤τ₂) ⟩
-  unfold[ν τ₁ ⟶ τ₂ ]  ≤⟨ fold ⟩
-  ν τ₁ ⟶ τ₂           ∎
+  unfold[μ τ₁ ⟶ τ₂ ]  ≤⟨ fold ⟩
+  μ τ₁ ⟶ τ₂           ∎

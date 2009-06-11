@@ -31,7 +31,7 @@ module TyApp {T} (l : Lift T Ty) where
   ⊤       / ρ = ⊤
   var x   / ρ = lift (lookup x ρ)
   σ ⟶ τ   / ρ = (σ / ρ) ⟶ (τ / ρ)
-  ν σ ⟶ τ / ρ = ν (σ / ρ ↑) ⟶ (τ / ρ ↑)
+  μ σ ⟶ τ / ρ = μ (σ / ρ ↑) ⟶ (τ / ρ ↑)
 
   open Application (record { _/_ = _/_ }) using (_/✶_)
 
@@ -50,11 +50,11 @@ module TyApp {T} (l : Lift T Ty) where
   ⟶-/✶-↑✶ k ε        = refl
   ⟶-/✶-↑✶ k (ρ ◅ ρs) = cong₂ _/_ (⟶-/✶-↑✶ k ρs) refl
 
-  ν⟶-/✶-↑✶ : ∀ k {m n σ τ} (ρs : Subs T m n) →
-             ν σ ⟶ τ /✶ ρs ↑✶ k ≡
-             ν (σ /✶ ρs ↑✶ suc k) ⟶ (τ /✶ ρs ↑✶ suc k)
-  ν⟶-/✶-↑✶ k ε        = refl
-  ν⟶-/✶-↑✶ k (ρ ◅ ρs) = cong₂ _/_ (ν⟶-/✶-↑✶ k ρs) refl
+  μ⟶-/✶-↑✶ : ∀ k {m n σ τ} (ρs : Subs T m n) →
+             μ σ ⟶ τ /✶ ρs ↑✶ k ≡
+             μ (σ /✶ ρs ↑✶ suc k) ⟶ (τ /✶ ρs ↑✶ suc k)
+  μ⟶-/✶-↑✶ k ε        = refl
+  μ⟶-/✶-↑✶ k (ρ ◅ ρs) = cong₂ _/_ (μ⟶-/✶-↑✶ k ρs) refl
 
 tySubst : TermSubst Ty
 tySubst = record { var = var; app = TyApp._/_ }
@@ -70,8 +70,8 @@ _[0≔_] : ∀ {n} → Ty (suc n) → Ty n → Ty n
 
 -- The unfolding of a fixpoint.
 
-unfold[ν_⟶_] : ∀ {n} → Ty (suc n) → Ty (suc n) → Ty n
-unfold[ν σ ⟶ τ ] = σ ⟶ τ [0≔ ν σ ⟶ τ ]
+unfold[μ_⟶_] : ∀ {n} → Ty (suc n) → Ty (suc n) → Ty n
+unfold[μ σ ⟶ τ ] = σ ⟶ τ [0≔ μ σ ⟶ τ ]
 
 -- Substitution lemmas.
 
@@ -105,12 +105,12 @@ tyLemmas = record
                                                           (/✶-↑✶ ρs₁ ρs₂ hyp k τ) ⟩
       (σ /✶₂ ρs₂ ↑✶₂ k) ⟶ (τ /✶₂ ρs₂ ↑✶₂ k)  ≡⟨ sym (TyApp.⟶-/✶-↑✶ _ k ρs₂) ⟩
       σ ⟶ τ /✶₂ ρs₂ ↑✶₂ k                    ∎
-    /✶-↑✶ ρs₁ ρs₂ hyp k (ν σ ⟶ τ) = begin
-      ν σ ⟶ τ /✶₁ ρs₁ ↑✶₁ k                            ≡⟨ TyApp.ν⟶-/✶-↑✶ _ k ρs₁ ⟩
-      ν (σ /✶₁ ρs₁ ↑✶₁ suc k) ⟶ (τ /✶₁ ρs₁ ↑✶₁ suc k)  ≡⟨ cong₂ ν_⟶_ (/✶-↑✶ ρs₁ ρs₂ hyp (suc k) σ)
+    /✶-↑✶ ρs₁ ρs₂ hyp k (μ σ ⟶ τ) = begin
+      μ σ ⟶ τ /✶₁ ρs₁ ↑✶₁ k                            ≡⟨ TyApp.μ⟶-/✶-↑✶ _ k ρs₁ ⟩
+      μ (σ /✶₁ ρs₁ ↑✶₁ suc k) ⟶ (τ /✶₁ ρs₁ ↑✶₁ suc k)  ≡⟨ cong₂ μ_⟶_ (/✶-↑✶ ρs₁ ρs₂ hyp (suc k) σ)
                                                                      (/✶-↑✶ ρs₁ ρs₂ hyp (suc k) τ) ⟩
-      ν (σ /✶₂ ρs₂ ↑✶₂ suc k) ⟶ (τ /✶₂ ρs₂ ↑✶₂ suc k)  ≡⟨ sym (TyApp.ν⟶-/✶-↑✶ _ k ρs₂) ⟩
-      ν σ ⟶ τ /✶₂ ρs₂ ↑✶₂ k                            ∎
+      μ (σ /✶₂ ρs₂ ↑✶₂ suc k) ⟶ (τ /✶₂ ρs₂ ↑✶₂ suc k)  ≡⟨ sym (TyApp.μ⟶-/✶-↑✶ _ k ρs₂) ⟩
+      μ σ ⟶ τ /✶₂ ρs₂ ↑✶₂ k                            ∎
 
 open TermLemmas tyLemmas public hiding (var)
 

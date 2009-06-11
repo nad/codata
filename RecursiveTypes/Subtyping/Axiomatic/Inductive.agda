@@ -50,9 +50,9 @@ data _⊢_≤_ {n} (A : List (Hyp n)) : Ty n → Ty n → Set where
         (τ₁≤σ₁ : H ∷ A ⊢ τ₁ ≤ σ₁) (σ₂≤τ₂ : H ∷ A ⊢ σ₂ ≤ τ₂) →
         A ⊢ σ₁ ⟶ σ₂ ≤ τ₁ ⟶ τ₂
 
-  -- Rules for folding and unfolding ν.
-  unfold : ∀ {τ₁ τ₂} → A ⊢ ν τ₁ ⟶ τ₂ ≤ unfold[ν τ₁ ⟶ τ₂ ]
-  fold   : ∀ {τ₁ τ₂} → A ⊢ unfold[ν τ₁ ⟶ τ₂ ] ≤ ν τ₁ ⟶ τ₂
+  -- Rules for folding and unfolding μ.
+  unfold : ∀ {τ₁ τ₂} → A ⊢ μ τ₁ ⟶ τ₂ ≤ unfold[μ τ₁ ⟶ τ₂ ]
+  fold   : ∀ {τ₁ τ₂} → A ⊢ unfold[μ τ₁ ⟶ τ₂ ] ≤ μ τ₁ ⟶ τ₂
 
   -- Reflexivity.
   _∎ : ∀ τ → A ⊢ τ ≤ τ
@@ -157,32 +157,32 @@ module Decidable {n} (χ₁ χ₂ : Ty n) where
 
   mutual
 
-    -- A wrapper which applies the U∨Ν view.
+    -- A wrapper which applies the U∨Μ view.
 
     _⊢_,_≤?_,_ : ∀ {A ℓ} → A ⊕ ℓ →
                  ∀ σ → Subterm σ → ∀ τ → Subterm τ →
                  ⟨ A ⟩⋆ ⊢ σ ≤ τ ⊎ (¬ σ ≤Coind τ)
-    T ⊢ σ , σ⊑ ≤? τ , τ⊑ = T ⊩ u∨ν σ , σ⊑ ≤? u∨ν τ , τ⊑
+    T ⊢ σ , σ⊑ ≤? τ , τ⊑ = T ⊩ u∨μ σ , σ⊑ ≤? u∨μ τ , τ⊑
 
-    -- _⊩_,_≤?_,_ unfolds fixpoints. Note that at least one U∨Ν
+    -- _⊩_,_≤?_,_ unfolds fixpoints. Note that at least one U∨Μ
     -- argument becomes smaller in each recursive call, while ℓ, an
     -- upper bound on the number of pairs of types yet to be
     -- inspected, is preserved.
 
     _⊩_,_≤?_,_ : ∀ {A ℓ} → A ⊕ ℓ →
-                 ∀ {σ τ} → U∨Ν σ → Subterm σ → U∨Ν τ → Subterm τ →
+                 ∀ {σ τ} → U∨Μ σ → Subterm σ → U∨Μ τ → Subterm τ →
                  ⟨ A ⟩⋆ ⊢ σ ≤ τ ⊎ (¬ σ ≤Coind τ)
 
     T ⊩ fixpoint {σ₁} {σ₂} u , σ⊑ ≤? τ , τ⊑ =
-      Sum.map (λ ≤τ → ν σ₁ ⟶ σ₂           ≤⟨ unfold ⟩
-                      unfold[ν σ₁ ⟶ σ₂ ]  ≤⟨ ≤τ ⟩
-                      u∨ν⁻¹ τ             ∎)
+      Sum.map (λ ≤τ → μ σ₁ ⟶ σ₂           ≤⟨ unfold ⟩
+                      unfold[μ σ₁ ⟶ σ₂ ]  ≤⟨ ≤τ ⟩
+                      u∨μ⁻¹ τ             ∎)
               (λ ≰τ ≤τ → ≰τ (Sem.trans Sem.fold ≤τ))
               (T ⊩ u , anti-mono ST.unfold′ σ⊑ ≤? τ , τ⊑)
     T ⊩ σ , σ⊑ ≤? fixpoint {τ₁} {τ₂} u , τ⊑ =
-      Sum.map (λ σ≤ → u∨ν⁻¹ σ             ≤⟨ σ≤ ⟩
-                      unfold[ν τ₁ ⟶ τ₂ ]  ≤⟨ fold ⟩
-                      ν τ₁ ⟶ τ₂           ∎)
+      Sum.map (λ σ≤ → u∨μ⁻¹ σ             ≤⟨ σ≤ ⟩
+                      unfold[μ τ₁ ⟶ τ₂ ]  ≤⟨ fold ⟩
+                      μ τ₁ ⟶ τ₂           ∎)
               (λ σ≰ σ≤ → σ≰ (Sem.trans σ≤ Sem.unfold))
               (T ⊩ σ , σ⊑ ≤? u , anti-mono ST.unfold′ τ⊑)
 

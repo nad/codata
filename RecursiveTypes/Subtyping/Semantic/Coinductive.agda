@@ -111,11 +111,11 @@ trans {τ₁ = τ₁} {τ₂} {τ₃} τ₁≤τ₂ τ₂≤τ₃ =
     τ₃ ∎ ⟧≤∞
 
 unfold : ∀ {n} {τ₁ τ₂ : Ty (suc n)} →
-         ν τ₁ ⟶ τ₂ ≤Coind unfold[ν τ₁ ⟶ τ₂ ]
+         μ τ₁ ⟶ τ₂ ≤Coind unfold[μ τ₁ ⟶ τ₂ ]
 unfold = ♯ ⟦ _ ∎ ⟧≤∞ ⟶ ♯ ⟦ _ ∎ ⟧≤∞
 
 fold : ∀ {n} {τ₁ τ₂ : Ty (suc n)} →
-       unfold[ν τ₁ ⟶ τ₂ ] ≤Coind ν τ₁ ⟶ τ₂
+       unfold[μ τ₁ ⟶ τ₂ ] ≤Coind μ τ₁ ⟶ τ₂
 fold = ♯ ⟦ _ ∎ ⟧≤∞ ⟶ ♯ ⟦ _ ∎ ⟧≤∞
 
 var:≤∞⟶≡ : ∀ {n} {x y : Fin n} →

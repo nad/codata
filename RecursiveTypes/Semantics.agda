@@ -17,5 +17,5 @@ open import RecursiveTypes.Substitution
 ⟦ ⊤ ⟧       = ⊤
 ⟦ var x ⟧   = var x
 ⟦ σ ⟶ τ ⟧   = ♯ ⟦ σ ⟧         ⟶ ♯ ⟦ τ ⟧
-⟦ ν σ ⟶ τ ⟧ = ♯ ⟦ σ [0≔ χ ] ⟧ ⟶ ♯ ⟦ τ [0≔ χ ] ⟧
-              where χ = ν σ ⟶ τ
+⟦ μ σ ⟶ τ ⟧ = ♯ ⟦ σ [0≔ χ ] ⟧ ⟶ ♯ ⟦ τ [0≔ χ ] ⟧
+              where χ = μ σ ⟶ τ
