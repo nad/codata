@@ -1,5 +1,3 @@
-{-# OPTIONS --no-termination-check #-}
-
 ------------------------------------------------------------------------
 -- Inductive axiomatisation of subtyping
 ------------------------------------------------------------------------
@@ -11,18 +9,22 @@ open import Data.Empty using (⊥-elim)
 open import Data.Function
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.List using (List; []; _∷_)
-open import Data.List.Any as Any
+import Data.List.Any as Any
 open Any.Membership-≡ using (_∈_)
+import Data.List.Any.Properties as AnyP
 open import Data.List.All as All using (All; []; _∷_)
-open import Data.Product renaming (_,_ to _≲_)
+open import Data.Product
 open import Data.Sum as Sum using (_⊎_; inj₁; inj₂)
 open import Relation.Nullary
 open import Relation.Unary using (Pred)
-open import Relation.Binary
-open import Relation.Binary.PropositionalEquality
+open import Relation.Binary.PropositionalEquality as PropEq
+  using (_≡_; refl)
 
 open import RecursiveTypes.Syntax
+open import RecursiveTypes.Syntax.UnfoldedOrFixpoint
 open import RecursiveTypes.Substitution
+import RecursiveTypes.Subterm as ST
+import RecursiveTypes.Subterm.RestrictedHypothesis as Restricted
 open import RecursiveTypes.Subtyping.Semantic.Coinductive as Sem
   using (_≤Coind_)
 open import RecursiveTypes.Subtyping.Axiomatic.Coinductive as Ax
@@ -35,11 +37,6 @@ infixr 10 _⟶_
 infix  4  _⊢_≤_
 infixr 2  _≤⟨_⟩_
 infix  2  _∎
-
--- Hypotheses.
-
-Hyp : ℕ → Set
-Hyp n = Ty n × Ty n
 
 -- This inductive subtyping relation is parameterised on a list of
 -- hypotheses. Note Brandt and Henglein's unusual definition of _⟶_.
@@ -148,65 +145,85 @@ sound σ≤τ valid = ⟦ S.sound (All.map _↓ valid) σ≤τ ⟧≤
   where open module S = Soundness
 
 ------------------------------------------------------------------------
--- The relation is decidable
+-- The subtyping relation is decidable
 
-module Decidable where
+module Decidable {n} (χ₁ χ₂ : Ty n) where
 
-  infix 4 _⊢_≲?_ _⊢_≤?_ _⊢_≤?′_
+  open Restricted χ₁ χ₂
 
-  _≟_ : ∀ {n} → Decidable (_≡_ {Hyp n})
-  ( σ₁ ≲  σ₂) ≟ (τ₁ ≲ τ₂) with σ₁ ≡? τ₁ | σ₂ ≡? τ₂
-  (.τ₁ ≲ .τ₂) ≟ (τ₁ ≲ τ₂) | yes refl | yes refl = yes refl
-  ... | no σ₁≢τ₁ | _ = no (σ₁≢τ₁ ∘ cong proj₁)
-  ... | _ | no σ₂≢τ₂ = no (σ₂≢τ₂ ∘ cong proj₂)
-
-  _⊢_≲?_ : ∀ {n} A (σ₁ σ₂ : Ty n) → Dec ((σ₁ ≲ σ₂) ∈ A)
-  A ⊢ σ₁ ≲? σ₂ = Any.any (_≟_ (σ₁ ≲ σ₂)) A
-
-  -- The proof below can perhaps be optimised (see Gapeyev, Levin and
-  -- Pierce's "Recursive Subtyping Revealed" from ICFP '00).
+  -- The proof below is not optimised for speed. (See Gapeyev, Levin
+  -- and Pierce's "Recursive Subtyping Revealed" from ICFP '00 for
+  -- more information about the complexity of subtyping algorithms.)
 
   mutual
 
-   _⊢_≤?_ : ∀ {n} A (σ τ : Ty n) → A ⊢ σ ≤ τ ⊎ (¬ σ ≤Coind τ)
-   A ⊢ σ ≤? τ with A ⊢ σ ≲? τ
-   ... | yes σ≤τ = inj₁ (hyp σ≤τ)
-   ... | no  _   = A ⊢ σ ≤?′ τ
+    -- A wrapper which applies the U∨Ν view.
 
-   _⊢_≤?′_ : ∀ {n} A (σ τ : Ty n) → A ⊢ σ ≤ τ ⊎ (¬ σ ≤Coind τ)
-   A ⊢ ⊥ ≤?′ τ = inj₁ ⊥
-   A ⊢ σ ≤?′ ⊤ = inj₁ ⊤
+    _⊢_,_≤?_,_ : ∀ {A ℓ} → A ⊕ ℓ →
+                 ∀ σ → Subterm σ → ∀ τ → Subterm τ →
+                 ⟨ A ⟩⋆ ⊢ σ ≤ τ ⊎ (¬ σ ≤Coind τ)
+    T ⊢ σ , σ⊑ ≤? τ , τ⊑ = T ⊩ u∨ν σ , σ⊑ ≤? u∨ν τ , τ⊑
 
-   A ⊢ var x ≤?′ var  y with var x ≡? var y
-   A ⊢ var x ≤?′ var .x | yes refl = inj₁ (var x ∎)
-   A ⊢ var x ≤?′ var  y | no  x≠y  = inj₂ (x≠y ∘ Sem.var:≤∞⟶≡)
+    -- _⊩_,_≤?_,_ unfolds fixpoints. Note that at least one U∨Ν
+    -- argument becomes smaller in each recursive call, while ℓ, an
+    -- upper bound on the number of pairs of types yet to be
+    -- inspected, is preserved.
 
-   A ⊢ σ₁ ⟶ σ₂ ≤?′ τ₁ ⟶ τ₂ with H ∷ A ⊢ τ₁ ≤? σ₁ | H ∷ A ⊢ σ₂ ≤? τ₂
-                           where H = σ₁ ⟶ σ₂ ≲ τ₁ ⟶ τ₂
-   ... | inj₂ ≰  | _       = inj₂ (≰ ∘  Sem.left-proj)
-   ... | _       | inj₂ ≰  = inj₂ (≰ ∘ Sem.right-proj)
-   ... | inj₁ ≤₁ | inj₁ ≤₂ = inj₁ (≤₁ ⟶ ≤₂)
+    _⊩_,_≤?_,_ : ∀ {A ℓ} → A ⊕ ℓ →
+                 ∀ {σ τ} → U∨Ν σ → Subterm σ → U∨Ν τ → Subterm τ →
+                 ⟨ A ⟩⋆ ⊢ σ ≤ τ ⊎ (¬ σ ≤Coind τ)
 
-   A ⊢ ν σ₁ ⟶ σ₂ ≤?′ τ =
-     Sum.map (λ ≤τ → ν σ₁ ⟶ σ₂           ≤⟨ unfold ⟩
-                     unfold[ν σ₁ ⟶ σ₂ ]  ≤⟨ ≤τ ⟩
-                     τ                   ∎)
-             (λ ≰τ ≤τ → ≰τ (Sem.trans Sem.fold ≤τ))
-             (A ⊢ unfold[ν σ₁ ⟶ σ₂ ] ≤? τ)
-   A ⊢ σ ≤?′ ν τ₁ ⟶ τ₂ =
-     Sum.map (λ σ≤ → σ                   ≤⟨ σ≤ ⟩
-                     unfold[ν τ₁ ⟶ τ₂ ]  ≤⟨ fold ⟩
-                     ν τ₁ ⟶ τ₂           ∎)
-             (λ σ≰ σ≤ → σ≰ (Sem.trans σ≤ Sem.unfold))
-             (A ⊢ σ ≤? unfold[ν τ₁ ⟶ τ₂ ])
+    T ⊩ fixpoint {σ₁} {σ₂} u , σ⊑ ≤? τ , τ⊑ =
+      Sum.map (λ ≤τ → ν σ₁ ⟶ σ₂           ≤⟨ unfold ⟩
+                      unfold[ν σ₁ ⟶ σ₂ ]  ≤⟨ ≤τ ⟩
+                      u∨ν⁻¹ τ             ∎)
+              (λ ≰τ ≤τ → ≰τ (Sem.trans Sem.fold ≤τ))
+              (T ⊩ u , anti-mono ST.unfold′ σ⊑ ≤? τ , τ⊑)
+    T ⊩ σ , σ⊑ ≤? fixpoint {τ₁} {τ₂} u , τ⊑ =
+      Sum.map (λ σ≤ → u∨ν⁻¹ σ             ≤⟨ σ≤ ⟩
+                      unfold[ν τ₁ ⟶ τ₂ ]  ≤⟨ fold ⟩
+                      ν τ₁ ⟶ τ₂           ∎)
+              (λ σ≰ σ≤ → σ≰ (Sem.trans σ≤ Sem.unfold))
+              (T ⊩ σ , σ⊑ ≤? u , anti-mono ST.unfold′ τ⊑)
 
-   A ⊢ ⊤       ≤?′ ⊥       = inj₂ (λ ())
-   A ⊢ ⊤       ≤?′ var x   = inj₂ (λ ())
-   A ⊢ ⊤       ≤?′ τ₁ ⟶ τ₂ = inj₂ (λ ())
-   A ⊢ var x   ≤?′ ⊥       = inj₂ (λ ())
-   A ⊢ var x   ≤?′ τ₁ ⟶ τ₂ = inj₂ (λ ())
-   A ⊢ σ₁ ⟶ σ₂ ≤?′ ⊥       = inj₂ (λ ())
-   A ⊢ σ₁ ⟶ σ₂ ≤?′ var x   = inj₂ (λ ())
+    T ⊩ unfolded σ , σ⊑ ≤? unfolded τ , τ⊑ = T ⊪ σ , σ⊑ ≤? τ , τ⊑
+
+    -- _,_⊪_,_≤?_,_ handles the structural cases. Note that ℓ becomes
+    -- smaller in each recursive call.
+
+    _⊪_,_≤?_,_ : ∀ {A ℓ} → A ⊕ ℓ →
+                 ∀ {σ} → Unfolded σ → Subterm σ →
+                 ∀ {τ} → Unfolded τ → Subterm τ →
+                 ⟨ A ⟩⋆ ⊢ σ ≤ τ ⊎ (¬ σ ≤Coind τ)
+    T ⊪ ⊥ , _ ≤? τ , _ = inj₁ ⊥
+    T ⊪ σ , _ ≤? ⊤ , _ = inj₁ ⊤
+
+    T ⊪ var x , _ ≤? var  y , _ with var x ≡? var y
+    T ⊪ var x , _ ≤? var .x , _ | yes refl = inj₁ (var x ∎)
+    T ⊪ var x , _ ≤? var  y , _ | no  x≠y  = inj₂ (x≠y ∘ Sem.var:≤∞⟶≡)
+
+    T ⊪ σ₁ ⟶ σ₂ , σ⊑ ≤? τ₁ ⟶ τ₂ , τ⊑
+      with lookupOrInsert T ((, σ⊑) ≲ (, τ⊑))
+    ... | inj₁ σ≲τ = inj₁ $ hyp $ AnyP.map⁺ σ≲τ
+    ... | inj₂ (_ , refl , T′)
+          with T′ ⊢ τ₁ , anti-mono ST.⟶ˡ′ τ⊑ ≤? σ₁ , anti-mono ST.⟶ˡ′ σ⊑
+             | T′ ⊢ σ₂ , anti-mono ST.⟶ʳ′ σ⊑ ≤? τ₂ , anti-mono ST.⟶ʳ′ τ⊑
+    ...   | inj₁ ≤₁ | inj₁ ≤₂ = inj₁ (≤₁ ⟶ ≤₂)
+    ...   | inj₂ ≰  | _       = inj₂ (≰ ∘  Sem.left-proj)
+    ...   | _       | inj₂ ≰  = inj₂ (≰ ∘ Sem.right-proj)
+
+    T ⊪ ⊤       , _ ≤? ⊥       , _ = inj₂ (λ ())
+    T ⊪ ⊤       , _ ≤? var x   , _ = inj₂ (λ ())
+    T ⊪ ⊤       , _ ≤? τ₁ ⟶ τ₂ , _ = inj₂ (λ ())
+    T ⊪ var x   , _ ≤? ⊥       , _ = inj₂ (λ ())
+    T ⊪ var x   , _ ≤? τ₁ ⟶ τ₂ , _ = inj₂ (λ ())
+    T ⊪ σ₁ ⟶ σ₂ , _ ≤? ⊥       , _ = inj₂ (λ ())
+    T ⊪ σ₁ ⟶ σ₂ , _ ≤? var x   , _ = inj₂ (λ ())
+
+  -- Finally we have to prove that an upper bound ℓ actually exists.
+
+  dec : [] ⊢ χ₁ ≤ χ₂ ⊎ (¬ χ₁ ≤Coind χ₂)
+  dec = empty ⊢ χ₁ , inj₁ ST.refl ≤? χ₂ , inj₂ ST.refl
 
 infix 4 []⊢_≤?_ _≤?_
 
@@ -214,16 +231,14 @@ infix 4 []⊢_≤?_ _≤?_
 -- assumptions is empty).
 
 []⊢_≤?_ : ∀ {n} (σ τ : Ty n) → Dec ([] ⊢ σ ≤ τ)
-[]⊢ σ ≤? τ with [] ⊢ σ ≤? τ
-           where open Decidable
+[]⊢ σ ≤? τ with Decidable.dec σ τ
 ... | inj₁ σ≤τ = yes σ≤τ
 ... | inj₂ σ≰τ = no (σ≰τ ∘ Ax.sound ∘ flip sound [])
 
--- The other subtyping relations are also decidable.
+-- The other subtyping relations can also be decided.
 
 _≤?_ : ∀ {n} (σ τ : Ty n) → Dec (σ ≤ τ)
-σ ≤? τ with [] ⊢ σ ≤? τ
-       where open Decidable
+σ ≤? τ with Decidable.dec σ τ
 ... | inj₁ σ≤τ = yes (sound σ≤τ [])
 ... | inj₂ σ≰τ = no (σ≰τ ∘ Ax.sound)
 
@@ -233,9 +248,8 @@ _≤?_ : ∀ {n} (σ τ : Ty n) → Dec (σ ≤ τ)
 -- The subtyping relation defined above is complete with respect to
 -- the others.
 
-complete : ∀ {n A} {σ τ : Ty n} →
-           σ ≤ τ → A ⊢ σ ≤ τ
-complete {A = A} {σ} {τ} σ≤τ with A ⊢ σ ≤? τ
-                             where open Decidable
+complete : ∀ {n} {σ τ : Ty n} →
+           σ ≤ τ → [] ⊢ σ ≤ τ
+complete {σ = σ} {τ} σ≤τ with Decidable.dec σ τ
 ... | inj₁ ⊢σ≤τ = ⊢σ≤τ
 ... | inj₂ σ≰τ  = ⊥-elim (σ≰τ (Ax.sound σ≤τ))

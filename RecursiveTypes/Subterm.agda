@@ -273,3 +273,18 @@ complete (unfold {σ} {τ₁} {τ₂} σ⊑) =
   τ ∗  ++ τ ∗                       ⊆⟨ ++-idempotent ⟩
   τ ∗                               ∎
   where τ = ν τ₁ ⟶ τ₂
+
+------------------------------------------------------------------------
+-- A wrapper function
+
+-- Pairs up subterms with proofs.
+
+subtermsOf : ∀ {n} (τ : Ty n) → List (∃ λ σ → σ ⊑ τ)
+subtermsOf τ = map-with-∈ (τ ∗) (,_ ∘′ sound τ)
+
+-- subtermsOf is complete.
+
+subtermsOf-complete : ∀ {n} {σ τ : Ty n} →
+                      σ ⊑ τ → ∃ λ σ⊑τ → (σ , σ⊑τ) ∈ subtermsOf τ
+subtermsOf-complete {τ = τ} σ⊑τ =
+  (, map-with-∈-∈⁺ (,_ ∘′ sound τ) (complete σ⊑τ))

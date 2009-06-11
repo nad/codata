@@ -51,12 +51,14 @@ import RecursiveTypes.Subtyping.Axiomatic.Coinductive
 -- • A proof showing that the axiomatisation is sound with respect to
 --   the ones above. The soundness proof is different than the one
 --   given by Brandt and Henglein: it is cyclic (but productive).
--- • Partial proofs of decidability and completeness, based on Brandt
---   and Henglein's algorithm.
+-- • Proofs of decidability and completeness, based on Brandt and
+--   Henglein's algorithm.
 
 import RecursiveTypes.Subtyping.Axiomatic.Inductive
 
--- Brandt and Henglein's subterm relation. (Will be used to complete
--- the partial proofs mentioned above.)
+-- Some modules containing supporting code for the proof of
+-- decidability, including Brandt and Henglein's subterm relation.
 
 import RecursiveTypes.Subterm
+import RecursiveTypes.Subterm.RestrictedHypothesis
+import RecursiveTypes.Syntax.UnfoldedOrFixpoint

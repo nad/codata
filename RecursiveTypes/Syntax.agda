@@ -104,3 +104,14 @@ var x     ≡? ν τ₁ ⟶ τ₂   = no (λ ())
 ν σ₁ ⟶ σ₂ ≡? ν .σ₁ ⟶ .σ₂ | yes refl | yes refl = yes refl
 ν σ₁ ⟶ σ₂ ≡? ν  τ₁ ⟶  τ₂ | no σ₁≢τ₁ | _        = no (σ₁≢τ₁ ∘ dropν⟶ˡ)
 ν σ₁ ⟶ σ₂ ≡? ν  τ₁ ⟶  τ₂ | _        | no σ₂≢τ₂ = no (σ₂≢τ₂ ∘ dropν⟶ʳ)
+
+------------------------------------------------------------------------
+-- Hypotheses
+
+-- A hypothesis is a pair of types where the first is assumed to be a
+-- subtype of the other.
+
+open Data.Product public using () renaming (_,_ to _≲_)
+
+Hyp : ℕ → Set
+Hyp n = Ty n × Ty n
