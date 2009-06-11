@@ -7,8 +7,11 @@ module RecursiveTypes.Subterm where
 open import Data.Fin using (Fin; zero; suc; lift)
 open import Data.Nat
 open import Data.List using (List; []; _∷_; [_]; _++_)
-open import Data.List.Any
 open import Data.List.Properties
+open import Data.List.Any
+open Membership-≡
+open import Data.List.Any.Properties as AnyProp
+open AnyProp.Membership-≡
 open import Data.Product
 open import Data.Sum
 open import Data.Function
@@ -99,12 +102,11 @@ sub-⊑-ν σ⊑τ₁⟶τ₂ = unfold (/-monoˡ σ⊑τ₁⟶τ₂)
 sound : ∀ {n σ} (τ : Ty n) → σ ∈ τ ∗ → σ ⊑ τ
 sound τ         (here refl) = refl
 sound (τ₁ ⟶ τ₂) (there σ∈)  =
-  [ ⟶ˡ ∘ sound τ₁ , ⟶ʳ ∘ sound τ₂ ]′ (++-∈ (τ₁ ∗) σ∈)
+  [ ⟶ˡ ∘ sound τ₁ , ⟶ʳ ∘ sound τ₂ ]′ (++⁻ (τ₁ ∗) σ∈)
 sound (ν τ₁ ⟶ τ₂) (there (here refl)) = unfold refl
-sound (ν τ₁ ⟶ τ₂) (there (there σ∈))
-  with map-∈ (τ₁ ∗ ++ τ₂ ∗) σ∈
+sound (ν τ₁ ⟶ τ₂) (there (there σ∈))  with map-∈⁻ (τ₁ ∗ ++ τ₂ ∗) σ∈
 ... | (χ , χ∈ , refl) =
-  sub-⊑-ν $ [ ⟶ˡ ∘ sound τ₁ , ⟶ʳ ∘ sound τ₂ ]′ (++-∈ (τ₁ ∗) χ∈)
+  sub-⊑-ν $ [ ⟶ˡ ∘ sound τ₁ , ⟶ʳ ∘ sound τ₂ ]′ (++⁻ (τ₁ ∗) χ∈)
 sound ⊥       (there ())
 sound ⊤       (there ())
 sound (var x) (there ())
@@ -116,13 +118,13 @@ open ⊆-Reasoning
 
 ++-lemma : ∀ {A} xs ys {zs : List A} →
            (xs ++ zs) ++ (ys ++ zs) ⊆ (xs ++ ys) ++ zs
-++-lemma xs ys {zs} x∈ with ++-∈ (xs ++ zs) x∈
-++-lemma xs ys {zs} x∈ | inj₁ x∈ˡ with ++-∈ xs x∈ˡ
-... | inj₁ x∈xs = ∈-++ˡ (∈-++ˡ x∈xs)
-... | inj₂ x∈zs = ∈-++ʳ (xs ++ ys) x∈zs
-++-lemma xs ys {zs} x∈ | inj₂ x∈ʳ with ++-∈ ys x∈ʳ
-... | inj₁ x∈ys = ∈-++ˡ (∈-++ʳ xs x∈ys)
-... | inj₂ x∈zs = ∈-++ʳ (xs ++ ys) x∈zs
+++-lemma xs ys {zs} x∈ with ++⁻ (xs ++ zs) x∈
+++-lemma xs ys {zs} x∈ | inj₁ x∈ˡ with ++⁻ xs x∈ˡ
+... | inj₁ x∈xs = ++⁺ˡ (++⁺ˡ x∈xs)
+... | inj₂ x∈zs = ++⁺ʳ (xs ++ ys) x∈zs
+++-lemma xs ys {zs} x∈ | inj₂ x∈ʳ with ++⁻ ys x∈ʳ
+... | inj₁ x∈ys = ++⁺ˡ (++⁺ʳ xs x∈ys)
+... | inj₂ x∈zs = ++⁺ʳ (xs ++ ys) x∈zs
 
 mutual
 
@@ -205,8 +207,8 @@ sub-∗′-commute-var (suc k) (suc x) τ = begin
 sub-∗-commute : ∀ k {n} σ (τ : Ty n) →
                 σ / sub τ ↑⋆ k ∗ ⊆ σ ∗ // sub τ ↑⋆ k ++ τ ∗ // wk⋆ k
 sub-∗-commute k σ         τ     (here refl) = here refl
-sub-∗-commute k ⊥         τ     •∈•         = ∈-++ˡ •∈•
-sub-∗-commute k ⊤         τ     •∈•         = ∈-++ˡ •∈•
+sub-∗-commute k ⊥         τ     •∈•         = ++⁺ˡ •∈•
+sub-∗-commute k ⊤         τ     •∈•         = ++⁺ˡ •∈•
 sub-∗-commute k (var x)   τ     (there •∈•) = there $ sub-∗′-commute-var k x τ •∈•
 sub-∗-commute k (σ₁ ⟶ σ₂) τ {χ} (there •∈•) = there $
   χ                                    ∈⟨ •∈• ⟩
@@ -260,8 +262,8 @@ sub-∗-commute k (ν σ₁ ⟶ σ₂) τ {χ} (there (there •∈•)) = there
 
 complete : ∀ {n} {σ τ : Ty n} → σ ⊑ τ → σ ∈ τ ∗
 complete refl                      = here refl
-complete (⟶ˡ σ⊑τ₁)                 = there (∈-++ˡ       (complete σ⊑τ₁))
-complete (⟶ʳ σ⊑τ₂)                 = there (∈-++ʳ (_ ∗) (complete σ⊑τ₂))
+complete (⟶ˡ σ⊑τ₁)                 = there (++⁺ˡ       (complete σ⊑τ₁))
+complete (⟶ʳ σ⊑τ₂)                 = there (++⁺ʳ (_ ∗) (complete σ⊑τ₂))
 complete (unfold {σ} {τ₁} {τ₂} σ⊑) =
   σ                                 ∈⟨ complete σ⊑ ⟩
   unfold[ν τ₁ ⟶ τ₂ ] ∗              ⊆⟨ sub-∗-commute zero (τ₁ ⟶ τ₂) τ ⟩

@@ -11,7 +11,8 @@ open import Data.Empty using (⊥-elim)
 open import Data.Function
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.List using (List; []; _∷_)
-open import Data.List.Any as Any using (_∈_; _∉_)
+open import Data.List.Any as Any
+open Any.Membership-≡ using (_∈_)
 open import Data.List.All as All using (All; []; _∷_)
 open import Data.Product renaming (_,_ to _≲_)
 open import Data.Sum as Sum using (_⊎_; inj₁; inj₂)
