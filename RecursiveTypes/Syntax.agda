@@ -25,9 +25,11 @@ infixr 10 _⟶_
 infix  10 μ_⟶_
 
 -- Recursive types, indexed on the maximum number of free variables.
-
--- Note that no attempt is made to ensure that the variable bound in
--- μ_⟶_ is actually used.
+--
+-- μ σ ⟶ τ stands for μX. σ ⟶ τ, where X can be free in σ and τ. The
+-- arrow is included to avoid nonsensical types like μX.X. Note that
+-- no attempt is made to ensure that the variable bound in μ_⟶_ is
+-- actually used.
 
 data Ty (n : ℕ) : Set where
   ⊥    : Ty n
