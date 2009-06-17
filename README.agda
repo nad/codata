@@ -1,5 +1,7 @@
 ------------------------------------------------------------------------
 -- Various developments related to codata and coinduction
+--
+-- Nils Anders Danielsson
 ------------------------------------------------------------------------
 
 -- In order to type check/run the code here you need to use recent (at

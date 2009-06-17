@@ -1,5 +1,7 @@
 ------------------------------------------------------------------------
 -- Formalisation of subtyping for recursive types
+--
+-- Nils Anders Danielsson
 ------------------------------------------------------------------------
 
 -- Partly based on "Coinductive Axiomatization of Recursive Type
