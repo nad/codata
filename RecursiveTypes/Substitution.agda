@@ -7,11 +7,9 @@ module RecursiveTypes.Substitution where
 open import Data.Fin.Substitution
 open import Data.Fin.Substitution.Lemmas
 import Data.Fin.Substitution.List as ListSubst
-open import Data.Function
 open import Data.Nat
-open import Data.List using (List)
+open import Data.List
 open import Data.Vec
-open import Data.Product as Prod
 open import Relation.Binary.PropositionalEquality as PropEq
   using (_≡_; refl; sym; cong₂)
 open PropEq.≡-Reasoning
@@ -21,23 +19,21 @@ open import RecursiveTypes.Syntax
 
 -- Code for applying substitutions.
 
-module TyApp {T : ℕ → Set} (l : Lift T TY) where
+module TyApp {T} (l : Lift T Ty) where
   open Lift l hiding (var)
 
   -- Applies a substitution to a recursive type.
 
   infixl 8 _/_
 
-  _/_ : ∀ {k m n} → Ty m k → Sub T m n → Ty n k
-  ⊥     / ρ = ⊥
-  ⊤     / ρ = ⊤
-  var x / ρ = lift (lookup x ρ)
-  σ ⟶ τ / ρ = (σ / ρ) ⟶ (τ / ρ)
-  μ σ   / ρ = μ (σ / ρ ↑)
+  _/_ : ∀ {m n} → Ty m → Sub T m n → Ty n
+  ⊥       / ρ = ⊥
+  ⊤       / ρ = ⊤
+  var x   / ρ = lift (lookup x ρ)
+  σ ⟶ τ   / ρ = (σ / ρ) ⟶ (τ / ρ)
+  μ σ ⟶ τ / ρ = μ (σ / ρ ↑) ⟶ (τ / ρ ↑)
 
-  private
-    open module A = Application (record { _/_ = _/_ {any} })
-                      using (_/✶_)
+  open Application (record { _/_ = _/_ }) using (_/✶_)
 
   -- Some lemmas about _/_.
 
@@ -55,13 +51,13 @@ module TyApp {T : ℕ → Set} (l : Lift T TY) where
   ⟶-/✶-↑✶ k (ρ ◅ ρs) = cong₂ _/_ (⟶-/✶-↑✶ k ρs) refl
 
   μ⟶-/✶-↑✶ : ∀ k {m n σ τ} (ρs : Subs T m n) →
-             μ (σ ⟶ τ) /✶ ρs ↑✶ k ≡
-             μ ((σ /✶ ρs ↑✶ suc k) ⟶ (τ /✶ ρs ↑✶ suc k))
+             μ σ ⟶ τ /✶ ρs ↑✶ k ≡
+             μ (σ /✶ ρs ↑✶ suc k) ⟶ (τ /✶ ρs ↑✶ suc k)
   μ⟶-/✶-↑✶ k ε        = refl
   μ⟶-/✶-↑✶ k (ρ ◅ ρs) = cong₂ _/_ (μ⟶-/✶-↑✶ k ρs) refl
 
-tySubst : TermSubst TY
-tySubst = record { var = var; app = λ l → TyApp._/_ l }
+tySubst : TermSubst Ty
+tySubst = record { var = var; app = TyApp._/_ }
 
 open TermSubst tySubst hiding (var)
 
@@ -69,24 +65,24 @@ open TermSubst tySubst hiding (var)
 
 infix 8 _[0≔_]
 
-_[0≔_] : ∀ {n} → TY (suc n) → TY n → TY n
+_[0≔_] : ∀ {n} → Ty (suc n) → Ty n → Ty n
 σ [0≔ τ ] = σ / sub τ
 
 -- The unfolding of a fixpoint.
 
-unfold[μ_] : ∀ {n} → Ty (suc n) guarding → TY n
-unfold[μ σ ] = forget σ [0≔ μ σ ]
+unfold[μ_⟶_] : ∀ {n} → Ty (suc n) → Ty (suc n) → Ty n
+unfold[μ σ ⟶ τ ] = σ ⟶ τ [0≔ μ σ ⟶ τ ]
 
 -- Substitution lemmas.
 
-tyLemmas : TermLemmas TY
+tyLemmas : TermLemmas Ty
 tyLemmas = record
   { termSubst = tySubst
   ; app-var   = refl
   ; /✶-↑✶     = Lemma./✶-↑✶
   }
   where
-  module Lemma {T₁ T₂} {lift₁ : Lift T₁ TY} {lift₂ : Lift T₂ TY} where
+  module Lemma {T₁ T₂} {lift₁ : Lift T₁ Ty} {lift₂ : Lift T₂ Ty} where
 
     open Lifted lift₁ using () renaming (_↑✶_ to _↑✶₁_; _/✶_ to _/✶₁_)
     open Lifted lift₂ using () renaming (_↑✶_ to _↑✶₂_; _/✶_ to _/✶₂_)
@@ -109,13 +105,12 @@ tyLemmas = record
                                                           (/✶-↑✶ ρs₁ ρs₂ hyp k τ) ⟩
       (σ /✶₂ ρs₂ ↑✶₂ k) ⟶ (τ /✶₂ ρs₂ ↑✶₂ k)  ≡⟨ sym (TyApp.⟶-/✶-↑✶ _ k ρs₂) ⟩
       σ ⟶ τ /✶₂ ρs₂ ↑✶₂ k                    ∎
-    /✶-↑✶ ρs₁ ρs₂ hyp k (μ (σ ⟶ τ)) = begin
-      μ (σ ⟶ τ) /✶₁ ρs₁ ↑✶₁ k                            ≡⟨ TyApp.μ⟶-/✶-↑✶ _ k ρs₁ ⟩
-      μ ((σ /✶₁ ρs₁ ↑✶₁ suc k) ⟶ (τ /✶₁ ρs₁ ↑✶₁ suc k))  ≡⟨ cong₂ (λ σ τ → μ (σ ⟶ τ))
-                                                                  (/✶-↑✶ ρs₁ ρs₂ hyp (suc k) σ)
-                                                                  (/✶-↑✶ ρs₁ ρs₂ hyp (suc k) τ) ⟩
-      μ ((σ /✶₂ ρs₂ ↑✶₂ suc k) ⟶ (τ /✶₂ ρs₂ ↑✶₂ suc k))  ≡⟨ sym (TyApp.μ⟶-/✶-↑✶ _ k ρs₂) ⟩
-      μ (σ ⟶ τ) /✶₂ ρs₂ ↑✶₂ k                            ∎
+    /✶-↑✶ ρs₁ ρs₂ hyp k (μ σ ⟶ τ) = begin
+      μ σ ⟶ τ /✶₁ ρs₁ ↑✶₁ k                            ≡⟨ TyApp.μ⟶-/✶-↑✶ _ k ρs₁ ⟩
+      μ (σ /✶₁ ρs₁ ↑✶₁ suc k) ⟶ (τ /✶₁ ρs₁ ↑✶₁ suc k)  ≡⟨ cong₂ μ_⟶_ (/✶-↑✶ ρs₁ ρs₂ hyp (suc k) σ)
+                                                                     (/✶-↑✶ ρs₁ ρs₂ hyp (suc k) τ) ⟩
+      μ (σ /✶₂ ρs₂ ↑✶₂ suc k) ⟶ (τ /✶₂ ρs₂ ↑✶₂ suc k)  ≡⟨ sym (TyApp.μ⟶-/✶-↑✶ _ k ρs₂) ⟩
+      μ σ ⟶ τ /✶₂ ρs₂ ↑✶₂ k                            ∎
 
 open TermLemmas tyLemmas public hiding (var)
 
@@ -129,5 +124,5 @@ module // where
 
   infixl 6 _//_
 
-  _//_ : ∀ {m n} → List (TY m) → Sub TY m n → List (TY n)
+  _//_ : ∀ {m n} → List (Ty m) → Sub Ty m n → List (Ty n)
   _//_ = LS._//_

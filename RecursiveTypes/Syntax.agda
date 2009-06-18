@@ -21,39 +21,22 @@ private
 ------------------------------------------------------------------------
 -- Types
 
--- Some type constructors are guarding, and some are not. The
--- constructor any means that the type constructor may or may not be
--- guarding.
-
-data Kind : Set where
-  guarding : Kind
-  any      : Kind
-
 infixr 10 _⟶_
+infix  10 μ_⟶_
 
--- Recursive types, parameterised on the maximum number of free
--- variables.
+-- Recursive types, indexed on the maximum number of free variables.
 --
--- Note that no attempt is made to ensure that the variable bound in μ
--- is actually used.
+-- μ σ ⟶ τ stands for μX. σ ⟶ τ, where X can be free in σ and τ. The
+-- arrow is included to avoid nonsensical types like μX.X. Note that
+-- no attempt is made to ensure that the variable bound in μ_⟶_ is
+-- actually used.
 
-data Ty (n : ℕ) : Kind → Set where
-  ⊥    : Ty n any
-  ⊤    : Ty n any
-  var  : (x : Fin n) → Ty n any
-  _⟶_  : ∀ {k} (τ₁ τ₂ : Ty n any) → Ty n k
-  μ    : (τ : Ty (suc n) guarding) → Ty n any
-
--- Types without information about the Kind.
-
-TY : ℕ → Set
-TY n = Ty n any
-
--- The Kind information can be "forgotten".
-
-forget : ∀ {k n} → Ty n k → TY n
-forget {any}      τ         = τ
-forget {guarding} (τ₁ ⟶ τ₂) = τ₁ ⟶ τ₂
+data Ty (n : ℕ) : Set where
+  ⊥    : Ty n
+  ⊤    : Ty n
+  var  : (x : Fin n) → Ty n
+  _⟶_  : (τ₁ τ₂ : Ty n) → Ty n
+  μ_⟶_ : (τ₁ τ₂ : Ty (suc n)) → Ty n
 
 -- Potentially infinite trees.
 
@@ -68,53 +51,59 @@ data Tree (n : ℕ) : Set where
 
 private
 
-  drop-var : ∀ {n x y} → (Ty n _ ∶ var x) ≡ var y → x ≡ y
+  drop-var : ∀ {n x y} → (Ty n ∶ var x) ≡ var y → x ≡ y
   drop-var refl = refl
 
-  drop⟶ˡ : ∀ {n k σ₁ σ₂ τ₁ τ₂} →
-           (Ty n k ∶ σ₁ ⟶ σ₂) ≡ τ₁ ⟶ τ₂ → σ₁ ≡ τ₁
+  drop⟶ˡ : ∀ {n σ₁ σ₂ τ₁ τ₂} →
+           (Ty n ∶ σ₁ ⟶ σ₂) ≡ τ₁ ⟶ τ₂ → σ₁ ≡ τ₁
   drop⟶ˡ refl = refl
 
-  drop⟶ʳ : ∀ {n k σ₁ σ₂ τ₁ τ₂} →
-           (Ty n k ∶ σ₁ ⟶ σ₂) ≡ τ₁ ⟶ τ₂ → σ₂ ≡ τ₂
+  drop⟶ʳ : ∀ {n σ₁ σ₂ τ₁ τ₂} →
+           (Ty n ∶ σ₁ ⟶ σ₂) ≡ τ₁ ⟶ τ₂ → σ₂ ≡ τ₂
   drop⟶ʳ refl = refl
 
-  dropμ : ∀ {n} {σ τ : Ty (suc n) _} → μ σ ≡ μ τ → σ ≡ τ
-  dropμ refl = refl
+  dropμ⟶ˡ : ∀ {n σ₁ σ₂ τ₁ τ₂} →
+            (Ty n ∶ μ σ₁ ⟶ σ₂) ≡ μ τ₁ ⟶ τ₂ → σ₁ ≡ τ₁
+  dropμ⟶ˡ refl = refl
+
+  dropμ⟶ʳ : ∀ {n σ₁ σ₂ τ₁ τ₂} →
+            (Ty n ∶ μ σ₁ ⟶ σ₂) ≡ μ τ₁ ⟶ τ₂ → σ₂ ≡ τ₂
+  dropμ⟶ʳ refl = refl
 
 infix 4 _≡?_
 
-_≡?_ : ∀ {n k} (σ τ : Ty n k) → Dec (σ ≡ τ)
-⊥       ≡? ⊥         = yes refl
-⊥       ≡? ⊤         = no (λ ())
-⊥       ≡? var y     = no (λ ())
-⊥       ≡? τ₁ ⟶ τ₂   = no (λ ())
-⊥       ≡? μ τ       = no (λ ())
-⊤       ≡? ⊥         = no (λ ())
-⊤       ≡? ⊤         = yes refl
-⊤       ≡? var y     = no (λ ())
-⊤       ≡? τ₁ ⟶ τ₂   = no (λ ())
-⊤       ≡? μ τ       = no (λ ())
-var x   ≡? ⊥         = no (λ ())
-var x   ≡? ⊤         = no (λ ())
-var x   ≡? var  y    = Dec.map (cong var , drop-var) (x ≟F y)
-var x   ≡? τ₁ ⟶ τ₂   = no (λ ())
-var x   ≡? μ τ       = no (λ ())
-σ₁ ⟶ σ₂ ≡? ⊥         = no (λ ())
-σ₁ ⟶ σ₂ ≡? ⊤         = no (λ ())
-σ₁ ⟶ σ₂ ≡? var y     = no (λ ())
-σ₁ ⟶ σ₂ ≡?  τ₁ ⟶  τ₂ with σ₁ ≡? τ₁ | σ₂ ≡? τ₂
-σ₁ ⟶ σ₂ ≡? .σ₁ ⟶ .σ₂ | yes refl | yes refl = yes refl
-σ₁ ⟶ σ₂ ≡?  τ₁ ⟶  τ₂ | no σ₁≢τ₁ | _        = no (σ₁≢τ₁ ∘ drop⟶ˡ)
-σ₁ ⟶ σ₂ ≡?  τ₁ ⟶  τ₂ | _        | no σ₂≢τ₂ = no (σ₂≢τ₂ ∘ drop⟶ʳ)
-σ₁ ⟶ σ₂ ≡? μ τ       = no (λ ())
-μ σ     ≡? ⊥         = no (λ ())
-μ σ     ≡? ⊤         = no (λ ())
-μ σ     ≡? var y     = no (λ ())
-μ σ     ≡? τ₁ ⟶ τ₂   = no (λ ())
-μ σ     ≡? μ  τ      with σ ≡? τ
-μ σ     ≡? μ .σ      | yes refl = yes refl
-μ σ     ≡? μ  τ      | no  σ≢τ  = no (σ≢τ ∘ dropμ)
+_≡?_ : ∀ {n} (σ τ : Ty n) → Dec (σ ≡ τ)
+⊥         ≡? ⊥           = yes refl
+⊥         ≡? ⊤           = no (λ ())
+⊥         ≡? var y       = no (λ ())
+⊥         ≡? τ₁ ⟶ τ₂     = no (λ ())
+⊥         ≡? μ τ₁ ⟶ τ₂   = no (λ ())
+⊤         ≡? ⊥           = no (λ ())
+⊤         ≡? ⊤           = yes refl
+⊤         ≡? var y       = no (λ ())
+⊤         ≡? τ₁ ⟶ τ₂     = no (λ ())
+⊤         ≡? μ τ₁ ⟶ τ₂   = no (λ ())
+var x     ≡? ⊥           = no (λ ())
+var x     ≡? ⊤           = no (λ ())
+var x     ≡? var  y      = Dec.map (cong var , drop-var) (x ≟F y)
+var x     ≡? τ₁ ⟶ τ₂     = no (λ ())
+var x     ≡? μ τ₁ ⟶ τ₂   = no (λ ())
+σ₁ ⟶ σ₂   ≡? ⊥           = no (λ ())
+σ₁ ⟶ σ₂   ≡? ⊤           = no (λ ())
+σ₁ ⟶ σ₂   ≡? var y       = no (λ ())
+σ₁ ⟶ σ₂   ≡?  τ₁ ⟶  τ₂   with σ₁ ≡? τ₁ | σ₂ ≡? τ₂
+σ₁ ⟶ σ₂   ≡? .σ₁ ⟶ .σ₂   | yes refl | yes refl = yes refl
+σ₁ ⟶ σ₂   ≡?  τ₁ ⟶  τ₂   | no σ₁≢τ₁ | _        = no (σ₁≢τ₁ ∘ drop⟶ˡ)
+σ₁ ⟶ σ₂   ≡?  τ₁ ⟶  τ₂   | _        | no σ₂≢τ₂ = no (σ₂≢τ₂ ∘ drop⟶ʳ)
+σ₁ ⟶ σ₂   ≡? μ τ₁ ⟶ τ₂   = no (λ ())
+μ σ₁ ⟶ σ₂ ≡? ⊥           = no (λ ())
+μ σ₁ ⟶ σ₂ ≡? ⊤           = no (λ ())
+μ σ₁ ⟶ σ₂ ≡? var y       = no (λ ())
+μ σ₁ ⟶ σ₂ ≡? τ₁ ⟶ τ₂     = no (λ ())
+μ σ₁ ⟶ σ₂ ≡? μ  τ₁ ⟶  τ₂ with σ₁ ≡? τ₁ | σ₂ ≡? τ₂
+μ σ₁ ⟶ σ₂ ≡? μ .σ₁ ⟶ .σ₂ | yes refl | yes refl = yes refl
+μ σ₁ ⟶ σ₂ ≡? μ  τ₁ ⟶  τ₂ | no σ₁≢τ₁ | _        = no (σ₁≢τ₁ ∘ dropμ⟶ˡ)
+μ σ₁ ⟶ σ₂ ≡? μ  τ₁ ⟶  τ₂ | _        | no σ₂≢τ₂ = no (σ₂≢τ₂ ∘ dropμ⟶ʳ)
 
 ------------------------------------------------------------------------
 -- Hypotheses
@@ -125,4 +114,4 @@ var x   ≡? μ τ       = no (λ ())
 open Data.Product public using () renaming (_,_ to _≲_)
 
 Hyp : ℕ → Set
-Hyp n = TY n × TY n
+Hyp n = Ty n × Ty n
