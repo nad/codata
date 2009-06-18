@@ -37,7 +37,7 @@ data _≤∞_ {n} : Tree n → Tree n → Set where
 -- Subtyping for recursive types is defined in terms of subtyping for
 -- trees.
 
-_≤Coind_ : ∀ {n} → Ty n → Ty n → Set
+_≤Coind_ : ∀ {n k} → Ty n k → Ty n k → Set
 σ ≤Coind τ = ⟦ σ ⟧ ≤∞ ⟦ τ ⟧
 
 ------------------------------------------------------------------------
@@ -110,13 +110,13 @@ trans {τ₁ = τ₁} {τ₂} {τ₃} τ₁≤τ₂ τ₂≤τ₃ =
     τ₂ ≤⟨ prog τ₂≤τ₃ ⟩
     τ₃ ∎ ⟧≤∞
 
-unfold : ∀ {n} {τ₁ τ₂ : Ty (suc n)} →
-         μ τ₁ ⟶ τ₂ ≤Coind unfold[μ τ₁ ⟶ τ₂ ]
-unfold = ♯ ⟦ _ ∎ ⟧≤∞ ⟶ ♯ ⟦ _ ∎ ⟧≤∞
+unfold : ∀ {n} (τ : Ty (suc n) guarding) →
+         μ τ ≤Coind unfold[μ τ ]
+unfold (_ ⟶ _) = ♯ ⟦ _ ∎ ⟧≤∞ ⟶ ♯ ⟦ _ ∎ ⟧≤∞
 
-fold : ∀ {n} {τ₁ τ₂ : Ty (suc n)} →
-       unfold[μ τ₁ ⟶ τ₂ ] ≤Coind μ τ₁ ⟶ τ₂
-fold = ♯ ⟦ _ ∎ ⟧≤∞ ⟶ ♯ ⟦ _ ∎ ⟧≤∞
+fold : ∀ {n} (τ : Ty (suc n) guarding) →
+       unfold[μ τ ] ≤Coind μ τ
+fold (_ ⟶ _) = ♯ ⟦ _ ∎ ⟧≤∞ ⟶ ♯ ⟦ _ ∎ ⟧≤∞
 
 var:≤∞⟶≡ : ∀ {n} {x y : Fin n} →
            var x ≤∞ var y → var x ≡ var y

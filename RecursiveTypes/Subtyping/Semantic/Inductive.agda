@@ -65,5 +65,5 @@ _≤↑_ : ∀ {n} → Tree n → Tree n → Set
 -- Subtyping for recursive types, defined in terms of subtyping for
 -- possibly infinite trees.
 
-_≤Ind_ : ∀ {n} → Ty n → Ty n → Set
+_≤Ind_ : ∀ {n k} → Ty n k → Ty n k → Set
 σ ≤Ind τ = ⟦ σ ⟧ ≤↓ ⟦ τ ⟧

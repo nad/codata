@@ -86,8 +86,8 @@ mutual
     ♯ ≤↑⇒≤∞ (♭ σ₂) (♭ σ₁) (codomain ∘ le ∘ suc) ⟶
     ♯ ≤↓⇒≤∞ (♭ τ₁) (♭ τ₂) (domain   ∘ le ∘ suc)
 
-Ind⇒Coind : ∀ {n} {σ τ : Ty n} → σ ≤Ind τ → σ ≤Coind τ
+Ind⇒Coind : ∀ {n k} {σ τ : Ty n k} → σ ≤Ind τ → σ ≤Coind τ
 Ind⇒Coind = ≤↓⇒≤∞ _ _
 
-Coind⇒Ind : ∀ {n} {σ τ : Ty n} → σ ≤Coind τ → σ ≤Ind τ
+Coind⇒Ind : ∀ {n k} {σ τ : Ty n k} → σ ≤Coind τ → σ ≤Ind τ
 Coind⇒Ind = ≤∞⇒≤↓
