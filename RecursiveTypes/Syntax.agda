@@ -24,7 +24,8 @@ private
 infixr 10 _⟶_
 infix  10 μ_⟶_
 
--- Recursive types, indexed on the maximum number of free variables.
+-- Recursive types, parameterised on the maximum number of free
+-- variables.
 --
 -- μ σ ⟶ τ stands for μX. σ ⟶ τ, where X can be free in σ and τ. The
 -- arrow is included to avoid nonsensical types like μX.X. Note that
