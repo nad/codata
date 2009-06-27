@@ -57,6 +57,14 @@ import BreadthFirst
 
 import RecursiveTypes
 
+-- A definition of a big-step semantics which handles termination and
+-- non-termination at the same time, without duplication of rules.
+-- Partly based on Leroy and Grall's "Coinductive big-step operational
+-- semantics" and Cousot and Cousot's "Bi-inductive structural
+-- semantics".
+
+import Lambda
+
 -- An implementation of "A Unifying Approach to Recursive and
 -- Co-recursive Definitions" by Pietro Di Gianantonio and Marino
 -- Miculan.
