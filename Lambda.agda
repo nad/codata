@@ -30,7 +30,10 @@ import Lambda.OneSemantics
 --
 -- Leroy and Grall attempted to unify their two semantics into a
 -- single one, using only coinduction, but failed to find a definition
--- which was equivalent to the two that they started with.
+-- which was equivalent to the two that they started with. However,
+-- they aimed for a definition which did not have more rules than the
+-- definition for converging terms; the definition in OneSemantics
+-- does not satisfy this criterion.
 
 import Lambda.TwoSemantics
 
