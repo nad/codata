@@ -74,7 +74,7 @@ _⟶⋆_ = Star _⟶_
 
 open StarReasoning _⟶_ public
 
--- "Infinite" closure.
+-- Infinite sequences of steps.
 
 infixr 5 _◅_
 infix  4 _⟶∞ _⟶∞′
@@ -82,7 +82,7 @@ infix  4 _⟶∞ _⟶∞′
 data _⟶∞ : State → Set where
   _◅_ : ∀ {s₁ s₂} (s₁⟶s₂ : s₁ ⟶ s₂) (s₂⟶∞ : ∞ (s₂ ⟶∞)) → s₁ ⟶∞
 
--- A variant of the infinite closure which is easier to use.
+-- A variant of _⟶∞ which is easier to use.
 
 infixr 2 _⟶⟨_⟩′_ _⟶⋆⟨_⟩′_
 infix  2 _⟶∞⟨_⟩
