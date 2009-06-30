@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Big-step semantics for closed terms of the untyped λ-calculus
+-- Big-step semantics for the untyped λ-calculus
 ------------------------------------------------------------------------
 
 module Lambda.OneSemantics where
