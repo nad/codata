@@ -46,7 +46,7 @@ data _⇒_ {n} : Tm n → Sem n → Set where
 -- Example.
 
 ω : Tm 0
-ω = ƛ (var zero · var zero)
+ω = ƛ (vr 0 · vr 0)
 
 Ω : Tm 0
 Ω = ω · ω

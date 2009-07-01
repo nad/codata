@@ -6,6 +6,7 @@ module Lambda.Syntax where
 
 open import Data.Nat
 open import Data.Fin
+open import Relation.Nullary.Decidable
 
 -- Variables are represented using de Bruijn indices.
 
@@ -16,6 +17,11 @@ data Tm (n : ℕ) : Set where
   var : (x : Fin n) → Tm n
   ƛ   : (t : Tm (suc n)) → Tm n
   _·_ : (t₁ t₂ : Tm n) → Tm n
+
+-- Convenient helper.
+
+vr : ∀ m {n} {m<n : True (suc m ≤? n)} → Tm n
+vr _ {m<n = m<n} = var (#_ _ {m<n = m<n})
 
 -- Values.
 
