@@ -8,17 +8,15 @@ module StreamProg where
 
 open import Coinduction
 import Stream as S
-open S using (Stream; _≺_)
+open S using (Stream; _≺_; _≈_; Ord; lt; eq; gt)
 open import Data.Nat
+open import Relation.Binary
+private
+  module SS {A} = Setoid (S.setoid A)
 import IO
 
 ------------------------------------------------------------------------
 -- Stream programs
-
-data Ord : Set where
-  lt : Ord
-  eq : Ord
-  gt : Ord
 
 infixr 5 _≺_
 
@@ -41,9 +39,9 @@ whnf (map f xs)        with whnf xs
 whnf (map f xs)        | x ≺ xs′ = f x ≺ map f xs′
 whnf (merge cmp xs ys) with whnf xs | whnf ys
 whnf (merge cmp xs ys) | x ≺ xs′ | y ≺ ys′ with cmp x y
-whnf (merge cmp xs ys) | x ≺ xs′ | y ≺ ys′ | lt = x ≺ merge cmp xs′ ys
+whnf (merge cmp xs ys) | x ≺ xs′ | y ≺ ys′ | lt = x ≺ merge cmp xs′ (y ≺ ♯₁ ys′)
 whnf (merge cmp xs ys) | x ≺ xs′ | y ≺ ys′ | eq = x ≺ merge cmp xs′ ys′
-whnf (merge cmp xs ys) | x ≺ xs′ | y ≺ ys′ | gt = y ≺ merge cmp xs  ys′
+whnf (merge cmp xs ys) | x ≺ xs′ | y ≺ ys′ | gt = y ≺ merge cmp (x ≺ ♯₁ xs′) ys′
 
 mutual
 
@@ -59,15 +57,90 @@ mutual
 fib : Prog ℕ
 fib = 0 ≺ ♯₁ zipWith _+_ fib (1 ≺ ♯₁ fib)
 
-hamming : Prog ℕ
-hamming = 1 ≺ ♯₁ merge cmp (map (_*_ 2) hamming) (map (_*_ 3) hamming)
+cmp : ℕ → ℕ → Ord
+cmp m n = toOrd (compare m n)
   where
   toOrd : ∀ {m n} → Ordering m n → Ord
   toOrd (less _ _)    = lt
   toOrd (equal _)     = eq
   toOrd (greater _ _) = gt
 
-  cmp : ℕ → ℕ → Ord
-  cmp m n = toOrd (compare m n)
+hamming : Prog ℕ
+hamming = 1 ≺ ♯₁ merge cmp (map (_*_ 2) hamming) (map (_*_ 3) hamming)
 
 main = IO.run (S.putStream (S._⋎_ ⟦ fib ⟧ ⟦ hamming ⟧))
+
+------------------------------------------------------------------------
+-- The definition of fib is correct
+
+-- ⟦_⟧ is homomorphic with respect to zipWith/S.zipWith.
+
+zipWith-hom : ∀ {A B C} (_∙_ : A → B → C) xs ys →
+              ⟦ zipWith _∙_ xs ys ⟧ ≈ S.zipWith _∙_ ⟦ xs ⟧ ⟦ ys ⟧
+zipWith-hom _∙_ xs ys with whnf xs | whnf ys
+zipWith-hom _∙_ xs ys | x ≺ xs′ | y ≺ ys′ =
+  (x ∙ y) ≺ ♯ zipWith-hom _∙_ xs′ ys′
+
+-- S.zipWith is a congruence.
+
+zipWith-cong : ∀ {A B C} (_∙_ : A → B → C) {xs xs′ ys ys′} →
+               xs ≈ xs′ → ys ≈ ys′ →
+               S.zipWith _∙_ xs ys ≈ S.zipWith _∙_ xs′ ys′
+zipWith-cong _∙_ (x ≺ xs≈) (y ≺ ys≈) =
+  (x ∙ y) ≺ ♯ zipWith-cong _∙_ (♭ xs≈) (♭ ys≈)
+
+-- Unfortunately Agda's definitional equality for coinductive
+-- constructors is currently a little strange, so the result type
+-- cannot be written out completely here:
+
+fib-correct′ :
+  ⟦ fib ⟧ ≈ 0 ≺ ♯ S.zipWith _+_ ⟦ fib ⟧ (1 ≺ _ {- ♯ ⟦ fib ⟧ -})
+fib-correct′ = 0 ≺ ♯ zipWith-hom _+_ fib (1 ≺ ♯₁ fib)
+
+-- Fortunately there is a workaround.
+
+fib-correct : ⟦ fib ⟧ ≈ 0 ≺ ♯ S.zipWith _+_ ⟦ fib ⟧ (1 ≺ ♯ ⟦ fib ⟧)
+fib-correct =
+  0 ≺ ♯ SS.trans (zipWith-hom  _+_ fib     (1 ≺ ♯₁ fib))
+                 (zipWith-cong _+_ SS.refl (1 ≺ ♯ SS.refl))
+
+------------------------------------------------------------------------
+-- The definition of hamming is correct
+
+-- ⟦_⟧ is homomorphic with respect to map/S.map.
+
+map-hom : ∀ {A B} (f : A → B) xs →
+          ⟦ map f xs ⟧ ≈ S.map f ⟦ xs ⟧
+map-hom f xs with whnf xs
+... | x ≺ xs′ = f x ≺ ♯ map-hom f xs′
+
+-- ⟦_⟧ is homomorphic with respect to merge/S.merge.
+
+merge-hom : ∀ {A} (cmp : A → A → Ord) xs ys →
+            ⟦ merge cmp xs ys ⟧ ≈ S.merge cmp ⟦ xs ⟧ ⟦ ys ⟧
+merge-hom cmp xs ys with whnf xs | whnf ys
+... | x ≺ xs′ | y ≺ ys′ with cmp x y
+...   | lt = x ≺ ♯ merge-hom cmp xs′ _
+...   | eq = x ≺ ♯ merge-hom cmp xs′ ys′
+...   | gt = y ≺ ♯ merge-hom cmp _ ys′
+
+-- S.merge is a congruence.
+
+merge-cong : ∀ {A} (cmp : A → A → Ord) {xs xs′ ys ys′} →
+             xs ≈ xs′ → ys ≈ ys′ →
+             S.merge cmp xs ys ≈ S.merge cmp xs′ ys′
+merge-cong cmp (x ≺ xs≈) (y ≺ ys≈) with cmp x y
+... | lt = x ≺ ♯ merge-cong cmp (♭ xs≈) (y ≺ ys≈)
+... | eq = x ≺ ♯ merge-cong cmp (♭ xs≈) (♭ ys≈)
+... | gt = y ≺ ♯ merge-cong cmp (x ≺ xs≈) (♭ ys≈)
+
+-- hamming is correct.
+
+hamming-correct : ⟦ hamming ⟧ ≈
+                  1 ≺ ♯ S.merge cmp (S.map (_*_ 2) ⟦ hamming ⟧)
+                                    (S.map (_*_ 3) ⟦ hamming ⟧)
+hamming-correct =
+  1 ≺ ♯ SS.trans (merge-hom cmp (map (_*_ 2) hamming)
+                                (map (_*_ 3) hamming))
+                 (merge-cong cmp (map-hom (_*_ 2) hamming)
+                                 (map-hom (_*_ 3) hamming))
