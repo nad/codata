@@ -8,7 +8,7 @@ open import Coinduction
 open import Data.Empty using (⊥-elim)
 open import Data.Function
 open import Data.Nat using (ℕ; zero; suc)
-open import Data.List using (List; []; _∷_)
+open import Data.List using (List; []; _∷_; _++_)
 import Data.List.Any as Any
 open Any.Membership-≡ using (_∈_)
 import Data.List.Any.Properties as AnyP
@@ -22,7 +22,7 @@ open import Relation.Binary.PropositionalEquality as PropEq
 
 open import RecursiveTypes.Syntax
 open import RecursiveTypes.Syntax.UnfoldedOrFixpoint
-open import RecursiveTypes.Substitution
+open import RecursiveTypes.Substitution using (unfold[μ_⟶_])
 import RecursiveTypes.Subterm as ST
 import RecursiveTypes.Subterm.RestrictedHypothesis as Restricted
 open import RecursiveTypes.Subtyping.Semantic.Coinductive as Sem
@@ -245,11 +245,24 @@ _≤?_ : ∀ {n} (σ τ : Ty n) → Dec (σ ≤ τ)
 ------------------------------------------------------------------------
 -- Completeness
 
+-- Weakening (at the end of the list of assumptions).
+
+weaken : ∀ {n A A′} {σ τ : Ty n} →
+         A ⊢ σ ≤ τ → A ++ A′ ⊢ σ ≤ τ
+weaken ⊥                     = ⊥
+weaken ⊤                     = ⊤
+weaken unfold                = unfold
+weaken fold                  = fold
+weaken (τ ∎)                 = τ ∎
+weaken (τ₁ ≤⟨ τ₁≤τ₂ ⟩ τ₂≤τ₃) = τ₁ ≤⟨ weaken τ₁≤τ₂ ⟩ weaken τ₂≤τ₃
+weaken (hyp h)               = hyp (AnyP.++⁺ˡ h)
+weaken (τ₁≤σ₁ ⟶ σ₂≤τ₂)       = weaken τ₁≤σ₁ ⟶ weaken σ₂≤τ₂
+
 -- The subtyping relation defined above is complete with respect to
 -- the others.
 
-complete : ∀ {n} {σ τ : Ty n} →
-           σ ≤ τ → [] ⊢ σ ≤ τ
+complete : ∀ {n A} {σ τ : Ty n} →
+           σ ≤ τ → A ⊢ σ ≤ τ
 complete {σ = σ} {τ} σ≤τ with Decidable.dec σ τ
-... | inj₁ ⊢σ≤τ = ⊢σ≤τ
+... | inj₁ ⊢σ≤τ = weaken ⊢σ≤τ
 ... | inj₂ σ≰τ  = ⊥-elim (σ≰τ (Ax.sound σ≤τ))
