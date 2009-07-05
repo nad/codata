@@ -188,7 +188,7 @@ module Decidable {n} (χ₁ χ₂ : Ty n) where
 
     T ⊩ unfolded σ , σ⊑ ≤? unfolded τ , τ⊑ = T ⊪ σ , σ⊑ ≤? τ , τ⊑
 
-    -- _,_⊪_,_≤?_,_ handles the structural cases. Note that ℓ becomes
+    -- _⊪_,_≤?_,_ handles the structural cases. Note that ℓ becomes
     -- smaller in each recursive call.
 
     _⊪_,_≤?_,_ : ∀ {A ℓ} → A ⊕ ℓ →
