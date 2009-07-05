@@ -96,7 +96,7 @@ module Soundness where
     -- takes /WHNFs/.
 
     data _≤WHNF_ {n} : Ty n → Ty n → Set where
-      _↓     : ∀ {σ τ} (σ≤τ : σ ≤ τ) → σ ≤WHNF τ
+      done   : ∀ {σ τ} (σ≤τ : σ ≤ τ) → σ ≤WHNF τ
       _⟶_    : ∀ {σ₁ σ₂ τ₁ τ₂}
                (τ₁≤σ₁ : ∞ (τ₁ ≤Prog σ₁)) (σ₂≤τ₂ : ∞ (σ₂ ≤Prog τ₂)) →
                σ₁ ⟶ σ₂ ≤WHNF τ₁ ⟶ τ₂
@@ -111,11 +111,11 @@ module Soundness where
   whnf (sound {A} valid σ≤τ) = w-s σ≤τ
     where
     w-s : ∀ {σ τ} → A ⊢ σ ≤ τ → σ ≤WHNF τ
-    w-s ⊥                     = ⊥      ↓
-    w-s ⊤                     = ⊤      ↓
-    w-s unfold                = unfold ↓
-    w-s fold                  = fold   ↓
-    w-s (τ ∎)                 = (τ ∎)  ↓
+    w-s ⊥                     = done ⊥
+    w-s ⊤                     = done ⊤
+    w-s unfold                = done unfold
+    w-s fold                  = done fold
+    w-s (τ ∎)                 = done (τ ∎)
     w-s (τ₁ ≤⟨ τ₁≤τ₂ ⟩ τ₂≤τ₃) = τ₁ ≤⟨ w-s τ₁≤τ₂ ⟩ w-s τ₂≤τ₃
     w-s (hyp σ≤τ)             = All.lookup valid σ≤τ
     w-s (τ₁≤σ₁ ⟶ σ₂≤τ₂)       = proof
@@ -128,7 +128,7 @@ module Soundness where
 
     value : ∀ {n} {σ τ : Ty n} →
             σ ≤WHNF τ → σ ≤ τ
-    value (σ≤τ ↓)               = σ≤τ
+    value (done σ≤τ)            = σ≤τ
     value (τ₁≤σ₁ ⟶ σ₂≤τ₂)       = ♯ ⟦ ♭ τ₁≤σ₁ ⟧≤ ⟶ ♯ ⟦ ♭ σ₂≤τ₂ ⟧≤
     value (τ₁ ≤⟨ τ₁≤τ₂ ⟩ τ₂≤τ₃) = τ₁ ≤⟨ value τ₁≤τ₂ ⟩ value τ₂≤τ₃
 
@@ -141,7 +141,7 @@ module Soundness where
 
 sound : ∀ {n A} {σ τ : Ty n} →
         A ⊢ σ ≤ τ → All (Valid _≤_) A → σ ≤ τ
-sound σ≤τ valid = ⟦ S.sound (All.map _↓ valid) σ≤τ ⟧≤
+sound σ≤τ valid = ⟦ S.sound (All.map done valid) σ≤τ ⟧≤
   where open module S = Soundness
 
 ------------------------------------------------------------------------
