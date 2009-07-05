@@ -140,8 +140,8 @@ module Soundness where
 -- others.
 
 sound : ∀ {n A} {σ τ : Ty n} →
-        A ⊢ σ ≤ τ → All (Valid _≤_) A → σ ≤ τ
-sound σ≤τ valid = ⟦ S.sound (All.map done valid) σ≤τ ⟧≤
+        All (Valid _≤_) A → A ⊢ σ ≤ τ → σ ≤ τ
+sound valid σ≤τ = ⟦ S.sound (All.map done valid) σ≤τ ⟧≤
   where open module S = Soundness
 
 ------------------------------------------------------------------------
@@ -233,13 +233,13 @@ infix 4 []⊢_≤?_ _≤?_
 []⊢_≤?_ : ∀ {n} (σ τ : Ty n) → Dec ([] ⊢ σ ≤ τ)
 []⊢ σ ≤? τ with Decidable.dec σ τ
 ... | inj₁ σ≤τ = yes σ≤τ
-... | inj₂ σ≰τ = no (σ≰τ ∘ Ax.sound ∘ flip sound [])
+... | inj₂ σ≰τ = no (σ≰τ ∘ Ax.sound ∘ sound [])
 
 -- The other subtyping relations can also be decided.
 
 _≤?_ : ∀ {n} (σ τ : Ty n) → Dec (σ ≤ τ)
 σ ≤? τ with Decidable.dec σ τ
-... | inj₁ σ≤τ = yes (sound σ≤τ [])
+... | inj₁ σ≤τ = yes (sound [] σ≤τ)
 ... | inj₂ σ≰τ = no (σ≰τ ∘ Ax.sound)
 
 ------------------------------------------------------------------------
