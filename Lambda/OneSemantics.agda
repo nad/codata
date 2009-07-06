@@ -18,30 +18,33 @@ data Sem (n : ℕ) : Set where
   ⊥   : Sem n
   val : (v : Value n) → Sem n
 
--- Conditional coinduction: coinduction only for ⊥.
-
-∞? : ∀ {n} → Sem n → Set → Set
-∞? ⊥       = ∞
-∞? (val v) = id₁
-
 -- Big-step semantics.
 
-infix 4 _⇒_
+mutual
 
-data _⇒_ {n} : Tm n → Sem n → Set where
-  val : ∀ {v} → ⌜ v ⌝ ⇒ val v
-  app : ∀ {t₁ t₂ t v s}
-        (t₁⇓   : t₁ ⇒ val (ƛ t))
-        (t₂⇓   : t₂ ⇒ val v)
-        (t₁t₂⇒ : ∞? s (t / sub ⌜ v ⌝ ⇒ s)) →
-        t₁ · t₂ ⇒ s
-  ·ˡ  : ∀ {t₁ t₂}
-        (t₁⇑ : ∞ (t₁ ⇒ ⊥)) →
-        t₁ · t₂ ⇒ ⊥
-  ·ʳ  : ∀ {t₁ t₂ v}
-        (t₁⇓ : t₁ ⇒ val v)
-        (t₂⇑ : ∞ (t₂ ⇒ ⊥)) →
-        t₁ · t₂ ⇒ ⊥
+  infix 4 _⇒_ _⇒?_
+
+  data _⇒_ {n} : Tm n → Sem n → Set where
+    val : ∀ {v} → ⌜ v ⌝ ⇒ val v
+    app : ∀ {t₁ t₂ t v s}
+          (t₁⇓   : t₁ ⇒? val (ƛ t))
+          (t₂⇓   : t₂ ⇒? val v)
+          (t₁t₂⇒ : t / sub ⌜ v ⌝ ⇒? s) →
+          t₁ · t₂ ⇒ s
+    ·ˡ  : ∀ {t₁ t₂}
+          (t₁⇑ : t₁ ⇒? ⊥) →
+          t₁ · t₂ ⇒ ⊥
+    ·ʳ  : ∀ {t₁ t₂ v}
+          (t₁⇓ : t₁ ⇒? val v)
+          (t₂⇑ : t₂ ⇒? ⊥) →
+          t₁ · t₂ ⇒ ⊥
+
+  -- Conditional coinduction: coinduction only for diverging
+  -- computations.
+
+  _⇒?_ : ∀ {n} → Tm n → Sem n → Set
+  t ⇒? ⊥     = ∞ (t ⇒ ⊥)
+  t ⇒? val v = t ⇒ val v
 
 -- Example.
 
