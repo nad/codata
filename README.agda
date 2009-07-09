@@ -65,6 +65,11 @@ import RecursiveTypes
 
 import Lambda
 
+-- An investigation of nested fixpoints of the form μX.νY.… in Agda.
+-- It turns out that they cannot be represented directly.
+
+import MuNu
+
 -- An implementation of "A Unifying Approach to Recursive and
 -- Co-recursive Definitions" by Pietro Di Gianantonio and Marino
 -- Miculan.
