@@ -50,11 +50,12 @@ infixl  5 _∣_
 -- string (is nullable).
 
 data P : Bool → Set where
-  ∅   : P false
-  ε   : P true
-  tok : Tok → P false
-  _∣_ : ∀ {n₁ n₂} → P n₁ →              P n₂  → P (n₁ ∨ n₂)
-  _·_ : ∀ {n₁ n₂} → P n₁ → ∞? (not n₁) (P n₂) → P (n₁ ∧ n₂)
+  ∅        : P false
+  ε        : P true
+  tok      : Tok → P false
+  _∣_      : ∀ {n₁ n₂} → P n₁ →              P n₂  → P (n₁ ∨ n₂)
+  _·_      : ∀ {n₁ n₂} → P n₁ → ∞? (not n₁) (P n₂) → P (n₁ ∧ n₂)
+  nonempty : ∀ {n} → P n → P false
 
 ------------------------------------------------------------------------
 -- Semantics
@@ -65,15 +66,17 @@ data P : Bool → Set where
 infix 4 _∈_
 
 data _∈_ : ∀ {n} → List Tok → P n → Set where
-  ε   : [] ∈ ε
-  tok : ∀ {t} → [ t ] ∈ tok t
-  ∣ˡ  : ∀ {s n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} →
-        s ∈ p₁ → s ∈ p₁ ∣ p₂
-  ∣ʳ  : ∀ {s n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} →
-        s ∈ p₂ → s ∈ p₁ ∣ p₂
-  _·_ : ∀ {s₁ s₂ n₁ n₂} {p₁ : P n₁} {p₂ : ∞? (not n₁) (P n₂)} →
-        s₁ ∈ p₁ → s₂ ∈ ♭? (not n₁) p₂ →
-        s₁ ++ s₂ ∈ p₁ · p₂
+  ε        : [] ∈ ε
+  tok      : ∀ {t} → [ t ] ∈ tok t
+  ∣ˡ       : ∀ {s n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} →
+             s ∈ p₁ → s ∈ p₁ ∣ p₂
+  ∣ʳ       : ∀ {s n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} →
+             s ∈ p₂ → s ∈ p₁ ∣ p₂
+  _·_      : ∀ {s₁ s₂ n₁ n₂} {p₁ : P n₁} {p₂ : ∞? (not n₁) (P n₂)} →
+             s₁ ∈ p₁ → s₂ ∈ ♭? (not n₁) p₂ →
+             s₁ ++ s₂ ∈ p₁ · p₂
+  nonempty : ∀ {n t s} {p : P n} →
+             t ∷ s ∈ p → t ∷ s ∈ nonempty p
 
 -- A lemma.
 
@@ -83,12 +86,10 @@ cast refl s∈ = s∈
 ------------------------------------------------------------------------
 -- Example: Kleene star
 
-mutual
-  _⋆ : P false → P true
-  p ⋆ = ε ∣ p +
+-- This definition works for any argument parser.
 
-  _+ : P false → P false
-  p + = p · ♯ (p ⋆)
+_⋆ : ∀ {n} → P n → P true
+p ⋆ = ε ∣ nonempty p · ♯ (p ⋆)
 
 -- The intended semantics of the Kleene star.
 
@@ -101,14 +102,15 @@ data _∈[_]⋆ {n} : List Tok → P n → Set where
 
 -- The definition of _⋆ above is correct.
 
-⋆-sound : ∀ {s p} → s ∈ p ⋆ → s ∈[ p ]⋆
-⋆-sound (∣ˡ ε)           = []
-⋆-sound (∣ʳ (pr₁ · pr₂)) = pr₁ ∷ ⋆-sound pr₂
+⋆-sound : ∀ {s n} {p : P n} → s ∈ p ⋆ → s ∈[ p ]⋆
+⋆-sound (∣ˡ ε)                    = []
+⋆-sound (∣ʳ (nonempty pr₁ · pr₂)) = pr₁ ∷ ⋆-sound pr₂
 
-⋆-complete : ∀ {s p} → s ∈[ p ]⋆ → s ∈ p ⋆
+⋆-complete : ∀ {s n} {p : P n} → s ∈[ p ]⋆ → s ∈ p ⋆
 ⋆-complete []                    = ∣ˡ ε
 ⋆-complete (_∷_ {[]}    pr₁ pr₂) = ⋆-complete pr₂
-⋆-complete (_∷_ {_ ∷ _} pr₁ pr₂) = ∣ʳ {n₁ = true} (pr₁ · ⋆-complete pr₂)
+⋆-complete (_∷_ {_ ∷ _} pr₁ pr₂) =
+  ∣ʳ {n₁ = true} (nonempty pr₁ · ⋆-complete pr₂)
 
 ------------------------------------------------------------------------
 -- Nullability
@@ -127,6 +129,7 @@ data _∈[_]⋆ {n} : List Tok → P n → Set where
   ⇒′ (∣ʳ {n₁ = n₁} pr₂)    refl | refl = proj₂ Bool-CS.zero n₁
   ⇒′ (_·_ {[]}    pr₁ pr₂) refl = cong₂ _∧_ (⇒ pr₁) (⇒ pr₂)
   ⇒′ (_·_ {_ ∷ _} pr₁ pr₂) ()
+  ⇒′ (nonempty p)          ()
 
 ⇐ : ∀ {n} (p : P n) → n ≡ true → [] ∈ p
 ⇐ ∅                            ()
@@ -137,6 +140,7 @@ data _∈[_]⋆ {n} : List Tok → P n → Set where
 ⇐ (_∣_ {false} {false}  p₁ p₂) ()
 ⇐ (_·_ {true}  p₁ p₂)          refl = ⇐ p₁ refl · ⇐ p₂ refl
 ⇐ (_·_ {false} p₁ p₂)          ()
+⇐ (nonempty p)                 ()
 
 -- We can decide if the empty string belongs to a given language.
 
@@ -162,6 +166,7 @@ nullable? {false} p = no helper
 ∂n (p₁ ∣ p₂)           t = _
 ∂n (_·_ {true}  p₁ p₂) t = _
 ∂n (_·_ {false} p₁ p₂) t = _
+∂n (nonempty p)        t = _
 
 -- ∂ p t is the "derivative" of p with respect to t. It is specified
 -- by the equivalence s ∈ ∂ p t ⇔ t ∷ s ∈ p (proved below).
@@ -176,6 +181,7 @@ nullable? {false} p = no helper
 ∂ (_·_ {true} p₁ p₂)  t = ∂ p₁ t · ♯? (not (∂n p₁ t)) p₂
                         ∣ ∂ p₂ t
 ∂ (_·_ {false} p₁ p₂) t = ∂ p₁ t · ♯? (not (∂n p₁ t)) (♭ p₂)
+∂ (nonempty p)        t = ∂ p t
 
 -- ∂ is correct.
 
@@ -193,6 +199,7 @@ nullable? {false} p = no helper
   ∂-sound′ (_·_ {true}  p₁ p₂) t (∣ˡ (∈₁ · ∈₂)) = ∂-sound′ p₁ t ∈₁ · cast (♭?♯? (not (∂n p₁ t))) ∈₂
   ∂-sound′ (_·_ {true}  p₁ p₂) t (∣ʳ ∈₂)        = ⇐ p₁ refl · ∂-sound′ p₂ t ∈₂
   ∂-sound′ (_·_ {false} p₁ p₂) t (∈₁ · ∈₂)      = ∂-sound′ p₁ t ∈₁ · cast (♭?♯? (not (∂n p₁ t))) ∈₂
+  ∂-sound′ (nonempty p)        t ∈              = nonempty (∂-sound ∈)
 
 ∂-complete : ∀ {s n} {p : P n} {t} → t ∷ s ∈ p → s ∈ ∂ p t
 ∂-complete {t = t} t∷s∈ = ∂-complete′ _ t∷s∈ refl
@@ -212,6 +219,7 @@ nullable? {false} p = no helper
   ∂-complete′ (_·_ {false} p₁ p₂) (_·_ {[]}     ∈₁ ∈₂) refl with ⇒ ∈₁
   ∂-complete′ (_·_ {false} p₁ p₂) (_·_ {[]}     ∈₁ ∈₂) refl | ()
   ∂-complete′ (_·_ {false} p₁ p₂) (_·_ {._ ∷ _} ∈₁ ∈₂) refl = ∂-complete ∈₁ · cast (sym (♭?♯? (not (∂n p₁ t)))) ∈₂
+  ∂-complete′ (nonempty p)        (nonempty ∈)         refl = ∂-complete ∈
 
 ------------------------------------------------------------------------
 -- _∈_ is decidable
