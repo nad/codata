@@ -9,18 +9,17 @@ open import Coinduction
 open import Data.Bool using (Bool; true; false; not; _∧_; _∨_)
 import Data.Bool.Properties as Bool
 private
-  module Bool-CS = CommutativeSemiring Bool.commutativeSemiring-∧-∨
+  module BoolCS = CommutativeSemiring Bool.commutativeSemiring-∧-∨
 open import Data.Function
-open import Data.List using (List; []; _∷_; _++_; [_])
+open import Data.List as List using (List; []; _∷_; _++_; [_])
+private
+  module ListMonoid {A} = Monoid (List.monoid A)
 open import Data.Product
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality
 open import Relation.Nullary
 open import Data.String using () renaming (String to Tok)
 open DecSetoid Data.String.decSetoid using (_≟_)
-
-infixl 10 _·_
-infixl  5 _∣_
 
 ------------------------------------------------------------------------
 -- Conditional coinduction
@@ -45,6 +44,9 @@ infixl  5 _∣_
 
 ------------------------------------------------------------------------
 -- Parser combinators
+
+infixl 10 _·_
+infixl  5 _∣_
 
 -- The index is true if the corresponding language contains the empty
 -- string (is nullable).
@@ -80,8 +82,8 @@ data _∈_ : ∀ {n} → List Tok → P n → Set where
 
 -- A lemma.
 
-cast : ∀ {n} {p p′ : P n} {s} → p ≡ p′ → s ∈ p → s ∈ p′
-cast refl s∈ = s∈
+cast : ∀ {n} {p p′ : P n} {s s′} → s ≡ s′ → p ≡ p′ → s ∈ p → s′ ∈ p′
+cast refl refl s∈ = s∈
 
 ------------------------------------------------------------------------
 -- Example: Kleene star
@@ -126,7 +128,7 @@ data _∈[_]⋆ {n} : List Tok → P n → Set where
   ⇒′ (∣ˡ pr₁)              refl with ⇒ pr₁
   ⇒′ (∣ˡ pr₁)              refl | refl = refl
   ⇒′ (∣ʳ pr₂)              refl with ⇒ pr₂
-  ⇒′ (∣ʳ {n₁ = n₁} pr₂)    refl | refl = proj₂ Bool-CS.zero n₁
+  ⇒′ (∣ʳ {n₁ = n₁} pr₂)    refl | refl = proj₂ BoolCS.zero n₁
   ⇒′ (_·_ {[]}    pr₁ pr₂) refl = cong₂ _∧_ (⇒ pr₁) (⇒ pr₂)
   ⇒′ (_·_ {_ ∷ _} pr₁ pr₂) ()
   ⇒′ (nonempty p)          ()
@@ -196,9 +198,9 @@ nullable? {false} p = no helper
   ∂-sound′ (tok t′)            t ()             | no  t≢t′
   ∂-sound′ (p₁ ∣ p₂)           t (∣ˡ ∈₁)        = ∣ˡ (∂-sound′ p₁ t ∈₁)
   ∂-sound′ (p₁ ∣ p₂)           t (∣ʳ ∈₂)        = ∣ʳ {p₁ = p₁} (∂-sound′ p₂ t ∈₂)
-  ∂-sound′ (_·_ {true}  p₁ p₂) t (∣ˡ (∈₁ · ∈₂)) = ∂-sound′ p₁ t ∈₁ · cast (♭?♯? (not (∂n p₁ t))) ∈₂
+  ∂-sound′ (_·_ {true}  p₁ p₂) t (∣ˡ (∈₁ · ∈₂)) = ∂-sound′ p₁ t ∈₁ · cast refl (♭?♯? (not (∂n p₁ t))) ∈₂
   ∂-sound′ (_·_ {true}  p₁ p₂) t (∣ʳ ∈₂)        = ⇐ p₁ refl · ∂-sound′ p₂ t ∈₂
-  ∂-sound′ (_·_ {false} p₁ p₂) t (∈₁ · ∈₂)      = ∂-sound′ p₁ t ∈₁ · cast (♭?♯? (not (∂n p₁ t))) ∈₂
+  ∂-sound′ (_·_ {false} p₁ p₂) t (∈₁ · ∈₂)      = ∂-sound′ p₁ t ∈₁ · cast refl (♭?♯? (not (∂n p₁ t))) ∈₂
   ∂-sound′ (nonempty p)        t ∈              = nonempty (∂-sound ∈)
 
 ∂-complete : ∀ {s n} {p : P n} {t} → t ∷ s ∈ p → s ∈ ∂ p t
@@ -215,10 +217,10 @@ nullable? {false} p = no helper
   ∂-complete′ (p₁ ∣ p₂)           (∣ˡ ∈₁)              refl = ∣ˡ (∂-complete ∈₁)
   ∂-complete′ (p₁ ∣ p₂)           (∣ʳ ∈₂)              refl = ∣ʳ {p₁ = ∂ p₁ t} (∂-complete ∈₂)
   ∂-complete′ (_·_ {true}  p₁ p₂) (_·_ {[]}     ∈₁ ∈₂) refl = ∣ʳ {p₁ = ∂ p₁ t · _} (∂-complete ∈₂)
-  ∂-complete′ (_·_ {true}  p₁ p₂) (_·_ {._ ∷ _} ∈₁ ∈₂) refl = ∣ˡ (∂-complete ∈₁ · cast (sym (♭?♯? (not (∂n p₁ t)))) ∈₂)
+  ∂-complete′ (_·_ {true}  p₁ p₂) (_·_ {._ ∷ _} ∈₁ ∈₂) refl = ∣ˡ (∂-complete ∈₁ · cast refl (sym (♭?♯? (not (∂n p₁ t)))) ∈₂)
   ∂-complete′ (_·_ {false} p₁ p₂) (_·_ {[]}     ∈₁ ∈₂) refl with ⇒ ∈₁
   ∂-complete′ (_·_ {false} p₁ p₂) (_·_ {[]}     ∈₁ ∈₂) refl | ()
-  ∂-complete′ (_·_ {false} p₁ p₂) (_·_ {._ ∷ _} ∈₁ ∈₂) refl = ∂-complete ∈₁ · cast (sym (♭?♯? (not (∂n p₁ t)))) ∈₂
+  ∂-complete′ (_·_ {false} p₁ p₂) (_·_ {._ ∷ _} ∈₁ ∈₂) refl = ∂-complete ∈₁ · cast refl (sym (♭?♯? (not (∂n p₁ t)))) ∈₂
   ∂-complete′ (nonempty p)        (nonempty ∈)         refl = ∂-complete ∈
 
 ------------------------------------------------------------------------
@@ -234,3 +236,64 @@ _∈?_ : ∀ {n} (s : List Tok) (p : P n) → Dec (s ∈ p)
 t ∷ s ∈? p with s ∈? ∂ p t
 t ∷ s ∈? p | yes s∈∂pt = yes (∂-sound s∈∂pt)
 t ∷ s ∈? p | no  s∉∂pt = no  (s∉∂pt ∘ ∂-complete)
+
+------------------------------------------------------------------------
+-- The combinator nonempty does not need to be primitive
+
+-- The variant of nonempty which is defined below (nonempty′) makes
+-- many parsers larger, though.
+
+module AlternativeNonempty where
+
+  nonempty′ : ∀ {n} → P n → P false
+  nonempty′ ∅                           = ∅
+  nonempty′ ε                           = ∅
+  nonempty′ (tok t)                     = tok t
+  nonempty′ (p₁ ∣ p₂)                   = nonempty′ p₁ ∣ nonempty′ p₂
+  nonempty′ (_·_ {true}  {true}  p₁ p₂) = nonempty′ p₁ ∣ nonempty′ p₂
+                                        ∣ nonempty′ p₁ · ♯ nonempty′ p₂
+  nonempty′ (_·_ {true}  {false} p₁ p₂) = p₁ · p₂
+  nonempty′ (_·_ {false}         p₁ p₂) = p₁ · p₂
+  nonempty′ (nonempty p)                = nonempty′ p
+
+  sound : ∀ {n s} {p : P n} → s ∈ nonempty′ p → s ∈ nonempty p
+  sound {s = []}    pr with ⇒ pr
+  ... | ()
+  sound {s = _ ∷ _} pr = nonempty (sound′ _ pr refl)
+    where
+    sound′ : ∀ {n t s s′} (p : P n) →
+             s′ ∈ nonempty′ p → s′ ≡ t ∷ s → t ∷ s ∈ p
+    sound′ ∅                          ()                         refl
+    sound′ ε                          ()                         refl
+    sound′ (tok t)                    tok                        refl = tok
+    sound′ (p₁ ∣ p₂)                  (∣ˡ pr)                    refl = ∣ˡ           (sound′ p₁ pr refl)
+    sound′ (p₁ ∣ p₂)                  (∣ʳ pr)                    refl = ∣ʳ {p₁ = p₁} (sound′ p₂ pr refl)
+    sound′ (_·_ {true} {true}  p₁ p₂) (∣ˡ (∣ˡ pr))               refl = cast (proj₂ ListMonoid.identity _) refl $
+                                                                          sound′ p₁ pr refl · ⇐ p₂ refl
+    sound′ (_·_ {true} {true}  p₁ p₂) (∣ˡ (∣ʳ pr))               refl = ⇐ p₁ refl · sound′ p₂ pr refl
+    sound′ (_·_ {true} {true}  p₁ p₂) (∣ʳ (_·_ {[]}    pr₁ pr₂)) refl with ⇒ pr₁
+    ... | ()
+    sound′ (_·_ {true} {true}  p₁ p₂) (∣ʳ (_·_ {_ ∷ _} pr₁ pr₂)) refl with sound {p = p₂} pr₂
+    ... | nonempty pr₂′ = sound′ p₁ pr₁ refl · pr₂′
+    sound′ (_·_ {true} {false} p₁ p₂) pr                         refl = pr
+    sound′ (_·_ {false}        p₁ p₂) pr                         refl = pr
+    sound′ (nonempty p)               pr                         refl = nonempty (sound′ p pr refl)
+
+  complete : ∀ {n s} {p : P n} → s ∈ nonempty p → s ∈ nonempty′ p
+  complete (nonempty pr) = complete′ _ pr refl
+    where
+    complete′ : ∀ {n t s s′} (p : P n) →
+                s ∈ p → s ≡ t ∷ s′ → t ∷ s′ ∈ nonempty′ p
+    complete′ ∅                          ()                            refl
+    complete′ ε                          ()                            refl
+    complete′ (tok t)                    tok                           refl = tok
+    complete′ (p₁ ∣ p₂)                  (∣ˡ pr)                       refl = ∣ˡ              (complete′ p₁ pr refl)
+    complete′ (p₁ ∣ p₂)                  (∣ʳ pr)                       refl = ∣ʳ {n₁ = false} (complete′ p₂ pr refl)
+    complete′ (_·_ {true} {true}  p₁ p₂) (_·_ {[]}            pr₁ pr₂) refl = ∣ˡ (∣ʳ {n₁ = false} (complete′ p₂ pr₂ refl))
+    complete′ (_·_ {true} {true}  p₁ p₂) (_·_ {_ ∷ _} {[]}    pr₁ pr₂) refl = cast (sym $ proj₂ ListMonoid.identity _) refl $
+                                                                                ∣ˡ (∣ˡ {n₂ = false} (complete′ p₁ pr₁ refl))
+    complete′ (_·_ {true} {true}  p₁ p₂) (_·_ {_ ∷ _} {_ ∷ _} pr₁ pr₂) refl = ∣ʳ {n₁ = false} (complete′ p₁ pr₁ refl ·
+                                                                                               complete′ p₂ pr₂ refl)
+    complete′ (_·_ {true} {false} p₁ p₂) pr                            refl = pr
+    complete′ (_·_ {false}        p₁ p₂) pr                            refl = pr
+    complete′ (nonempty p)               (nonempty pr)                 refl = complete′ p pr refl
