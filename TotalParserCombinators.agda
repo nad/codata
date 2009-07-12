@@ -57,16 +57,6 @@ data P : Bool → Set where
   _·_ : ∀ {n₁ n₂} → P n₁ → ∞? (not n₁) (P n₂) → P (n₁ ∧ n₂)
 
 ------------------------------------------------------------------------
--- Example: Kleene star
-
-mutual
-  _⋆ : P false → P true
-  p ⋆ = ε ∣ p +
-
-  _+ : P false → P false
-  p + = p · ♯ (p ⋆)
-
-------------------------------------------------------------------------
 -- Semantics
 
 -- The semantics is defined inductively: s ∈ p iff the string s is
@@ -89,6 +79,36 @@ data _∈_ : ∀ {n} → List Tok → P n → Set where
 
 cast : ∀ {n} {p p′ : P n} {s} → p ≡ p′ → s ∈ p → s ∈ p′
 cast refl s∈ = s∈
+
+------------------------------------------------------------------------
+-- Example: Kleene star
+
+mutual
+  _⋆ : P false → P true
+  p ⋆ = ε ∣ p +
+
+  _+ : P false → P false
+  p + = p · ♯ (p ⋆)
+
+-- The intended semantics of the Kleene star.
+
+infixr 5 _∷_
+infix  4 _∈[_]⋆
+
+data _∈[_]⋆ {n} : List Tok → P n → Set where
+  []  : ∀ {p}       → [] ∈[ p ]⋆
+  _∷_ : ∀ {s₁ s₂ p} → s₁ ∈ p → s₂ ∈[ p ]⋆ → s₁ ++ s₂ ∈[ p ]⋆
+
+-- The definition of _⋆ above is correct.
+
+⋆-sound : ∀ {s p} → s ∈ p ⋆ → s ∈[ p ]⋆
+⋆-sound (∣ˡ ε)           = []
+⋆-sound (∣ʳ (pr₁ · pr₂)) = pr₁ ∷ ⋆-sound pr₂
+
+⋆-complete : ∀ {s p} → s ∈[ p ]⋆ → s ∈ p ⋆
+⋆-complete []                    = ∣ˡ ε
+⋆-complete (_∷_ {[]}    pr₁ pr₂) = ⋆-complete pr₂
+⋆-complete (_∷_ {_ ∷ _} pr₁ pr₂) = ∣ʳ {n₁ = true} (pr₁ · ⋆-complete pr₂)
 
 ------------------------------------------------------------------------
 -- Nullability
