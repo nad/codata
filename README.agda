@@ -69,6 +69,10 @@ import TotalParserCombinators
 
 import Lambda
 
+-- An example showing how the list and colist types can be "unified".
+
+import DataAndCodata
+
 -- An investigation of nested fixpoints of the form μX.νY.… in Agda.
 -- It turns out that they cannot be represented directly.
 
