@@ -57,6 +57,10 @@ import BreadthFirst
 
 import RecursiveTypes
 
+-- Total parser combinators.
+
+import TotalParserCombinators
+
 -- A definition of a big-step semantics which handles termination and
 -- non-termination at the same time, without duplication of rules.
 -- Partly based on Leroy and Grall's "Coinductive big-step operational
