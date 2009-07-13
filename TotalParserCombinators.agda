@@ -88,11 +88,6 @@ cast refl refl s∈ = s∈
 ------------------------------------------------------------------------
 -- Example: Kleene star
 
--- This definition works for any argument parser.
-
-_⋆ : ∀ {n} → P n → P true
-p ⋆ = ε ∣ nonempty p · ♯ (p ⋆)
-
 -- The intended semantics of the Kleene star.
 
 infixr 5 _∷_
@@ -102,17 +97,51 @@ data _∈[_]⋆ {n} : List Tok → P n → Set where
   []  : ∀ {p}       → [] ∈[ p ]⋆
   _∷_ : ∀ {s₁ s₂ p} → s₁ ∈ p → s₂ ∈[ p ]⋆ → s₁ ++ s₂ ∈[ p ]⋆
 
--- The definition of _⋆ above is correct.
+module Variant₁ where
 
-⋆-sound : ∀ {s n} {p : P n} → s ∈ p ⋆ → s ∈[ p ]⋆
-⋆-sound (∣ˡ ε)                    = []
-⋆-sound (∣ʳ (nonempty pr₁ · pr₂)) = pr₁ ∷ ⋆-sound pr₂
+  -- This definition requires that the argument parsers are not
+  -- nullable.
 
-⋆-complete : ∀ {s n} {p : P n} → s ∈[ p ]⋆ → s ∈ p ⋆
-⋆-complete []                    = ∣ˡ ε
-⋆-complete (_∷_ {[]}    pr₁ pr₂) = ⋆-complete pr₂
-⋆-complete (_∷_ {_ ∷ _} pr₁ pr₂) =
-  ∣ʳ {n₁ = true} (nonempty pr₁ · ⋆-complete pr₂)
+  _⋆ : P false → P true
+  p ⋆ = ε ∣ p · ♯ (p ⋆)
+
+  -- The definition of _⋆ above is correct.
+
+  ⋆-sound : ∀ {s p} → s ∈ p ⋆ → s ∈[ p ]⋆
+  ⋆-sound (∣ˡ ε)           = []
+  ⋆-sound (∣ʳ (pr₁ · pr₂)) = pr₁ ∷ ⋆-sound pr₂
+
+  ⋆-complete : ∀ {s p} → s ∈[ p ]⋆ → s ∈ p ⋆
+  ⋆-complete []                    = ∣ˡ ε
+  ⋆-complete (_∷_ {[]}    pr₁ pr₂) = ⋆-complete pr₂
+  ⋆-complete (_∷_ {_ ∷ _} pr₁ pr₂) =
+    ∣ʳ {n₁ = true} (pr₁ · ⋆-complete pr₂)
+
+module Variant₂ where
+
+  -- This definition works for any argument parser.
+
+  _⋆ : ∀ {n} → P n → P true
+  p ⋆ = ε ∣ nonempty p · ♯ (p ⋆)
+
+  -- The definition of _⋆ above is correct.
+
+  ⋆-sound : ∀ {s n} {p : P n} → s ∈ p ⋆ → s ∈[ p ]⋆
+  ⋆-sound (∣ˡ ε)                    = []
+  ⋆-sound (∣ʳ (nonempty pr₁ · pr₂)) = pr₁ ∷ ⋆-sound pr₂
+
+  ⋆-complete : ∀ {s n} {p : P n} → s ∈[ p ]⋆ → s ∈ p ⋆
+  ⋆-complete []                    = ∣ˡ ε
+  ⋆-complete (_∷_ {[]}    pr₁ pr₂) = ⋆-complete pr₂
+  ⋆-complete (_∷_ {_ ∷ _} pr₁ pr₂) =
+    ∣ʳ {n₁ = true} (nonempty pr₁ · ⋆-complete pr₂)
+
+  -- Note, however, that for actual parsing the corresponding
+  -- definition would not be correct. The reason is that p would give
+  -- a result also when the empty string was accepted, and these
+  -- results are ignored by the definition above. In the case of
+  -- actual parsing the result of p ⋆, when p is nullable, should be a
+  -- stream and not a finite list.
 
 ------------------------------------------------------------------------
 -- Nullability
