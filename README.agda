@@ -86,11 +86,3 @@ import Contractive
 import Contractive.Function
 import Contractive.Stream
 import Contractive.Examples
-
--- An abandoned encoding of guarded definitions.
-
-import Guarded
-import Guarded.Stream
-import Guarded.Product
-import Guarded.IndexedBy
-import Guarded.Language
