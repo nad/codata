@@ -191,9 +191,9 @@ nullable? {false} p = no helper
 ∂n : ∀ {n} → P n → Tok → Bool
 ∂n ∅                   t = _
 ∂n ε                   t = _
-∂n (tok t′)            t with t ≟ t′
-∂n (tok .t)            t | yes refl = _
-∂n (tok t′)            t | no  t≢t′ = _
+∂n (tok t′)            t with t′ ≟ t
+∂n (tok t′)            t | yes t′≡t = _
+∂n (tok t′)            t | no  t′≢t = _
 ∂n (p₁ ∣ p₂)           t = _
 ∂n (_·_ {true}  p₁ p₂) t = _
 ∂n (_·_ {false} p₁ p₂) t = _
@@ -205,9 +205,9 @@ nullable? {false} p = no helper
 ∂ : ∀ {n} (p : P n) (t : Tok) → P (∂n p t)
 ∂ ∅                   t = ∅
 ∂ ε                   t = ∅
-∂ (tok t′)            t with t ≟ t′
-∂ (tok .t)            t | yes refl = ε
-∂ (tok t′)            t | no  t≢t′ = ∅
+∂ (tok t′)            t with t′ ≟ t
+∂ (tok t′)            t | yes t′≡t = ε
+∂ (tok t′)            t | no  t′≢t = ∅
 ∂ (p₁ ∣ p₂)           t = ∂ p₁ t ∣ ∂ p₂ t
 ∂ (_·_ {true} p₁ p₂)  t = ∂ p₁ t · ♯? (not (∂n p₁ t)) p₂
                         ∣ ∂ p₂ t
@@ -222,9 +222,9 @@ nullable? {false} p = no helper
   ∂-sound′ : ∀ {s n} (p : P n) t → s ∈ ∂ p t → t ∷ s ∈ p
   ∂-sound′ ∅                   t ()
   ∂-sound′ ε                   t ()
-  ∂-sound′ (tok t′)            t _              with t ≟ t′
+  ∂-sound′ (tok t′)            t _              with t′ ≟ t
   ∂-sound′ (tok .t)            t ε              | yes refl = tok
-  ∂-sound′ (tok t′)            t ()             | no  t≢t′
+  ∂-sound′ (tok t′)            t ()             | no  t′≢t
   ∂-sound′ (p₁ ∣ p₂)           t (∣ˡ ∈₁)        = ∣ˡ (∂-sound′ p₁ t ∈₁)
   ∂-sound′ (p₁ ∣ p₂)           t (∣ʳ ∈₂)        = ∣ʳ {p₁ = p₁} (∂-sound′ p₂ t ∈₂)
   ∂-sound′ (_·_ {true}  p₁ p₂) t (∣ˡ (∈₁ · ∈₂)) = ∂-sound′ p₁ t ∈₁ · cast refl (♭?♯? (not (∂n p₁ t))) ∈₂
@@ -238,11 +238,11 @@ nullable? {false} p = no helper
   ∂-complete′ : ∀ {s s′ n} (p : P n) → s′ ∈ p → s′ ≡ t ∷ s → s ∈ ∂ p t
   ∂-complete′         ∅        ()  refl
   ∂-complete′         ε        ()  refl
-  ∂-complete′         (tok t′) _   refl with t ≟ t′
+  ∂-complete′         (tok t′) _   refl with t′ ≟ t
   ∂-complete′         (tok .t) tok refl | yes refl = ε
-  ∂-complete′ {[]}    (tok .t) tok refl | no  t≢t′ with t≢t′ refl
-  ∂-complete′ {[]}    (tok .t) tok refl | no  t≢t′ | ()
-  ∂-complete′ {_ ∷ _} (tok t′) ()  refl | no  t≢t′
+  ∂-complete′ {[]}    (tok .t) tok refl | no  t′≢t with t′≢t refl
+  ∂-complete′ {[]}    (tok .t) tok refl | no  t′≢t | ()
+  ∂-complete′ {_ ∷ _} (tok t′) ()  refl | no  t′≢t
   ∂-complete′ (p₁ ∣ p₂)           (∣ˡ ∈₁)              refl = ∣ˡ (∂-complete ∈₁)
   ∂-complete′ (p₁ ∣ p₂)           (∣ʳ ∈₂)              refl = ∣ʳ {p₁ = ∂ p₁ t} (∂-complete ∈₂)
   ∂-complete′ (_·_ {true}  p₁ p₂) (_·_ {[]}     ∈₁ ∈₂) refl = ∣ʳ {p₁ = ∂ p₁ t · _} (∂-complete ∈₂)
