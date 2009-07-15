@@ -68,12 +68,9 @@ data _⊢_≤_ {n} (A : List (Hyp n)) : Ty n → Ty n → Set where
 -- Soundness
 
 -- A hypothesis is valid if there is a corresponding proof.
---
--- This definition is lazy in order to simplify the definition of
--- sound below.
 
 Valid : ∀ {n} → (Ty n → Ty n → Set) → Pred (Hyp n)
-Valid _≤_ σ₁≲σ₂ = proj₁ σ₁≲σ₂ ≤ proj₂ σ₁≲σ₂
+Valid _≤_ (σ₁ ≲ σ₂) = σ₁ ≤ σ₂
 
 module Soundness where
 
@@ -141,8 +138,13 @@ module Soundness where
 
 sound : ∀ {n A} {σ τ : Ty n} →
         All (Valid _≤_) A → A ⊢ σ ≤ τ → σ ≤ τ
-sound valid σ≤τ = ⟦ S.sound (All.map done valid) σ≤τ ⟧≤
-  where open module S = Soundness
+sound {n} valid σ≤τ =
+  ⟦ S.sound (All.map (λ {h} → done′ h) valid) σ≤τ ⟧≤
+  where
+  open module S = Soundness
+
+  done′ : (σ₁≲σ₂ : Hyp n) → Valid _≤_ σ₁≲σ₂ → Valid _≤WHNF_ σ₁≲σ₂
+  done′ (_ ≲ _) = done
 
 ------------------------------------------------------------------------
 -- The subtyping relation is decidable
