@@ -68,7 +68,8 @@ import RecursiveTypes
 
 import TotalParserCombinators
 
--- Full parser combinators.
+-- Full parser combinators. Initially developed together with Ulf
+-- Norell; I added the use of mixed induction and coinduction.
 
 import StructurallyRecursiveDescentParsing.README
 
