@@ -6,7 +6,7 @@ module TotalParserCombinators where
 
 open import Algebra
 open import Coinduction
-open import Data.Bool using (Bool; true; false; not; _∧_; _∨_)
+open import Data.Bool using (Bool; true; false; not; _∨_)
 import Data.Bool.Properties as Bool
 private
   module BoolCS = CommutativeSemiring Bool.commutativeSemiring-∧-∨
@@ -20,6 +20,20 @@ open import Relation.Binary.PropositionalEquality
 open import Relation.Nullary
 open import Data.String using () renaming (String to Tok)
 open DecSetoid Data.String.decSetoid using (_≟_)
+
+------------------------------------------------------------------------
+-- A "right-strict" variant of _∧_
+
+-- If the left-strict variant of _∧_ were used to type _·_ below, then
+-- the inferred definition of ∂n would not be total; it would contain
+-- expressions of the form "∂n (♭ p₁) t ∧ false". With the
+-- right-strict definition of _∧_ such expressions reduce to "false".
+
+infixr 6 _∧_
+
+_∧_ : Bool → Bool → Bool
+b ∧ true  = b
+b ∧ false = false
 
 ------------------------------------------------------------------------
 -- Conditional coinduction
@@ -187,7 +201,8 @@ module Variant₂ where
 ⇐ (_∣_ {false} {false}  p₁ p₂) ()
 ⇐ (⟨ p₁ ⟩ · ⟨ p₂ ⟩)            refl = ⇐ p₁ refl · ⇐ p₂ refl
 ⇐ (⟪ p₁ ⟫ · ⟨ p₂ ⟩)            ()
-⇐ (p₁     · ⟪ p₂ ⟫)            ()
+⇐ (⟨ p₁ ⟩ · ⟪ p₂ ⟫)            ()
+⇐ (⟪ p₁ ⟫ · ⟪ p₂ ⟫)            ()
 ⇐ (nonempty p)                 ()
 
 -- We can decide if the empty string belongs to a given language.
@@ -203,75 +218,63 @@ nullable? {false} p = no helper
 ------------------------------------------------------------------------
 -- Derivative
 
--- The index of the derivative. Mostly left implicit.
+-- The index of the derivative. The right-hand sides (excluding
+-- t′ ≟ t) are inferable, but included here so that they can easily be
+-- inspected.
 
 ∂n : ∀ {n} → P n → Tok → Bool
-∂n ∅             t = _
-∂n ε             t = _
-∂n (tok t′)      t with t′ ≟ t
-∂n (tok t′)      t | yes t′≡t = _
-∂n (tok t′)      t | no  t′≢t = _
-∂n (p₁ ∣ p₂)     t = _
-∂n (p₁ · ⟨ p₂ ⟩) t = _
-∂n (p₁ · ⟪ p₂ ⟫) t = _
-∂n (nonempty p)  t = _
-
-∂?n : ∀ {n b} → ∞? (P n) b → Tok → Bool
-∂?n ⟨ p ⟩ t = _
-∂?n ⟪ p ⟫ t = _
+∂n ∅                 t = false
+∂n ε                 t = false
+∂n (tok t′)          t with t′ ≟ t
+∂n (tok t′)          t | yes t′≡t = true
+∂n (tok t′)          t | no  t′≢t = false
+∂n (p₁ ∣ p₂)         t = ∂n p₁ t ∨ ∂n p₂ t
+∂n (⟨ p₁ ⟩ · ⟨ p₂ ⟩) t = ∂n p₁ t ∨ ∂n p₂ t
+∂n (⟪ p₁ ⟫ · ⟨ p₂ ⟩) t = ∂n p₂ t
+∂n (⟨ p₁ ⟩ · ⟪ p₂ ⟫) t = ∂n p₁ t
+∂n (⟪ p₁ ⟫ · ⟪ p₂ ⟫) t = false
+∂n (nonempty p)      t = ∂n p t
 
 -- ∂ p t is the "derivative" of p with respect to t. It is specified
 -- by the equivalence s ∈ ∂ p t ⇔ t ∷ s ∈ p (proved below).
 
-mutual
-
-  ∂ : ∀ {n} (p : P n) (t : Tok) → P (∂n p t)
-  ∂ ∅             t = ∅
-  ∂ ε             t = ∅
-  ∂ (tok t′)      t with t′ ≟ t
-  ∂ (tok t′)      t | yes t′≡t = ε
-  ∂ (tok t′)      t | no  t′≢t = ∅
-  ∂ (p₁ ∣ p₂)     t = ∂ p₁ t ∣ ∂ p₂ t
-  ∂ (p₁ · ⟨ p₂ ⟩) t = ∂? p₁ t · ♯?    p₂
-                    ∣ ∂  p₂ t
-  ∂ (p₁ · ⟪ p₂ ⟫) t = ∂? p₁ t · ♯? (♭ p₂)
-  ∂ (nonempty p)  t = ∂ p t
-
-  ∂? : ∀ {n b} (p : ∞? (P n) b) (t : Tok) → ∞? (P (∂?n p t)) b
-  ∂? ⟨ p ⟩ t = ⟨   ∂    p  t ⟩
-  ∂? ⟪ p ⟫ t = ⟪ ♯ ∂ (♭ p) t ⟫
+∂ : ∀ {n} (p : P n) (t : Tok) → P (∂n p t)
+∂ ∅                 t = ∅
+∂ ε                 t = ∅
+∂ (tok t′)          t with t′ ≟ t
+∂ (tok t′)          t | yes t′≡t = ε
+∂ (tok t′)          t | no  t′≢t = ∅
+∂ (p₁ ∣ p₂)         t = ∂ p₁ t ∣ ∂ p₂ t
+∂ (⟨ p₁ ⟩ · ⟨ p₂ ⟩) t = ⟨   ∂    p₁  t ⟩ · ♯?    p₂ ∣ ∂ p₂  t
+∂ (⟪ p₁ ⟫ · ⟨ p₂ ⟩) t = ⟪ ♯ ∂ (♭ p₁) t ⟫ · ♯?    p₂ ∣ ∂ p₂  t
+∂ (⟨ p₁ ⟩ · ⟪ p₂ ⟫) t = ⟨   ∂    p₁  t ⟩ · ♯? (♭ p₂)
+∂ (⟪ p₁ ⟫ · ⟪ p₂ ⟫) t = ⟪ ♯ ∂ (♭ p₁) t ⟫ · ♯? (♭ p₂)
+∂ (nonempty p)      t = ∂ p t
 
 -- ∂ is correct.
 
 ∂-sound : ∀ {s n} {p : P n} {t} → s ∈ ∂ p t → t ∷ s ∈ p
 ∂-sound s∈ = ∂-sound′ _ _ s∈
   where
-  ∂?-sound : ∀ {s n b} (p : ∞? (P n) b) {t} →
-             s ∈ ♭? (∂? p t) → t ∷ s ∈ ♭? p
-  ∂?-sound ⟨ p ⟩ ∈ = ∂-sound ∈
-  ∂?-sound ⟪ p ⟫ ∈ = ∂-sound ∈
-
   ∂-sound′ : ∀ {s n} (p : P n) t → s ∈ ∂ p t → t ∷ s ∈ p
-  ∂-sound′ ∅             t ()
-  ∂-sound′ ε             t ()
-  ∂-sound′ (tok t′)      t _              with t′ ≟ t
-  ∂-sound′ (tok .t)      t ε              | yes refl = tok
-  ∂-sound′ (tok t′)      t ()             | no  t′≢t
-  ∂-sound′ (p₁ ∣ p₂)     t (∣ˡ ∈₁)        = ∣ˡ (∂-sound′ p₁ t ∈₁)
-  ∂-sound′ (p₁ ∣ p₂)     t (∣ʳ ∈₂)        = ∣ʳ {p₁ = p₁} (∂-sound′ p₂ t ∈₂)
-  ∂-sound′ (p₁ · ⟨ p₂ ⟩) t (∣ˡ (∈₁ · ∈₂)) = ∂?-sound p₁ ∈₁ · cast refl (♭?♯? (∂?n p₁ t)) ∈₂
-  ∂-sound′ (p₁ · ⟨ p₂ ⟩) t (∣ʳ ∈₂)        = ⇐ (♭? p₁) refl · ∂-sound′ p₂ t ∈₂
-  ∂-sound′ (p₁ · ⟪ p₂ ⟫) t (∈₁ · ∈₂)      = ∂?-sound p₁ ∈₁ · cast refl (♭?♯? (∂?n p₁ t)) ∈₂
-  ∂-sound′ (nonempty p)  t ∈              = nonempty (∂-sound ∈)
+  ∂-sound′ ∅                 t ()
+  ∂-sound′ ε                 t ()
+  ∂-sound′ (tok t′)          t _              with t′ ≟ t
+  ∂-sound′ (tok .t)          t ε              | yes refl = tok
+  ∂-sound′ (tok t′)          t ()             | no  t′≢t
+  ∂-sound′ (p₁ ∣ p₂)         t (∣ˡ ∈₁)        = ∣ˡ (∂-sound′ p₁ t ∈₁)
+  ∂-sound′ (p₁ ∣ p₂)         t (∣ʳ ∈₂)        = ∣ʳ {p₁ = p₁} (∂-sound′ p₂ t ∈₂)
+  ∂-sound′ (⟨ p₁ ⟩ · ⟨ p₂ ⟩) t (∣ˡ (∈₁ · ∈₂)) = ∂-sound ∈₁ · cast refl (♭?♯? (∂n p₁ t)) ∈₂
+  ∂-sound′ (⟨ p₁ ⟩ · ⟨ p₂ ⟩) t (∣ʳ ∈₂)        = ⇐ p₁ refl · ∂-sound′ p₂ t ∈₂
+  ∂-sound′ (⟨ p₁ ⟩ · ⟪ p₂ ⟫) t (∈₁ · ∈₂)      = ∂-sound ∈₁ · cast refl (♭?♯? (∂n p₁ t)) ∈₂
+  ∂-sound′ (⟪ p₁ ⟫ · ⟨ p₂ ⟩) t (∣ˡ (∈₁ · ∈₂)) = ∂-sound ∈₁ · cast refl (♭?♯? (∂n (♭ p₁) t)) ∈₂
+  ∂-sound′ (⟪ p₁ ⟫ · ⟨ p₂ ⟩) t (∣ʳ ∈₂)        = ⇐ (♭ p₁) refl · ∂-sound′ p₂ t ∈₂
+  ∂-sound′ (⟪ p₁ ⟫ · ⟪ p₂ ⟫) t (∈₁ · ∈₂)      = ∂-sound ∈₁ · cast refl (♭?♯? (∂n (♭ p₁) t)) ∈₂
+  ∂-sound′ (nonempty p)      t ∈              = nonempty (∂-sound ∈)
 
 ∂-complete : ∀ {s n} {p : P n} {t} → t ∷ s ∈ p → s ∈ ∂ p t
 ∂-complete {t = t} t∷s∈ = ∂-complete′ _ t∷s∈ refl
   where
-  ∂?-complete : ∀ {s n b} (p : ∞? (P n) b) {t} →
-                t ∷ s ∈ ♭? p → s ∈ ♭? (∂? p t)
-  ∂?-complete ⟨ p ⟩ ∈ = ∂-complete ∈
-  ∂?-complete ⟪ p ⟫ ∈ = ∂-complete ∈
-
   ∂-complete′ : ∀ {s s′ n} (p : P n) → s′ ∈ p → s′ ≡ t ∷ s → s ∈ ∂ p t
   ∂-complete′         ∅        ()  refl
   ∂-complete′         ε        ()  refl
@@ -280,14 +283,19 @@ mutual
   ∂-complete′ {[]}    (tok .t) tok refl | no  t′≢t with t′≢t refl
   ∂-complete′ {[]}    (tok .t) tok refl | no  t′≢t | ()
   ∂-complete′ {_ ∷ _} (tok t′) ()  refl | no  t′≢t
-  ∂-complete′ (p₁ ∣ p₂)     (∣ˡ ∈₁)              refl = ∣ˡ (∂-complete ∈₁)
-  ∂-complete′ (p₁ ∣ p₂)     (∣ʳ ∈₂)              refl = ∣ʳ {p₁ = ∂ p₁ t} (∂-complete ∈₂)
-  ∂-complete′ (p₁ · ⟨ p₂ ⟩) (_·_ {[]}     ∈₁ ∈₂) refl = ∣ʳ {p₁ = ∂? p₁ t · _} (∂-complete ∈₂)
-  ∂-complete′ (p₁ · ⟨ p₂ ⟩) (_·_ {._ ∷ _} ∈₁ ∈₂) refl = ∣ˡ (∂?-complete p₁ ∈₁ · cast refl (sym (♭?♯? (∂?n p₁ t))) ∈₂)
-  ∂-complete′ (p₁ · ⟪ p₂ ⟫) (_·_ {[]}     ∈₁ ∈₂) refl with ⇒ ∈₁
-  ∂-complete′ (p₁ · ⟪ p₂ ⟫) (_·_ {[]}     ∈₁ ∈₂) refl | ()
-  ∂-complete′ (p₁ · ⟪ p₂ ⟫) (_·_ {._ ∷ _} ∈₁ ∈₂) refl = ∂?-complete p₁ ∈₁ · cast refl (sym (♭?♯? (∂?n p₁ t))) ∈₂
-  ∂-complete′ (nonempty p)  (nonempty ∈)         refl = ∂-complete ∈
+  ∂-complete′ (p₁ ∣ p₂)         (∣ˡ ∈₁)              refl = ∣ˡ (∂-complete ∈₁)
+  ∂-complete′ (p₁ ∣ p₂)         (∣ʳ ∈₂)              refl = ∣ʳ {p₁ = ∂ p₁ t} (∂-complete ∈₂)
+  ∂-complete′ (⟨ p₁ ⟩ · ⟨ p₂ ⟩) (_·_ {[]}     ∈₁ ∈₂) refl = ∣ʳ {p₁ = ⟨ ∂ p₁ t ⟩ · _} (∂-complete ∈₂)
+  ∂-complete′ (⟨ p₁ ⟩ · ⟨ p₂ ⟩) (_·_ {._ ∷ _} ∈₁ ∈₂) refl = ∣ˡ (∂-complete ∈₁ · cast refl (sym (♭?♯? (∂n p₁ t))) ∈₂)
+  ∂-complete′ (⟨ p₁ ⟩ · ⟪ p₂ ⟫) (_·_ {[]}     ∈₁ ∈₂) refl with ⇒ ∈₁
+  ∂-complete′ (⟨ p₁ ⟩ · ⟪ p₂ ⟫) (_·_ {[]}     ∈₁ ∈₂) refl | ()
+  ∂-complete′ (⟨ p₁ ⟩ · ⟪ p₂ ⟫) (_·_ {._ ∷ _} ∈₁ ∈₂) refl = ∂-complete ∈₁ · cast refl (sym (♭?♯? (∂n p₁ t))) ∈₂
+  ∂-complete′ (⟪ p₁ ⟫ · ⟨ p₂ ⟩) (_·_ {[]}     ∈₁ ∈₂) refl = ∣ʳ {p₁ = ⟪ _ ⟫ · _} (∂-complete ∈₂)
+  ∂-complete′ (⟪ p₁ ⟫ · ⟨ p₂ ⟩) (_·_ {._ ∷ _} ∈₁ ∈₂) refl = ∣ˡ (∂-complete ∈₁ · cast refl (sym (♭?♯? (∂n (♭ p₁) t))) ∈₂)
+  ∂-complete′ (⟪ p₁ ⟫ · ⟪ p₂ ⟫) (_·_ {[]}     ∈₁ ∈₂) refl with ⇒ ∈₁
+  ∂-complete′ (⟪ p₁ ⟫ · ⟪ p₂ ⟫) (_·_ {[]}     ∈₁ ∈₂) refl | ()
+  ∂-complete′ (⟪ p₁ ⟫ · ⟪ p₂ ⟫) (_·_ {._ ∷ _} ∈₁ ∈₂) refl = ∂-complete ∈₁ · cast refl (sym (♭?♯? (∂n (♭ p₁) t))) ∈₂
+  ∂-complete′ (nonempty p)      (nonempty ∈)         refl = ∂-complete ∈
 
 ------------------------------------------------------------------------
 -- _∈_ is decidable
@@ -316,8 +324,8 @@ module AlternativeNonempty where
   nonempty′ ε                 = ∅
   nonempty′ (tok t)           = tok t
   nonempty′ (p₁ ∣ p₂)         = nonempty′ p₁ ∣ nonempty′ p₂
-  nonempty′ (  p₁   · ⟪ p₂ ⟫) =   p₁   · ⟪ p₂ ⟫
-  nonempty′ (⟪ p₁ ⟫ · ⟨ p₂ ⟩) = ⟪ p₁ ⟫ · ⟨ p₂ ⟩
+  nonempty′ (⟪ p₁ ⟫ ·   p₂  ) = ⟪ p₁ ⟫ ·   p₂
+  nonempty′ (⟨ p₁ ⟩ · ⟪ p₂ ⟫) = ⟨ p₁ ⟩ · ⟪ p₂ ⟫
   nonempty′ (⟨ p₁ ⟩ · ⟨ p₂ ⟩) = nonempty′ p₁ ∣ nonempty′ p₂
                               ∣ ♯? (nonempty′ p₁) · ♯? (nonempty′ p₂)
   nonempty′ (nonempty p)      = nonempty′ p
@@ -334,8 +342,8 @@ module AlternativeNonempty where
     sound′ (tok t)           tok                        refl = tok
     sound′ (p₁ ∣ p₂)         (∣ˡ pr)                    refl = ∣ˡ           (sound′ p₁ pr refl)
     sound′ (p₁ ∣ p₂)         (∣ʳ pr)                    refl = ∣ʳ {p₁ = p₁} (sound′ p₂ pr refl)
-    sound′ (  p₁   · ⟪ p₂ ⟫) pr                         refl = pr
-    sound′ (⟪ p₁ ⟫ · ⟨ p₂ ⟩) pr                         refl = pr
+    sound′ (⟪ p₁ ⟫ ·   p₂  ) pr                         refl = pr
+    sound′ (⟨ p₁ ⟩ · ⟪ p₂ ⟫) pr                         refl = pr
     sound′ (⟨ p₁ ⟩ · ⟨ p₂ ⟩) (∣ˡ (∣ˡ pr))               refl = cast (proj₂ ListMonoid.identity _) refl $
                                                                  sound′ p₁ pr refl · ⇐ p₂ refl
     sound′ (⟨ p₁ ⟩ · ⟨ p₂ ⟩) (∣ˡ (∣ʳ pr))               refl = ⇐ p₁ refl · sound′ p₂ pr refl
@@ -355,8 +363,8 @@ module AlternativeNonempty where
     complete′ (tok t)           tok                           refl = tok
     complete′ (p₁ ∣ p₂)         (∣ˡ pr)                       refl = ∣ˡ              (complete′ p₁ pr refl)
     complete′ (p₁ ∣ p₂)         (∣ʳ pr)                       refl = ∣ʳ {n₁ = false} (complete′ p₂ pr refl)
-    complete′ (  p₁   · ⟪ p₂ ⟫) pr                            refl = pr
-    complete′ (⟪ p₁ ⟫ · ⟨ p₂ ⟩) pr                            refl = pr
+    complete′ (⟪ p₁ ⟫ ·   p₂  ) pr                            refl = pr
+    complete′ (⟨ p₁ ⟩ · ⟪ p₂ ⟫) pr                            refl = pr
     complete′ (⟨ p₁ ⟩ · ⟨ p₂ ⟩) (_·_ {[]}            pr₁ pr₂) refl = ∣ˡ (∣ʳ {n₁ = false} (complete′ p₂ pr₂ refl))
     complete′ (⟨ p₁ ⟩ · ⟨ p₂ ⟩) (_·_ {_ ∷ _} {[]}    pr₁ pr₂) refl = cast (sym $ proj₂ ListMonoid.identity _) refl $
                                                                        ∣ˡ (∣ˡ {n₂ = false} (complete′ p₁ pr₁ refl))
