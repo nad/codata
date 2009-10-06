@@ -61,6 +61,13 @@ import BreadthFirst
 
 import RecursiveTypes
 
+-- One must exercise caution when using the technique advertised in
+-- Section 4. The following module shows that, in a coinductive
+-- setting, it is not always sound to postulate admissible rules
+-- (inductively).
+
+import AdmissibleButNotPostulable
+
 ------------------------------------------------------------------------
 -- Section 5: Total parser combinators
 
