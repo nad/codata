@@ -66,12 +66,6 @@ mutual
   O′→ZO ([0] o) = [0] (♯ O′→ZO (♭ o))
   O′→ZO ([1] o) = [1] (O′→O o)
 
--- The type Z is (essentially) defined by Z O = ∞ (Z O) + O, and this
--- should be interpreted as Z O = νC.C + O. The type O is in turn
--- (essentially) defined by O = Z O where Z O = ∞ (Z O) + O, which can
--- be rewritten as O = ∞ O + O, and this should be interpreted as
--- O = νC.μI.C + I.
-
 -- If O had actually encoded the type μO. νZ. Z + O, then we could
 -- have proved the following theorem:
 
