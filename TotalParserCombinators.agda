@@ -1,12 +1,21 @@
 ------------------------------------------------------------------------
--- Total parser combinators
+-- Total parser combinators (recognisers)
 ------------------------------------------------------------------------
 
-module TotalParserCombinators where
+open import Relation.Binary
+open import Relation.Binary.PropositionalEquality
+
+-- The recognisers are parametrised on the alphabet.
+
+module TotalParserCombinators
+         (Tok : Set)
+         (_≟_ : Decidable (_≡_ {A = Tok}))
+         -- The tokens must come with decidable equality.
+         where
 
 open import Algebra
 open import Coinduction
-open import Data.Bool using (Bool; true; false; not; _∨_)
+open import Data.Bool using (Bool; true; false; _∨_)
 import Data.Bool.Properties as Bool
 private
   module BoolCS = CommutativeSemiring Bool.commutativeSemiring-∧-∨
@@ -15,11 +24,7 @@ open import Data.List as List using (List; []; _∷_; _++_; [_])
 private
   module ListMonoid {A} = Monoid (List.monoid A)
 open import Data.Product
-open import Relation.Binary
-open import Relation.Binary.PropositionalEquality
 open import Relation.Nullary
-open import Data.String using () renaming (String to Tok)
-open DecSetoid Data.String.decSetoid using (_≟_)
 
 ------------------------------------------------------------------------
 -- A "right-strict" variant of _∧_
