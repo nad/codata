@@ -74,6 +74,7 @@ import AdmissibleButNotPostulable
 -- Parser combinators which only handle recognition.
 
 import TotalParserCombinators
+import TotalParserCombinators.NotOnlyContextFree
 
 -- Full parser combinators. Initially developed together with Ulf
 -- Norell; I added the use of mixed induction and coinduction.
