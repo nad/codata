@@ -3,6 +3,11 @@
 -- be recognised
 ------------------------------------------------------------------------
 
+-- This is obvious given the proof in
+-- TotalParserCombinators.AllDecidablePredicates, but the code below
+-- provides a non-trivial example of the use of the parser
+-- combinators.
+
 module TotalParserCombinators.NotOnlyContextFree where
 
 open import Algebra
