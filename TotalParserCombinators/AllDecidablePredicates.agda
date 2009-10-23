@@ -68,9 +68,9 @@ pred⇒parser f = (p f , λ s → (p-sound f , p-complete f s))
   p-sound : ∀ f {s} → s ∈ p f → f s ≡ true
   p-sound f (∣ʳ s∈) with base-case-sound (f []) s∈
   ... | (refl , eq) = eq
-  p-sound f (∣ˡ (∣ˡ (s∈ · t∈))) with cast refl (♭?♯? (f [ true  ])) t∈
+  p-sound f (∣ˡ (∣ˡ (s∈ · t∈))) with cast∈ refl (♭?♯? (f [ true  ])) t∈
   ... | tok = p-sound (extend f true ) s∈
-  p-sound f (∣ˡ (∣ʳ (s∈ · t∈))) with cast refl (♭?♯? (f [ false ])) t∈
+  p-sound f (∣ˡ (∣ʳ (s∈ · t∈))) with cast∈ refl (♭?♯? (f [ false ])) t∈
   ... | tok = p-sound (extend f false) s∈
 
   p-complete′ : ∀ f {s} → Reverse s → f s ≡ true → s ∈ p f
@@ -79,11 +79,11 @@ pred⇒parser f = (p f , λ s → (p-sound f , p-complete f s))
   p-complete′ f (bs ∶ rs ∶ʳ true) eq =
     ∣ˡ {n₁ = false} $ ∣ˡ {n₁ = false} $
       p-complete′ (extend f true ) rs eq ·
-      cast refl (sym (♭?♯? (extend f true  []))) tok
+      cast∈ refl (sym (♭?♯? (extend f true  []))) tok
   p-complete′ f (bs ∶ rs ∶ʳ false) eq =
     ∣ˡ {n₁ = false} $ ∣ʳ {n₁ = false} $
       p-complete′ (extend f false) rs eq ·
-      cast refl (sym (♭?♯? (extend f false []))) tok
+      cast∈ refl (sym (♭?♯? (extend f false []))) tok
 
   p-complete : ∀ f s → f s ≡ true → s ∈ p f
   p-complete f s eq = p-complete′ f (reverseView s) eq

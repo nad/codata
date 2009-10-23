@@ -79,9 +79,19 @@ data P : Bool → Set where
   _∣_      : ∀ {n₁ n₂} →     P n₁     →     P n₂     → P (n₁ ∨ n₂)
   _·_      : ∀ {n₁ n₂} → ∞? (P n₁) n₂ → ∞? (P n₂) n₁ → P (n₁ ∧ n₂)
   nonempty : ∀ {n} → P n → P false
+  cast     : ∀ {n₁ n₂} → n₁ ≡ n₂ → P n₁ → P n₂
 
--- Note that, as discussed below, ∅ and nonempty could be defined as
--- derived combinators.
+-- Note that ∅, nonempty and cast could be defined as derived
+-- combinators. (For cast this is obvious, for ∅ and nonempty see
+-- below, and note that the proof in
+-- TotalParserCombinators.AllDecidablePredicates does not rely on
+-- these constructors.) However, Agda uses /guarded/ corecursion, so
+-- the fact that nonempty and cast are constructors can be very
+-- convenient when constructing other parsers.
+
+-- For an example of the use of nonempty, see the Kleene star example
+-- below. For an example of the use of cast, see
+-- TotalParserCombinators.NotOnlyContextFree.)
 
 ------------------------------------------------------------------------
 -- Semantics
@@ -102,11 +112,13 @@ data _∈_ : ∀ {n} → List Tok → P n → Set where
              s₁ ∈ ♭? p₁ → s₂ ∈ ♭? p₂ → s₁ ++ s₂ ∈ p₁ · p₂
   nonempty : ∀ {n t s} {p : P n} →
              t ∷ s ∈ p → t ∷ s ∈ nonempty p
+  cast     : ∀ {n₁ n₂ s} {p : P n₁} {eq : n₁ ≡ n₂} →
+             s ∈ p → s ∈ cast eq p
 
 -- A lemma.
 
-cast : ∀ {n} {p p′ : P n} {s s′} → s ≡ s′ → p ≡ p′ → s ∈ p → s′ ∈ p′
-cast refl refl s∈ = s∈
+cast∈ : ∀ {n} {p p′ : P n} {s s′} → s ≡ s′ → p ≡ p′ → s ∈ p → s′ ∈ p′
+cast∈ refl refl s∈ = s∈
 
 ------------------------------------------------------------------------
 -- Example: A definition which is left and right recursive
@@ -196,6 +208,7 @@ module Variant₂ where
   ⇒′ (_·_ {[]}    pr₁ pr₂) refl = cong₂ _∧_ (⇒ pr₁) (⇒ pr₂)
   ⇒′ (_·_ {_ ∷ _} pr₁ pr₂) ()
   ⇒′ (nonempty p)          ()
+  ⇒′ (cast {eq = refl} p)  refl = ⇒′ p refl
 
 ⇐ : ∀ {n} (p : P n) → n ≡ true → [] ∈ p
 ⇐ ∅                            ()
@@ -209,6 +222,7 @@ module Variant₂ where
 ⇐ (⟨ p₁ ⟩ · ⟪ p₂ ⟫)            ()
 ⇐ (⟪ p₁ ⟫ · ⟪ p₂ ⟫)            ()
 ⇐ (nonempty p)                 ()
+⇐ (cast refl p)                refl = cast (⇐ p refl)
 
 -- We can decide if the empty string belongs to a given language.
 
@@ -239,6 +253,7 @@ nullable? {false} p = no helper
 ∂n (⟨ p₁ ⟩ · ⟪ p₂ ⟫) t = ∂n p₁ t
 ∂n (⟪ p₁ ⟫ · ⟪ p₂ ⟫) t = false
 ∂n (nonempty p)      t = ∂n p t
+∂n (cast _ p)        t = ∂n p t
 
 -- ∂ p t is the "derivative" of p with respect to t. It is specified
 -- by the equivalence s ∈ ∂ p t ⇔ t ∷ s ∈ p (proved below).
@@ -255,6 +270,7 @@ nullable? {false} p = no helper
 ∂ (⟨ p₁ ⟩ · ⟪ p₂ ⟫) t = ⟨   ∂    p₁  t ⟩ · ♯? (♭ p₂)
 ∂ (⟪ p₁ ⟫ · ⟪ p₂ ⟫) t = ⟪ ♯ ∂ (♭ p₁) t ⟫ · ♯? (♭ p₂)
 ∂ (nonempty p)      t = ∂ p t
+∂ (cast _ p)        t = ∂ p t
 
 -- ∂ is correct.
 
@@ -269,13 +285,14 @@ nullable? {false} p = no helper
   ∂-sound′ (tok t′)          t ()             | no  t′≢t
   ∂-sound′ (p₁ ∣ p₂)         t (∣ˡ ∈₁)        = ∣ˡ (∂-sound′ p₁ t ∈₁)
   ∂-sound′ (p₁ ∣ p₂)         t (∣ʳ ∈₂)        = ∣ʳ {p₁ = p₁} (∂-sound′ p₂ t ∈₂)
-  ∂-sound′ (⟨ p₁ ⟩ · ⟨ p₂ ⟩) t (∣ˡ (∈₁ · ∈₂)) = ∂-sound ∈₁ · cast refl (♭?♯? (∂n p₁ t)) ∈₂
+  ∂-sound′ (⟨ p₁ ⟩ · ⟨ p₂ ⟩) t (∣ˡ (∈₁ · ∈₂)) = ∂-sound ∈₁ · cast∈ refl (♭?♯? (∂n p₁ t)) ∈₂
   ∂-sound′ (⟨ p₁ ⟩ · ⟨ p₂ ⟩) t (∣ʳ ∈₂)        = ⇐ p₁ refl · ∂-sound′ p₂ t ∈₂
-  ∂-sound′ (⟨ p₁ ⟩ · ⟪ p₂ ⟫) t (∈₁ · ∈₂)      = ∂-sound ∈₁ · cast refl (♭?♯? (∂n p₁ t)) ∈₂
-  ∂-sound′ (⟪ p₁ ⟫ · ⟨ p₂ ⟩) t (∣ˡ (∈₁ · ∈₂)) = ∂-sound ∈₁ · cast refl (♭?♯? (∂n (♭ p₁) t)) ∈₂
+  ∂-sound′ (⟨ p₁ ⟩ · ⟪ p₂ ⟫) t (∈₁ · ∈₂)      = ∂-sound ∈₁ · cast∈ refl (♭?♯? (∂n p₁ t)) ∈₂
+  ∂-sound′ (⟪ p₁ ⟫ · ⟨ p₂ ⟩) t (∣ˡ (∈₁ · ∈₂)) = ∂-sound ∈₁ · cast∈ refl (♭?♯? (∂n (♭ p₁) t)) ∈₂
   ∂-sound′ (⟪ p₁ ⟫ · ⟨ p₂ ⟩) t (∣ʳ ∈₂)        = ⇐ (♭ p₁) refl · ∂-sound′ p₂ t ∈₂
-  ∂-sound′ (⟪ p₁ ⟫ · ⟪ p₂ ⟫) t (∈₁ · ∈₂)      = ∂-sound ∈₁ · cast refl (♭?♯? (∂n (♭ p₁) t)) ∈₂
+  ∂-sound′ (⟪ p₁ ⟫ · ⟪ p₂ ⟫) t (∈₁ · ∈₂)      = ∂-sound ∈₁ · cast∈ refl (♭?♯? (∂n (♭ p₁) t)) ∈₂
   ∂-sound′ (nonempty p)      t ∈              = nonempty (∂-sound ∈)
+  ∂-sound′ (cast _ p)        t ∈              = cast (∂-sound ∈)
 
 ∂-complete : ∀ {s n} {p : P n} {t} → t ∷ s ∈ p → s ∈ ∂ p t
 ∂-complete {t = t} t∷s∈ = ∂-complete′ _ t∷s∈ refl
@@ -291,16 +308,17 @@ nullable? {false} p = no helper
   ∂-complete′ (p₁ ∣ p₂)         (∣ˡ ∈₁)              refl = ∣ˡ (∂-complete ∈₁)
   ∂-complete′ (p₁ ∣ p₂)         (∣ʳ ∈₂)              refl = ∣ʳ {p₁ = ∂ p₁ t} (∂-complete ∈₂)
   ∂-complete′ (⟨ p₁ ⟩ · ⟨ p₂ ⟩) (_·_ {[]}     ∈₁ ∈₂) refl = ∣ʳ {p₁ = ⟨ ∂ p₁ t ⟩ · _} (∂-complete ∈₂)
-  ∂-complete′ (⟨ p₁ ⟩ · ⟨ p₂ ⟩) (_·_ {._ ∷ _} ∈₁ ∈₂) refl = ∣ˡ (∂-complete ∈₁ · cast refl (sym (♭?♯? (∂n p₁ t))) ∈₂)
+  ∂-complete′ (⟨ p₁ ⟩ · ⟨ p₂ ⟩) (_·_ {._ ∷ _} ∈₁ ∈₂) refl = ∣ˡ (∂-complete ∈₁ · cast∈ refl (sym (♭?♯? (∂n p₁ t))) ∈₂)
   ∂-complete′ (⟨ p₁ ⟩ · ⟪ p₂ ⟫) (_·_ {[]}     ∈₁ ∈₂) refl with ⇒ ∈₁
   ∂-complete′ (⟨ p₁ ⟩ · ⟪ p₂ ⟫) (_·_ {[]}     ∈₁ ∈₂) refl | ()
-  ∂-complete′ (⟨ p₁ ⟩ · ⟪ p₂ ⟫) (_·_ {._ ∷ _} ∈₁ ∈₂) refl = ∂-complete ∈₁ · cast refl (sym (♭?♯? (∂n p₁ t))) ∈₂
+  ∂-complete′ (⟨ p₁ ⟩ · ⟪ p₂ ⟫) (_·_ {._ ∷ _} ∈₁ ∈₂) refl = ∂-complete ∈₁ · cast∈ refl (sym (♭?♯? (∂n p₁ t))) ∈₂
   ∂-complete′ (⟪ p₁ ⟫ · ⟨ p₂ ⟩) (_·_ {[]}     ∈₁ ∈₂) refl = ∣ʳ {p₁ = ⟪ _ ⟫ · _} (∂-complete ∈₂)
-  ∂-complete′ (⟪ p₁ ⟫ · ⟨ p₂ ⟩) (_·_ {._ ∷ _} ∈₁ ∈₂) refl = ∣ˡ (∂-complete ∈₁ · cast refl (sym (♭?♯? (∂n (♭ p₁) t))) ∈₂)
+  ∂-complete′ (⟪ p₁ ⟫ · ⟨ p₂ ⟩) (_·_ {._ ∷ _} ∈₁ ∈₂) refl = ∣ˡ (∂-complete ∈₁ · cast∈ refl (sym (♭?♯? (∂n (♭ p₁) t))) ∈₂)
   ∂-complete′ (⟪ p₁ ⟫ · ⟪ p₂ ⟫) (_·_ {[]}     ∈₁ ∈₂) refl with ⇒ ∈₁
   ∂-complete′ (⟪ p₁ ⟫ · ⟪ p₂ ⟫) (_·_ {[]}     ∈₁ ∈₂) refl | ()
-  ∂-complete′ (⟪ p₁ ⟫ · ⟪ p₂ ⟫) (_·_ {._ ∷ _} ∈₁ ∈₂) refl = ∂-complete ∈₁ · cast refl (sym (♭?♯? (∂n (♭ p₁) t))) ∈₂
+  ∂-complete′ (⟪ p₁ ⟫ · ⟪ p₂ ⟫) (_·_ {._ ∷ _} ∈₁ ∈₂) refl = ∂-complete ∈₁ · cast∈ refl (sym (♭?♯? (∂n (♭ p₁) t))) ∈₂
   ∂-complete′ (nonempty p)      (nonempty ∈)         refl = ∂-complete ∈
+  ∂-complete′ (cast _ p)        (cast ∈)             refl = ∂-complete ∈
 
 ------------------------------------------------------------------------
 -- _∈_ is decidable
@@ -334,6 +352,7 @@ module AlternativeNonempty where
   nonempty′ (⟨ p₁ ⟩ · ⟨ p₂ ⟩) = nonempty′ p₁ ∣ nonempty′ p₂
                               ∣ ♯? (nonempty′ p₁) · ♯? (nonempty′ p₂)
   nonempty′ (nonempty p)      = nonempty′ p
+  nonempty′ (cast eq p)       = nonempty′ p
 
   sound : ∀ {n s} {p : P n} → s ∈ nonempty′ p → s ∈ nonempty p
   sound {s = []}    pr with ⇒ pr
@@ -349,7 +368,7 @@ module AlternativeNonempty where
     sound′ (p₁ ∣ p₂)         (∣ʳ pr)                    refl = ∣ʳ {p₁ = p₁} (sound′ p₂ pr refl)
     sound′ (⟪ p₁ ⟫ ·   p₂  ) pr                         refl = pr
     sound′ (⟨ p₁ ⟩ · ⟪ p₂ ⟫) pr                         refl = pr
-    sound′ (⟨ p₁ ⟩ · ⟨ p₂ ⟩) (∣ˡ (∣ˡ pr))               refl = cast (proj₂ ListMonoid.identity _) refl $
+    sound′ (⟨ p₁ ⟩ · ⟨ p₂ ⟩) (∣ˡ (∣ˡ pr))               refl = cast∈ (proj₂ ListMonoid.identity _) refl $
                                                                  sound′ p₁ pr refl · ⇐ p₂ refl
     sound′ (⟨ p₁ ⟩ · ⟨ p₂ ⟩) (∣ˡ (∣ʳ pr))               refl = ⇐ p₁ refl · sound′ p₂ pr refl
     sound′ (⟨ p₁ ⟩ · ⟨ p₂ ⟩) (∣ʳ (_·_ {[]}    pr₁ pr₂)) refl with ⇒ pr₁
@@ -357,6 +376,7 @@ module AlternativeNonempty where
     sound′ (⟨ p₁ ⟩ · ⟨ p₂ ⟩) (∣ʳ (_·_ {_ ∷ _} pr₁ pr₂)) refl with sound {p = p₂} pr₂
     ... | nonempty pr₂′ = sound′ p₁ pr₁ refl · pr₂′
     sound′ (nonempty p)      pr                         refl = nonempty (sound′ p pr refl)
+    sound′ (cast _ p)        pr                         refl = cast (sound′ p pr refl)
 
   complete : ∀ {n s} {p : P n} → s ∈ nonempty p → s ∈ nonempty′ p
   complete (nonempty pr) = complete′ _ pr refl
@@ -371,8 +391,9 @@ module AlternativeNonempty where
     complete′ (⟪ p₁ ⟫ ·   p₂  ) pr                            refl = pr
     complete′ (⟨ p₁ ⟩ · ⟪ p₂ ⟫) pr                            refl = pr
     complete′ (⟨ p₁ ⟩ · ⟨ p₂ ⟩) (_·_ {[]}            pr₁ pr₂) refl = ∣ˡ (∣ʳ {n₁ = false} (complete′ p₂ pr₂ refl))
-    complete′ (⟨ p₁ ⟩ · ⟨ p₂ ⟩) (_·_ {_ ∷ _} {[]}    pr₁ pr₂) refl = cast (sym $ proj₂ ListMonoid.identity _) refl $
+    complete′ (⟨ p₁ ⟩ · ⟨ p₂ ⟩) (_·_ {_ ∷ _} {[]}    pr₁ pr₂) refl = cast∈ (sym $ proj₂ ListMonoid.identity _) refl $
                                                                        ∣ˡ (∣ˡ {n₂ = false} (complete′ p₁ pr₁ refl))
     complete′ (⟨ p₁ ⟩ · ⟨ p₂ ⟩) (_·_ {_ ∷ _} {_ ∷ _} pr₁ pr₂) refl = ∣ʳ {n₁ = false} (complete′ p₁ pr₁ refl ·
                                                                                       complete′ p₂ pr₂ refl)
     complete′ (nonempty p)      (nonempty pr)                 refl = complete′ p pr refl
+    complete′ (cast _ p)        (cast pr)                     refl = complete′ p pr refl

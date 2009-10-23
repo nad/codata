@@ -12,7 +12,7 @@ module TotalParserCombinators.NotOnlyContextFree where
 
 open import Algebra
 open import Coinduction
-open import Data.Bool using (Bool; true; false)
+open import Data.Bool using (Bool; true; false; _∨_)
 open import Data.Function
 open import Data.List as List using (List; []; _∷_; _++_; [_])
 private
@@ -59,40 +59,13 @@ _^_ = flip List.replicate
 
 private
 
-  ^-lemma : ∀ t n → t ^ suc n ≡ t ^ n ++ [ t ]
-  ^-lemma t zero    = refl
-  ^-lemma t (suc n) = cong (_∷_ t) (^-lemma t n)
+  left-zero : ∀ b → false ∧ b ≡ false
+  left-zero true  = refl
+  left-zero false = refl
 
   shallow-comm : ∀ i n → i + suc n ≡ suc (i + n)
   shallow-comm i n =
     solve 2 (λ i n → i :+ (con 1 :+ n) := con 1 :+ i :+ n) refl i n
-
-  aⁿ⁺ⁱbⁿ⁺ⁱcⁿ-string : ℕ → ℕ → List Tok
-  aⁿ⁺ⁱbⁿ⁺ⁱcⁿ-string n i = (a ^ (i + n) ++ b ^ (i + n)) ++ c ^ n
-
-  rearranging-lemma : ∀ i n →
-    aⁿ⁺ⁱbⁿ⁺ⁱcⁿ-string (suc n) i ≡
-    ((a ^ (suc i + n) ++ b ^ (suc i + n)) ++ c ^ n) ++ [ c ]
-  rearranging-lemma i n with i + suc n | shallow-comm i n
-  ... | ._ | refl = begin
-    (a ^ (suc i + n) ++ b ^ (suc i + n)) ++ c ^ suc n
-      ≡⟨ cong (λ s → (a ^ (suc i + n) ++ b ^ (suc i + n)) ++ s)
-              (^-lemma c n) ⟩
-    (a ^ (suc i + n) ++ b ^ (suc i + n)) ++ (c ^ n ++ [ c ])
-      ≡⟨ sym (ListMonoid.assoc
-                (a ^ (suc i + n) ++ b ^ (suc i + n)) _ _) ⟩
-    ((a ^ (suc i + n) ++ b ^ (suc i + n)) ++ c ^ n) ++ [ c ]
-      ∎
-
-  identity-lemma : ∀ i →
-    a ^ i ++ b ^ i ≡ (a ^ (i + 0) ++ b ^ (i + 0)) ++ []
-  identity-lemma i = begin
-    a ^ i ++ b ^ i
-      ≡⟨ cong (λ i → a ^ i ++ b ^ i) (sym (proj₂ NatCS.+-identity i)) ⟩
-    a ^ (i + 0) ++ b ^ (i + 0)
-      ≡⟨ sym (proj₂ ListMonoid.identity _) ⟩
-    (a ^ (i + 0) ++ b ^ (i + 0)) ++ []
-      ∎
 
 ------------------------------------------------------------------------
 -- Recognising exactly i "things"
@@ -112,13 +85,13 @@ exactly (suc i) p = ♯? p · ♯? (exactly i p)
 exactly-tok-complete : ∀ t i → t ^ i ∈ exactly i (tok t)
 exactly-tok-complete t zero    = ε
 exactly-tok-complete t (suc i) =
-  cast refl lem tok · exactly-tok-complete t i
+  cast∈ refl lem tok · exactly-tok-complete t i
   where lem = sym (♭?♯? (exactly-index false i))
 
 exactly-tok-sound : ∀ t i {s} → s ∈ exactly i (tok t) → s ≡ t ^ i
 exactly-tok-sound t zero    ε         = refl
 exactly-tok-sound t (suc i) (t∈ · s∈)
-  with cast refl (♭?♯? (exactly-index false i)) t∈
+  with cast∈ refl (♭?♯? (exactly-index false i)) t∈
 ... | tok = cong (_∷_ t) (exactly-tok-sound t i s∈)
 
 ------------------------------------------------------------------------
@@ -127,55 +100,67 @@ exactly-tok-sound t (suc i) (t∈ · s∈)
 -- The context-sensitive language { aⁿbⁿcⁿ | n ∈ ℕ } can be recognised
 -- using the parser combinators defined in this development.
 
-aⁿ⁺ⁱbⁿ⁺ⁱcⁿ-index : ℕ → Bool
-aⁿ⁺ⁱbⁿ⁺ⁱcⁿ-index _ = _
+private
 
-aⁿ⁺ⁱbⁿ⁺ⁱcⁿ : (i : ℕ) → P (aⁿ⁺ⁱbⁿ⁺ⁱcⁿ-index i)
-aⁿ⁺ⁱbⁿ⁺ⁱcⁿ i = ⟪ ♯ aⁿ⁺ⁱbⁿ⁺ⁱcⁿ (suc i) ⟫ · ♯? (tok c)
-             ∣ ♯? (exactly i (tok a)) · ♯? (exactly i (tok b))
+  aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-index : ℕ → Bool
+  aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-index _ = _
+
+  aⁿbⁱ⁺ⁿcⁱ⁺ⁿ : (i : ℕ) → P (aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-index i)
+  aⁿbⁱ⁺ⁿcⁱ⁺ⁿ i = cast lem (♯? (tok a) · ⟪ ♯ aⁿbⁱ⁺ⁿcⁱ⁺ⁿ (suc i) ⟫)
+               ∣ ♯? (exactly i (tok b)) · ♯? (exactly i (tok c))
+    where lem = left-zero (aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-index (suc i))
 
 aⁿbⁿcⁿ : P true
-aⁿbⁿcⁿ = aⁿ⁺ⁱbⁿ⁺ⁱcⁿ 0
+aⁿbⁿcⁿ = aⁿbⁱ⁺ⁿcⁱ⁺ⁿ 0
 
 -- Let us prove that aⁿbⁿcⁿ is correctly defined.
 
 aⁿbⁿcⁿ-string : ℕ → List Tok
-aⁿbⁿcⁿ-string n = (a ^ n ++ b ^ n) ++ c ^ n
+aⁿbⁿcⁿ-string n = a ^ n ++ b ^ n ++ c ^ n
+
+private
+
+  aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-string : ℕ → ℕ → List Tok
+  aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-string n i = a ^ n ++ b ^ (i + n) ++ c ^ (i + n)
 
 aⁿbⁿcⁿ-complete : ∀ n → aⁿbⁿcⁿ-string n ∈ aⁿbⁿcⁿ
-aⁿbⁿcⁿ-complete n = aⁿ⁺ⁱbⁿ⁺ⁱcⁿ-complete n 0
+aⁿbⁿcⁿ-complete n = aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-complete n 0
   where
-  aⁿ⁺ⁱbⁿ⁺ⁱcⁿ-complete : ∀ n i → aⁿ⁺ⁱbⁿ⁺ⁱcⁿ-string n i ∈ aⁿ⁺ⁱbⁿ⁺ⁱcⁿ i
-  aⁿ⁺ⁱbⁿ⁺ⁱcⁿ-complete zero i
-    with (a ^ (i + 0) ++ b ^ (i + 0)) ++ [] | identity-lemma i
-  ... | ._ | refl = ∣ʳ {p₁ = ⟪ _ ⟫ · _} (helper a · helper b)
+  aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-complete : ∀ n i → aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-string n i ∈ aⁿbⁱ⁺ⁿcⁱ⁺ⁿ i
+  aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-complete zero i with i + 0 | proj₂ NatCS.+-identity i
+  ... | .i | refl = ∣ʳ {n₁ = false} (helper b · helper c)
     where
     helper = λ (t : Tok) →
-      cast refl (sym (♭?♯? (exactly-index false i)))
-           (exactly-tok-complete t i)
-  aⁿ⁺ⁱbⁿ⁺ⁱcⁿ-complete (suc n) i
-    with aⁿ⁺ⁱbⁿ⁺ⁱcⁿ-string (suc n) i | rearranging-lemma i n
-  ... | ._ | refl =
-    ∣ˡ (aⁿ⁺ⁱbⁿ⁺ⁱcⁿ-complete n (suc i) · cast refl lem tok)
-    where lem = sym (♭?♯? (aⁿ⁺ⁱbⁿ⁺ⁱcⁿ-index (suc i)))
+      cast∈ refl (sym (♭?♯? (exactly-index false i)))
+            (exactly-tok-complete t i)
+  aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-complete (suc n) i with i + suc n | shallow-comm i n
+  ... | .(suc i + n) | refl =
+    ∣ˡ $ cast {eq = lem} (
+      cast∈ refl (sym (♭?♯? (aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-index (suc i)))) tok ·
+      aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-complete n (suc i))
+    where lem = left-zero (aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-index (suc i))
 
 aⁿbⁿcⁿ-sound : ∀ {s} → s ∈ aⁿbⁿcⁿ → ∃ λ n → s ≡ aⁿbⁿcⁿ-string n
-aⁿbⁿcⁿ-sound = aⁿ⁺ⁱbⁿ⁺ⁱcⁿ-sound 0
+aⁿbⁿcⁿ-sound = aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-sound 0
   where
-  aⁿ⁺ⁱbⁿ⁺ⁱcⁿ-sound : ∀ {s} i →
-                     s ∈ aⁿ⁺ⁱbⁿ⁺ⁱcⁿ i →
-                     ∃ λ n → s ≡ aⁿ⁺ⁱbⁿ⁺ⁱcⁿ-string n i
-  aⁿ⁺ⁱbⁿ⁺ⁱcⁿ-sound i (∣ˡ (s∈ · t∈))
-    with cast refl (♭?♯? (aⁿ⁺ⁱbⁿ⁺ⁱcⁿ-index (suc i))) t∈
-  ... | tok with aⁿ⁺ⁱbⁿ⁺ⁱcⁿ-sound (suc i) s∈
-  ... | (n , refl) = (suc n , sym (rearranging-lemma i n))
-  aⁿ⁺ⁱbⁿ⁺ⁱcⁿ-sound i (∣ʳ (_·_ {s₁} {s₂} s₁∈ s₂∈)) = 0 , (begin
+  aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-sound : ∀ {s} i → s ∈ aⁿbⁱ⁺ⁿcⁱ⁺ⁿ i →
+                     ∃ λ n → s ≡ aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-string n i
+  aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-sound i (∣ˡ (cast (t∈ · s∈)))
+    with cast∈ refl (♭?♯? (aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-index (suc i))) t∈
+  ... | tok with aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-sound (suc i) s∈
+  ... | (n , refl) = suc n , (begin
+    a ^ suc n ++ b ^ (suc i + n) ++ c ^ (suc i + n)
+      ≡⟨ cong (λ i → a ^ suc n ++ b ^ i ++ c ^ i)
+              (sym (shallow-comm i n)) ⟩
+    a ^ suc n ++ b ^ (i + suc n) ++ c ^ (i + suc n)
+      ∎)
+  aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-sound i (∣ʳ (_·_ {s₁} {s₂} s₁∈ s₂∈)) = 0 , (begin
     s₁ ++ s₂
-      ≡⟨ cong₂ _++_ (exactly-tok-sound a i
-                      (cast refl (♭?♯? (exactly-index false i)) s₁∈))
-                    (exactly-tok-sound b i
-                      (cast refl (♭?♯? (exactly-index false i)) s₂∈)) ⟩
-    a ^ i ++ b ^ i
-      ≡⟨ identity-lemma i ⟩
-    (a ^ (i + 0) ++ b ^ (i + 0)) ++ []
+      ≡⟨ cong₂ _++_ (exactly-tok-sound b i
+                      (cast∈ refl (♭?♯? (exactly-index false i)) s₁∈))
+                    (exactly-tok-sound c i
+                      (cast∈ refl (♭?♯? (exactly-index false i)) s₂∈)) ⟩
+    b ^ i ++ c ^ i
+      ≡⟨ cong (λ i → b ^ i ++ c ^ i) (sym (proj₂ NatCS.+-identity i)) ⟩
+    b ^ (i + 0) ++ c ^ (i + 0)
       ∎)
