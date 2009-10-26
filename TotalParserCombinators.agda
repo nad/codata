@@ -40,6 +40,12 @@ _∧_ : Bool → Bool → Bool
 b ∧ true  = b
 b ∧ false = false
 
+-- A lemma.
+
+left-zero : ∀ b → false ∧ b ≡ false
+left-zero true  = refl
+left-zero false = refl
+
 ------------------------------------------------------------------------
 -- Conditional coinduction
 

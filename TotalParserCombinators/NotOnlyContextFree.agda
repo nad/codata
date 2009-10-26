@@ -50,7 +50,7 @@ c ≟ c = yes refl
 open TotalParserCombinators Tok _≟_
 
 ------------------------------------------------------------------------
--- An auxiliary definition and some boring lemmas
+-- An auxiliary definition and a boring lemma
 
 infixr 8 _^_
 
@@ -58,10 +58,6 @@ _^_ : Tok → ℕ → List Tok
 _^_ = flip List.replicate
 
 private
-
-  left-zero : ∀ b → false ∧ b ≡ false
-  left-zero true  = refl
-  left-zero false = refl
 
   shallow-comm : ∀ i n → i + suc n ≡ suc (i + n)
   shallow-comm i n =
