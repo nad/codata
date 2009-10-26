@@ -77,8 +77,8 @@ import AdmissibleButNotPostulable
 -- alphabet is {true, false}).
 
 import TotalParserCombinators
+import TotalParserCombinators.ExpressiveStrength
 import TotalParserCombinators.NotOnlyContextFree
-import TotalParserCombinators.AllDecidablePredicates
 
 -- Full parser combinators. Initially developed together with Ulf
 -- Norell; I added the use of mixed induction and coinduction.

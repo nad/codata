@@ -4,7 +4,7 @@
 ------------------------------------------------------------------------
 
 -- This is obvious given the proof in
--- TotalParserCombinators.AllDecidablePredicates, but the code below
+-- TotalParserCombinators.ExpressiveStrength but the code below
 -- provides a non-trivial example of the use of the parser
 -- combinators.
 

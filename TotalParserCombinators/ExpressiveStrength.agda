@@ -6,7 +6,7 @@
 
 -- This result could be generalised to other alphabets.
 
-module TotalParserCombinators.AllDecidablePredicates where
+module TotalParserCombinators.ExpressiveStrength where
 
 open import Coinduction
 open import Data.Bool
@@ -49,24 +49,25 @@ pred⇒parser f = (p f , λ s → (p-sound f , p-complete f s))
   extend : ∀ {A B} → (List A → B) → A → (List A → B)
   extend f x = λ xs → f (xs ∷ʳ x)
 
-  base-case : ∀ b → P b
-  base-case true  = ε
-  base-case false = ∅
+  accept-if-true : ∀ b → P b
+  accept-if-true true  = ε
+  accept-if-true false = ∅
 
   p : (f : List Bool → Bool) → P (f [])
   p f = ⟪ ♯ p (extend f true ) ⟫ · ♯? (tok true )
       ∣ ⟪ ♯ p (extend f false) ⟫ · ♯? (tok false)
-      ∣ base-case (f [])
+      ∣ accept-if-true (f [])
 
-  base-case-sound : ∀ b {s} → s ∈ base-case b → s ≡ [] × b ≡ true
-  base-case-sound true  ε  = (refl , refl)
-  base-case-sound false ()
+  accept-if-true-sound :
+    ∀ b {s} → s ∈ accept-if-true b → s ≡ [] × b ≡ true
+  accept-if-true-sound true  ε  = (refl , refl)
+  accept-if-true-sound false ()
 
-  base-case-complete : ∀ {b} → b ≡ true → [] ∈ base-case b
-  base-case-complete refl = ε
+  accept-if-true-complete : ∀ {b} → b ≡ true → [] ∈ accept-if-true b
+  accept-if-true-complete refl = ε
 
   p-sound : ∀ f {s} → s ∈ p f → f s ≡ true
-  p-sound f (∣ʳ s∈) with base-case-sound (f []) s∈
+  p-sound f (∣ʳ s∈) with accept-if-true-sound (f []) s∈
   ... | (refl , eq) = eq
   p-sound f (∣ˡ (∣ˡ (s∈ · t∈))) with cast∈ refl (♭?♯? (f [ true  ])) t∈
   ... | tok = p-sound (extend f true ) s∈
@@ -75,7 +76,7 @@ pred⇒parser f = (p f , λ s → (p-sound f , p-complete f s))
 
   p-complete′ : ∀ f {s} → Reverse s → f s ≡ true → s ∈ p f
   p-complete′ f [] eq =
-    ∣ʳ {n₁ = false} $ base-case-complete eq
+    ∣ʳ {n₁ = false} $ accept-if-true-complete eq
   p-complete′ f (bs ∶ rs ∶ʳ true) eq =
     ∣ˡ {n₁ = false} $ ∣ˡ {n₁ = false} $
       p-complete′ (extend f true ) rs eq ·
