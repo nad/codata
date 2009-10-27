@@ -23,7 +23,7 @@ open import Stream using (Stream; _≺_)
 
 label′ : ∀ {k} {a : U k} {B} → Prog (tree a) → Stream B →
          Prog (tree ⌈ B ⌉ ⊗ stream ⌈ Stream B ⌉)
-label′ t ls = lab t (↓ ♯₁ (⌈ ls ⌉ ≺ snd (label′ t ls)))
+label′ t ls = lab t (↓ ♯ (⌈ ls ⌉ ≺ snd (label′ t ls)))
 
 label : ∀ {A B} → Tree A → Stream B → Tree B
 label {A} t ls = ⟦ fst (label′ ⟦ tree ⌈ A ⌉ ∣ t ⟧⁻¹ ls) ⟧
@@ -39,8 +39,8 @@ shape-preserved′ t lss with whnf t
 ... | leaf       = leaf
 ... | node l _ r with whnf lss
 ...              | ⌈ x ≺ ls ⌉ ≺ lss′ =
-  node (♯₁ shape-preserved′ l lss′) ⌈ ≡-refl ⌉
-       (♯₁ shape-preserved′ r _)
+  node (♯ shape-preserved′ l lss′) ⌈ ≡-refl ⌉
+       (♯ shape-preserved′ r _)
 
 shape-preserved : ∀ {A B} (t : Tree A) (ls : Stream B) →
                   Eq (tree ⌈ ⊤ ⌉) (map (const tt) (label t ls))
@@ -64,7 +64,7 @@ invariant t lss with whnf t
 ... | leaf       = ⟦ lss ⟧ ∎
 ... | node l _ r with whnf lss
 ...              | ⌈ x ≺ ls ⌉ ≺ lss′ =
-  (⌈ ≡-refl ⌉ ≺ ♯₁ refl (♭ ls)) ≺ ♯₁ (
+  (⌈ ≡-refl ⌉ ≺ ♯ refl (♭ ls)) ≺ ♯ (
     ⟦ lss′ ⟧                                     ≊⟨ invariant l lss′ ⟩
     zipWith _⁺++∞_ ⟦ flatten (fst l′) ⟧
                    ⟦ snd l′ ⟧                    ≊⟨ zipWith-cong ⁺++∞-cong
@@ -91,13 +91,13 @@ prefix-lemma : ∀ {k} {a : U k} xs xss yss →
 prefix-lemma xs xss         []         _            = []
 prefix-lemma xs (xs′ ≺ xss) (ys ∷ yss) (xs≈ ≺ xss≈) =
   concat (ys ∷ yss)      ≋⟨ concat-lemma ys yss ⟩
-  ys ⁺++ concat (♭ yss)  ⊑⟨ ⁺++-mono ys (♯₁ prefix-lemma xs′ (♭ xss) (♭ yss) ⟦ lemma ⟧≈) ⟩
+  ys ⁺++ concat (♭ yss)  ⊑⟨ ⁺++-mono ys (♯ prefix-lemma xs′ (♭ xss) (♭ yss) ⟦ lemma ⟧≈) ⟩
   ys ⁺++∞ xs′            ≈⟨ sym xs≈ ⟩
   xs                     ∎
   where
   lemma =
-    xs′ ≺ _ {- ♯ ♭ xss -}           ≈⟨ refl xs′ ≺ ♯₁ refl (♭ xss) ⟩
-    xs′ ≺ xss                       ≈⟨ ♭₁ xss≈ ⟩
+    xs′ ≺ _ {- ♯ ♭ xss -}           ≈⟨ refl xs′ ≺ ♯ refl (♭ xss) ⟩
+    xs′ ≺ xss                       ≈⟨ ♭ xss≈ ⟩
     zipWith _⁺++∞_ (♭ yss) (♭ xss)  ∎
 
 is-prefix : ∀ {A B} (t : Tree A) (ls : Stream B) →
@@ -105,9 +105,9 @@ is-prefix : ∀ {A B} (t : Tree A) (ls : Stream B) →
 is-prefix {A} {B} t ls = ⟦
   concat ⟦ flatten fst-l  ⟧  ≋⟨ concat-cong ⟦ flatten-cong fst-l (fst l) (right-inverse ⟦ fst l ⟧) ⟧≈ ⟩
   concat ⟦ flatten (fst l)⟧  ⊑⟨ prefix-lemma ls ⟦ snd l ⟧ ⟦ flatten (fst l) ⟧
-                                  ⟦ ls ≺ _ {- ♯ ⟦ snd l ⟧ -}                      ≈⟨ refl ls ≺ ♯₁ refl ⟦ snd l ⟧ ⟩
+                                  ⟦ ls ≺ _ {- ♯ ⟦ snd l ⟧ -}                      ≈⟨ refl ls ≺ ♯ refl ⟦ snd l ⟧ ⟩
                                     ⟦ ↓_ {a = stream ⌈ Stream B ⌉}
-                                         (♯₁ (⌈ ls ⌉ ≺ snd (label′ t′ ls))) ⟧     ≊⟨ invariant t′ _ ⟩
+                                         (♯ (⌈ ls ⌉ ≺ snd (label′ t′ ls))) ⟧      ≊⟨ invariant t′ _ ⟩
                                     zipWith _⁺++∞_ ⟦ flatten (fst l) ⟧ ⟦ snd l ⟧  ∎ ⟧≈ ⟩
   ls                         ∎ ⟧⊑
   where

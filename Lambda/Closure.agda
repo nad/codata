@@ -50,7 +50,7 @@ data Sem : Set where
 
 ∞? : Sem → Set → Set
 ∞? ⊥       = ∞
-∞? (val v) = id₁
+∞? (val v) = id
 
 -- Big-step semantics.
 

@@ -21,7 +21,7 @@ import IO
 infixr 5 _≺_
 
 data Prog (A : Set) : Set1 where
-  _≺_     : (x : A) (xs : ∞₁ (Prog A)) → Prog A
+  _≺_     : (x : A) (xs : ∞ (Prog A)) → Prog A
   zipWith : ∀ {B C} (f : B → C → A)
             (xs : Prog B) (ys : Prog C) → Prog A
   map     : ∀ {B} (f : B → A) (xs : Prog B) → Prog A
@@ -32,16 +32,16 @@ data WHNF A : Set1 where
   _≺_ : (x : A) (xs : Prog A) → WHNF A
 
 whnf : ∀ {A} → Prog A → WHNF A
-whnf (x ≺ xs)          = x ≺ ♭₁ xs
+whnf (x ≺ xs)          = x ≺ ♭ xs
 whnf (zipWith f xs ys) with whnf xs | whnf ys
 whnf (zipWith f xs ys) | x ≺ xs′ | y ≺ ys′ = f x y ≺ zipWith f xs′ ys′
 whnf (map f xs)        with whnf xs
 whnf (map f xs)        | x ≺ xs′ = f x ≺ map f xs′
 whnf (merge cmp xs ys) with whnf xs | whnf ys
 whnf (merge cmp xs ys) | x ≺ xs′ | y ≺ ys′ with cmp x y
-whnf (merge cmp xs ys) | x ≺ xs′ | y ≺ ys′ | lt = x ≺ merge cmp xs′ (y ≺ ♯₁ ys′)
+whnf (merge cmp xs ys) | x ≺ xs′ | y ≺ ys′ | lt = x ≺ merge cmp xs′ (y ≺ ♯ ys′)
 whnf (merge cmp xs ys) | x ≺ xs′ | y ≺ ys′ | eq = x ≺ merge cmp xs′ ys′
-whnf (merge cmp xs ys) | x ≺ xs′ | y ≺ ys′ | gt = y ≺ merge cmp (x ≺ ♯₁ xs′) ys′
+whnf (merge cmp xs ys) | x ≺ xs′ | y ≺ ys′ | gt = y ≺ merge cmp (x ≺ ♯ xs′) ys′
 
 mutual
 
@@ -55,7 +55,7 @@ mutual
 -- Examples
 
 fib : Prog ℕ
-fib = 0 ≺ ♯₁ zipWith _+_ fib (1 ≺ ♯₁ fib)
+fib = 0 ≺ ♯ zipWith _+_ fib (1 ≺ ♯ fib)
 
 cmp : ℕ → ℕ → Ord
 cmp m n = toOrd (compare m n)
@@ -66,7 +66,7 @@ cmp m n = toOrd (compare m n)
   toOrd (greater _ _) = gt
 
 hamming : Prog ℕ
-hamming = 1 ≺ ♯₁ merge cmp (map (_*_ 2) hamming) (map (_*_ 3) hamming)
+hamming = 1 ≺ ♯ merge cmp (map (_*_ 2) hamming) (map (_*_ 3) hamming)
 
 main = IO.run (S.putStream (S._⋎_ ⟦ fib ⟧ ⟦ hamming ⟧))
 
@@ -95,13 +95,13 @@ zipWith-cong _∙_ (x ≺ xs≈) (y ≺ ys≈) =
 
 fib-correct′ :
   ⟦ fib ⟧ ≈ 0 ≺ ♯ S.zipWith _+_ ⟦ fib ⟧ (1 ≺ _ {- ♯ ⟦ fib ⟧ -})
-fib-correct′ = 0 ≺ ♯ zipWith-hom _+_ fib (1 ≺ ♯₁ fib)
+fib-correct′ = 0 ≺ ♯ zipWith-hom _+_ fib (1 ≺ ♯ fib)
 
 -- Fortunately there is a workaround.
 
 fib-correct : ⟦ fib ⟧ ≈ 0 ≺ ♯ S.zipWith _+_ ⟦ fib ⟧ (1 ≺ ♯ ⟦ fib ⟧)
 fib-correct =
-  0 ≺ ♯ SS.trans (zipWith-hom  _+_ fib     (1 ≺ ♯₁ fib))
+  0 ≺ ♯ SS.trans (zipWith-hom  _+_ fib     (1 ≺ ♯ fib))
                  (zipWith-cong _+_ SS.refl (1 ≺ ♯ SS.refl))
 
 ------------------------------------------------------------------------

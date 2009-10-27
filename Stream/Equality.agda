@@ -22,7 +22,7 @@ mutual
 
   data _≅_ {A} : (xs ys : Stream A) → Set1 where
     _≺_          : ∀ {x y xs ys}
-                   (x≡ : x ≡ y) (xs≈ : ∞₁ (♭ xs ≅ ♭ ys)) →
+                   (x≡ : x ≡ y) (xs≈ : ∞ (♭ xs ≅ ♭ ys)) →
                    x ≺ xs ≅ y ≺ ys
     _≊⟨_⟩_       : ∀ xs {ys zs}
                    (xs≈ys : ⟦ xs ⟧ ≅ ys) (ys≈zs : ys ≅ zs) → ⟦ xs ⟧ ≅ zs
@@ -49,7 +49,7 @@ data _≃_ {A} : (xs ys : Stream A) → Set1 where
         (x≡ : x ≡ y) (xs≈ : ♭ xs ≅ ♭ ys) → x ≺ xs ≃ y ≺ ys
 
 ≅⇒≃ : ∀ {A} {xs ys : Stream A} → xs ≅ ys → xs ≃ ys
-≅⇒≃ (x≡ ≺ xs≈)                 = x≡ ≺ ♭₁ xs≈
+≅⇒≃ (x≡ ≺ xs≈)                 = x≡ ≺ ♭ xs≈
 ≅⇒≃ (xs ≊⟨ xs≈ys ⟩ ys≈zs)      with whnf xs | ≅⇒≃ xs≈ys | ≅⇒≃ ys≈zs
 ≅⇒≃ (xs ≊⟨ xs≈ys ⟩ ys≈zs)      | x ≺ xs′ | x≡y ≺ xs≈ys′ | y≡z ≺ ys≈zs′ =
                                  trans x≡y y≡z ≺ (xs′ ≊⟨ xs≈ys′ ⟩ ys≈zs′)
@@ -90,11 +90,11 @@ mutual
 ≊⇒≈ = ≅⇒≈
 
 ≈⇒≅ : ∀ {A} {xs ys : Stream A} → xs ≈ ys → xs ≅ ys
-≈⇒≅ (x ≺ xs≈) = refl ≺ ♯₁ ≈⇒≅ (♭ xs≈)
+≈⇒≅ (x ≺ xs≈) = refl ≺ ♯ ≈⇒≅ (♭ xs≈)
 
 _∎ : ∀ {A} (xs : Prog A) → xs ≊ xs
 xs ∎ = ≈⇒≅ (Setoid.refl (Stream.setoid _))
 
-≊-η : ∀ {A} (xs : Prog A) → xs ≊ headP xs ≺ ♯₁ tailP xs
+≊-η : ∀ {A} (xs : Prog A) → xs ≊ headP xs ≺ ♯ tailP xs
 ≊-η xs with whnf xs
-≊-η xs | x ≺ xs′ = refl ≺ ♯₁ (xs′ ∎)
+≊-η xs | x ≺ xs′ = refl ≺ ♯ (xs′ ∎)

@@ -41,18 +41,18 @@ El ⌈ A ⌉      = A
 data Eq : ∀ {k} (a : U k) → El a → El a → Set1 where
   leaf : ∀ {k} {a : U k} → Eq (tree a) leaf leaf
   node : ∀ {k} {a : U k} {x x′ l l′ r r′}
-         (l≈l′ : ∞₁ (Eq (tree a) (♭ l) (♭ l′)))
-         (x≈x′ :     Eq a        x     x′     )
-         (r≈r′ : ∞₁ (Eq (tree a) (♭ r) (♭ r′))) →
+         (l≈l′ : ∞ (Eq (tree a) (♭ l) (♭ l′)))
+         (x≈x′ :    Eq a        x     x′     )
+         (r≈r′ : ∞ (Eq (tree a) (♭ r) (♭ r′))) →
          Eq (tree a) (node l x r) (node l′ x′ r′)
   _≺_  : ∀ {k} {a : U k} {x x′ xs xs′}
-         (x≈x′   :     Eq a              x      x′  )
-         (xs≈xs′ : ∞₁ (Eq (stream a) (♭ xs) (♭ xs′))) →
+         (x≈x′   :    Eq a              x      x′  )
+         (xs≈xs′ : ∞ (Eq (stream a) (♭ xs) (♭ xs′))) →
          Eq (stream a) (x ≺ xs) (x′ ≺ xs′)
   []   : ∀ {k} {a : U k} → Eq (colist a) [] []
   _∷_  : ∀ {k} {a : U k} {x x′ xs xs′}
-         (x≈x′   :     Eq a              x      x′  )
-         (xs≈xs′ : ∞₁ (Eq (colist a) (♭ xs) (♭ xs′))) →
+         (x≈x′   :    Eq a              x      x′  )
+         (xs≈xs′ : ∞ (Eq (colist a) (♭ xs) (♭ xs′))) →
          Eq (colist a) (x ∷ xs) (x′ ∷ xs′)
   _,_  : ∀ {k₁ k₂} {a : U k₁} {b : U k₂} {x x′ y y′}
          (x≈x′ : Eq a x x′) (y≈y′ : Eq b y y′) →
@@ -64,15 +64,15 @@ data Eq : ∀ {k} (a : U k) → El a → El a → Set1 where
 data PrefixOf {k} (a : U k) : Colist (El a) → Stream (El a) → Set1 where
   []  : ∀ {ys} → PrefixOf a [] ys
   _∷_ : ∀ {x y xs ys}
-        (x≈y : Eq a x y) (p : ∞₁ (PrefixOf a (♭ xs) (♭ ys))) →
+        (x≈y : Eq a x y) (p : ∞ (PrefixOf a (♭ xs) (♭ ys))) →
         PrefixOf a (x ∷ xs) (y ≺ ys)
 
 -- Conditional coinduction.
 
 ∞? : Kind → Set1 → Set1
 ∞? μ = λ A → A
-∞? ν = ∞₁
+∞? ν = ∞
 
 ♭? : ∀ k {A} → ∞? k A → A
 ♭? μ x = x
-♭? ν x = ♭₁ x
+♭? ν x = ♭ x

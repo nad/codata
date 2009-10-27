@@ -4,7 +4,7 @@
 
 module Stream.Programs where
 
-open import Coinduction hiding (∞)
+open import Coinduction renaming (∞ to ∞_)
 import Stream as S
 open S using (Stream; _≈_; _≺_; head; tail)
 open import Relation.Binary.PropositionalEquality
@@ -19,7 +19,7 @@ infix  6 _⟨_⟩_
 infixr 5 _≺_ _⋎_ _≺≺_
 
 data Prog (A : Set) : Set1 where
-  _≺_     : (x : A) (xs : ∞₁ (Prog A)) → Prog A
+  _≺_     : (x : A) (xs : ∞ (Prog A)) → Prog A
   _∞      : (x : A) → Prog A
   _·_     : ∀ {B} (f : B → A) (xs : Prog B) → Prog A
   _⟨_⟩_   : ∀ {B C} (xs : Prog B) (_∙_ : B → C → A) (ys : Prog C) →
@@ -35,7 +35,7 @@ data WHNF A : Set1 where
 -- Conversion
 
 whnf : ∀ {A} → Prog A → WHNF A
-whnf (x ≺ xs)         = x ≺ ♭₁ xs
+whnf (x ≺ xs)         = x ≺ ♭ xs
 whnf (x ∞)            = x ≺ x ∞
 whnf (f · xs)         with whnf xs
 whnf (f · xs)         | x ≺ xs′ = f x ≺ f · xs′
@@ -56,7 +56,7 @@ mutual
   ⟦ xs ⟧ = value (whnf xs)
 
 fromStream : ∀ {A} → Stream A → Prog A
-fromStream (x ≺ xs) = x ≺ ♯₁ fromStream (♭ xs)
+fromStream (x ≺ xs) = x ≺ ♯ fromStream (♭ xs)
 
 lift : ∀ {A} → (Prog A → Prog A) → Stream A → Stream A
 lift f xs = ⟦ f (fromStream xs) ⟧
@@ -67,7 +67,7 @@ lift f xs = ⟦ f (fromStream xs) ⟧
 infixr 5 _≺♯_
 
 _≺♯_ : ∀ {A} → A → Prog A → Prog A
-x ≺♯ xs = x ≺ ♯₁ xs
+x ≺♯ xs = x ≺ ♯ xs
 
 headP : ∀ {A} → Prog A → A
 headP xs = head ⟦ xs ⟧

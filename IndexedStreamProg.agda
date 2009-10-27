@@ -31,7 +31,7 @@ infixr 5 _≺_ _≺≺_
 -- to understand.
 
 data Prog (A : Set) : ℕ → ℕ → Set1 where
-  _≺≺_    : ∀ {m} (xs′ : Vec A m) (xs″ : ∞₁ (Prog A m m)) → Prog A m m
+  _≺≺_    : ∀ {m} (xs′ : Vec A m) (xs″ : ∞ (Prog A m m)) → Prog A m m
   forget  : ∀ {m n} (xs : Prog A m (suc n)) → Prog A m n
   _≺_     : ∀ {m n} (x : A) (xs : Prog A m n) → Prog A m (suc n)
   tail    : ∀ {m n} (xs : Prog A m (suc n)) → Prog A m n
@@ -47,7 +47,7 @@ data WHNF A m n : Set1 where
   _≺≺_ : (xs′ : Vec A n) (xs″ : Prog A m m) → WHNF A m n
 
 whnf : ∀ {A m n} → Prog A m n → WHNF A m n
-whnf (xs′ ≺≺ xs″)      = xs′ ≺≺ ♭₁ xs″
+whnf (xs′ ≺≺ xs″)      = xs′ ≺≺ ♭ xs″
 whnf (forget xs)       with whnf xs
 whnf (forget xs)       | xs′ ≺≺ xs″ = V.init xs′ ≺≺ forget (V.last xs′ ≺ xs″)
 whnf (x ≺ xs)          with whnf xs
@@ -86,11 +86,11 @@ mutual
 -- forgets.
 
 fib : Prog ℕ 1 1
-fib = (0 ∷ []) ≺≺ ♯₁ (1 ≺ zipWith _+_ (forget fib) (tail fib))
+fib = (0 ∷ []) ≺≺ ♯ (1 ≺ zipWith _+_ (forget fib) (tail fib))
 
 hamming : Prog ℕ 1 1
-hamming = (1 ∷ []) ≺≺ ♯₁ merge cmp (map (_*_ 2) hamming)
-                                   (map (_*_ 3) hamming)
+hamming = (1 ∷ []) ≺≺ ♯ merge cmp (map (_*_ 2) hamming)
+                                  (map (_*_ 3) hamming)
     where
     toOrd : ∀ {m n} → Ordering m n → Ord
     toOrd (less _ _)    = lt

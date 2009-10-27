@@ -80,7 +80,7 @@ mutual
   private
 
     ⟦_∣_⟧⁻¹ν : (a : U ν) → El a → Prog a
-    ⟦ a ∣ x ⟧⁻¹ν = ↓ ♯₁ reify a x
+    ⟦ a ∣ x ⟧⁻¹ν = ↓ ♯ reify a x
 
 ⟦_∣_⟧⁻¹ : ∀ {k} (a : U k) → El a → Prog a
 ⟦_∣_⟧⁻¹ {μ} = λ a x → ↓ (reify a x)

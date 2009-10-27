@@ -109,7 +109,7 @@ record ContractiveFun (cofe : COFE) : Set where
   -- The fixpoint is the limit of the following family.
 
   fam : carrier → domain
-  fam = wfRec (const₁ domain) (λ a rec → F (lim↓ a rec))
+  fam = wfRec (const domain) (λ a rec → F (lim↓ a rec))
 
   fixpoint : domain
   fixpoint = limU fam

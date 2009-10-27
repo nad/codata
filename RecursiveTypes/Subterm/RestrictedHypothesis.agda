@@ -57,7 +57,7 @@ RestrictedHyp = ∃ Subterm × ∃ Subterm
 -- Equality of restricted hypotheses (ignores the subterm proofs).
 
 _≈_ : Rel RestrictedHyp
-_≈_ = _≡_ on₁ ⟨_⟩
+_≈_ = _≡_ on ⟨_⟩
 
 -- List membership relation for restricted hypotheses.
 
@@ -132,7 +132,7 @@ complete ((σ , inj₂ σ⊑χ₂) ≲ (τ , inj₂ τ⊑χ₂)) =
 
 -- Equality of restricted hypotheses can be decided.
 
-_≟_ : Decidable (_≡_ {Hyp n})
+_≟_ : Decidable (_≡_ {A = Hyp n})
 ( σ₁ ≲  σ₂) ≟ (τ₁ ≲ τ₂) with σ₁ ≡? τ₁ | σ₂ ≡? τ₂
 (.τ₁ ≲ .τ₂) ≟ (τ₁ ≲ τ₂) | yes refl | yes refl = yes refl
 ... | no σ₁≢τ₁ | _ = no (σ₁≢τ₁ ∘ cong proj₁)

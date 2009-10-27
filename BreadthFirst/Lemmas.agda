@@ -39,33 +39,33 @@ xs ⁺++ ys = Colist.fromList (Vec.toList $ List⁺.toVec xs) ++ ys
 
 refl : ∀ {k} {a : U k} x → Eq a x x
 refl {a = tree a}   leaf         = leaf
-refl {a = tree a}   (node l x r) = node (♯₁ refl (♭ l)) (refl x) (♯₁ refl (♭ r))
-refl {a = stream a} (x ≺ xs)     = refl x ≺ ♯₁ refl (♭ xs)
+refl {a = tree a}   (node l x r) = node (♯ refl (♭ l)) (refl x) (♯ refl (♭ r))
+refl {a = stream a} (x ≺ xs)     = refl x ≺ ♯ refl (♭ xs)
 refl {a = colist a} []           = []
-refl {a = colist a} (x ∷ xs)     = refl x ∷ ♯₁ refl (♭ xs)
+refl {a = colist a} (x ∷ xs)     = refl x ∷ ♯ refl (♭ xs)
 refl {a = a ⊗ b}    (x , y)      = (refl x , refl y)
 refl {a = ⌈ A ⌉}    x            = ⌈ PropEq.refl ⌉
 
 sym : ∀ {k} {a : U k} {x y} → Eq a x y → Eq a y x
 sym {a = tree a}   leaf                  = leaf
-sym {a = tree a}   (node l≈l′ x≈x′ r≈r′) = node (♯₁ sym (♭₁ l≈l′)) (sym x≈x′) (♯₁ sym (♭₁ r≈r′))
-sym {a = stream a} (x≈x′ ≺ xs≈xs′)       = sym x≈x′ ≺ ♯₁ sym (♭₁ xs≈xs′)
+sym {a = tree a}   (node l≈l′ x≈x′ r≈r′) = node (♯ sym (♭ l≈l′)) (sym x≈x′) (♯ sym (♭ r≈r′))
+sym {a = stream a} (x≈x′ ≺ xs≈xs′)       = sym x≈x′ ≺ ♯ sym (♭ xs≈xs′)
 sym {a = colist a} []                    = []
-sym {a = colist a} (x≈x′ ∷ xs≈xs′)       = sym x≈x′ ∷ ♯₁ sym (♭₁ xs≈xs′)
+sym {a = colist a} (x≈x′ ∷ xs≈xs′)       = sym x≈x′ ∷ ♯ sym (♭ xs≈xs′)
 sym {a = a ⊗ b}    (x≈x′ , y≈y′)         = (sym x≈x′ , sym y≈y′)
 sym {a = ⌈ A ⌉}    ⌈ x≡x′ ⌉              = ⌈ PropEq.sym x≡x′ ⌉
 
 trans : ∀ {k} {a : U k} {x y z} → Eq a x y → Eq a y z → Eq a x z
 trans {a = tree a}   leaf leaf                = leaf
 trans {a = tree a}   (node l≈l′ x≈x′ r≈r′)
-                     (node l′≈l″ x′≈x″ r′≈r″) = node (♯₁ trans (♭₁ l≈l′) (♭₁ l′≈l″))
+                     (node l′≈l″ x′≈x″ r′≈r″) = node (♯ trans (♭ l≈l′) (♭ l′≈l″))
                                                      (trans x≈x′ x′≈x″)
-                                                     (♯₁ trans (♭₁ r≈r′) (♭₁ r′≈r″))
+                                                     (♯ trans (♭ r≈r′) (♭ r′≈r″))
 trans {a = stream a} (x≈x′  ≺ xs≈xs′)
-                     (x′≈x″ ≺ xs′≈xs″)        = trans x≈x′ x′≈x″ ≺ ♯₁ trans (♭₁ xs≈xs′) (♭₁ xs′≈xs″)
+                     (x′≈x″ ≺ xs′≈xs″)        = trans x≈x′ x′≈x″ ≺ ♯ trans (♭ xs≈xs′) (♭ xs′≈xs″)
 trans {a = colist a} [] []                    = []
 trans {a = colist a} (x≈x′  ∷ xs≈xs′)
-                     (x′≈x″ ∷ xs′≈xs″)        = trans x≈x′ x′≈x″ ∷ ♯₁ trans (♭₁ xs≈xs′) (♭₁ xs′≈xs″)
+                     (x′≈x″ ∷ xs′≈xs″)        = trans x≈x′ x′≈x″ ∷ ♯ trans (♭ xs≈xs′) (♭ xs′≈xs″)
 trans {a = a ⊗ b}    (x≈x′  , y≈y′)
                      (x′≈x″ , y′≈y″)          = (trans x≈x′ x′≈x″ , trans y≈y′ y′≈y″)
 trans {a = ⌈ A ⌉}    ⌈ x≡x′  ⌉ ⌈ x′≡x″ ⌉      = ⌈ PropEq.trans x≡x′ x′≡x″ ⌉
@@ -80,18 +80,18 @@ infix  2 _∎
 data EqProg : ∀ {k} (a : U k) → El a → El a → Set1 where
   leaf : ∀ {k} {a : U k} → EqProg (tree a) leaf leaf
   node : ∀ {k} {a : U k} {x x′ l l′ r r′}
-         (l≈l′ : ∞₁ (EqProg (tree a) (♭ l) (♭ l′)))
-         (x≈x′ :     Eq           a     x     x′  )
-         (r≈r′ : ∞₁ (EqProg (tree a) (♭ r) (♭ r′))) →
+         (l≈l′ : ∞ (EqProg (tree a) (♭ l) (♭ l′)))
+         (x≈x′ :    Eq           a     x     x′  )
+         (r≈r′ : ∞ (EqProg (tree a) (♭ r) (♭ r′))) →
          EqProg (tree a) (node l x r) (node l′ x′ r′)
   _≺_  : ∀ {k} {a : U k} {x x′ xs xs′}
-         (x≈x′   :     Eq             a     x      x′   )
-         (xs≈xs′ : ∞₁ (EqProg (stream a) (♭ xs) (♭ xs′))) →
+         (x≈x′   :    Eq             a     x      x′   )
+         (xs≈xs′ : ∞ (EqProg (stream a) (♭ xs) (♭ xs′))) →
          EqProg (stream a) (x ≺ xs) (x′ ≺ xs′)
   []   : ∀ {k} {a : U k} → EqProg (colist a) [] []
   _∷_  : ∀ {k} {a : U k} {x x′ xs xs′}
-         (x≈x′   :     Eq             a     x      x′   )
-         (xs≈xs′ : ∞₁ (EqProg (colist a) (♭ xs) (♭ xs′))) →
+         (x≈x′   :    Eq             a     x      x′   )
+         (xs≈xs′ : ∞ (EqProg (colist a) (♭ xs) (♭ xs′))) →
          EqProg (colist a) (x ∷ xs) (x′ ∷ xs′)
   _,_  : ∀ {k₁ k₂} {a : U k₁} {b : U k₂} {x x′ y y′}
          (x≈x′ : Eq a x x′) (y≈y′ : Eq b y y′) →
@@ -141,19 +141,19 @@ data EqWHNF : ∀ {k} (a : U k) → El a → El a → Set1 where
 
 ⟦_⟧≈⁻¹ : ∀ {k} {a : U k} {x y : El a} → Eq a x y → EqProg a x y
 ⟦ leaf                ⟧≈⁻¹ = leaf
-⟦ node l≈l′ x≈x′ r≈r′ ⟧≈⁻¹ = node (♯₁ ⟦ ♭₁ l≈l′ ⟧≈⁻¹) x≈x′ (♯₁ ⟦ ♭₁ r≈r′ ⟧≈⁻¹)
-⟦ x≈x′ ≺ xs≈xs′       ⟧≈⁻¹ = x≈x′ ≺ ♯₁ ⟦ ♭₁ xs≈xs′ ⟧≈⁻¹
+⟦ node l≈l′ x≈x′ r≈r′ ⟧≈⁻¹ = node (♯ ⟦ ♭ l≈l′ ⟧≈⁻¹) x≈x′ (♯ ⟦ ♭ r≈r′ ⟧≈⁻¹)
+⟦ x≈x′ ≺ xs≈xs′       ⟧≈⁻¹ = x≈x′ ≺ ♯ ⟦ ♭ xs≈xs′ ⟧≈⁻¹
 ⟦ []                  ⟧≈⁻¹ = []
-⟦ x≈x′ ∷ xs≈xs′       ⟧≈⁻¹ = x≈x′ ∷ ♯₁ ⟦ ♭₁ xs≈xs′ ⟧≈⁻¹
+⟦ x≈x′ ∷ xs≈xs′       ⟧≈⁻¹ = x≈x′ ∷ ♯ ⟦ ♭ xs≈xs′ ⟧≈⁻¹
 ⟦ (x≈x′ , y≈y′)       ⟧≈⁻¹ = (x≈x′ , y≈y′)
 ⟦ ⌈ x≡x′ ⌉            ⟧≈⁻¹ = ⌈ x≡x′ ⌉
 
 whnf≈ : ∀ {k} {a : U k} {xs ys} → EqProg a xs ys → EqWHNF a xs ys
 whnf≈ leaf                  = leaf
-whnf≈ (node l≈l′ x≈x′ r≈r′) = node (♭₁ l≈l′) x≈x′ (♭₁ r≈r′)
-whnf≈ (x≈x′ ≺ xs≈xs′)       = x≈x′ ≺ ♭₁ xs≈xs′
+whnf≈ (node l≈l′ x≈x′ r≈r′) = node (♭ l≈l′) x≈x′ (♭ r≈r′)
+whnf≈ (x≈x′ ≺ xs≈xs′)       = x≈x′ ≺ ♭ xs≈xs′
 whnf≈ []                    = []
-whnf≈ (x≈x′ ∷ xs≈xs′)       = x≈x′ ∷ ♭₁ xs≈xs′
+whnf≈ (x≈x′ ∷ xs≈xs′)       = x≈x′ ∷ ♭ xs≈xs′
 whnf≈ (x≈x′ , y≈y′)         = (x≈x′ , y≈y′)
 whnf≈ ⌈ x≡x′ ⌉              = ⌈ x≡x′ ⌉
 
@@ -190,10 +190,10 @@ mutual
 
   value≈ : ∀ {k} {a : U k} {xs ys} → EqWHNF a xs ys → Eq a xs ys
   value≈ leaf                  = leaf
-  value≈ (node l≈l′ x≈x′ r≈r′) = node (♯₁ ⟦ l≈l′ ⟧≈) x≈x′ (♯₁ ⟦ r≈r′ ⟧≈)
-  value≈ (x≈x′ ≺ xs≈xs′)       = x≈x′ ≺ ♯₁ ⟦ xs≈xs′ ⟧≈
+  value≈ (node l≈l′ x≈x′ r≈r′) = node (♯ ⟦ l≈l′ ⟧≈) x≈x′ (♯ ⟦ r≈r′ ⟧≈)
+  value≈ (x≈x′ ≺ xs≈xs′)       = x≈x′ ≺ ♯ ⟦ xs≈xs′ ⟧≈
   value≈ []                    = []
-  value≈ (x≈x′ ∷ xs≈xs′)       = x≈x′ ∷ ♯₁ ⟦ xs≈xs′ ⟧≈
+  value≈ (x≈x′ ∷ xs≈xs′)       = x≈x′ ∷ ♯ ⟦ xs≈xs′ ⟧≈
   value≈ (x≈x′ , y≈y′)         = (x≈x′ , y≈y′)
   value≈ ⌈ x≡x′ ⌉              = ⌈ x≡x′ ⌉
 
@@ -215,7 +215,7 @@ infixr 2 _≋⟨_⟩_ _⊑⟨_⟩_
 data PrefixOfProg {k} (a : U k) :
        Colist (El a) → Stream (El a) → Set1 where
   []       : ∀ {ys} → PrefixOfProg a [] ys
-  ⁺++-mono : ∀ xs {ys ys′} (ys⊑ys′ : ∞₁ (PrefixOfProg a ys ys′)) →
+  ⁺++-mono : ∀ xs {ys ys′} (ys⊑ys′ : ∞ (PrefixOfProg a ys ys′)) →
              PrefixOfProg a (xs ⁺++ ys) (xs ⁺++∞ ys′)
   _≋⟨_⟩_   : ∀ xs {ys zs} (xs≈ys : Eq (colist a) xs ys)
              (ys⊑zs : PrefixOfProg a ys zs) → PrefixOfProg a xs zs
@@ -233,12 +233,12 @@ whnf⊑ : ∀ {k} {a : U k} {xs ys} →
         PrefixOfProg a xs ys → PrefixOfWHNF a xs ys
 whnf⊑ []                         = []
 
-whnf⊑ (⁺++-mono [ x ]    ys⊑ys′) = refl x ∷ ♭₁ ys⊑ys′
+whnf⊑ (⁺++-mono [ x ]    ys⊑ys′) = refl x ∷ ♭ ys⊑ys′
 whnf⊑ (⁺++-mono (x ∷ xs) ys⊑ys′) = refl x ∷ ⁺++-mono xs ys⊑ys′
 
 whnf⊑ (._ ≋⟨ []          ⟩ _    ) = []
 whnf⊑ (._ ≋⟨ x≈y ∷ xs≈ys ⟩ ys⊑zs) with whnf⊑ ys⊑zs
-... | y≈z ∷ ys⊑zs′ = trans x≈y y≈z ∷ (_ ≋⟨ ♭₁ xs≈ys ⟩ ys⊑zs′)
+... | y≈z ∷ ys⊑zs′ = trans x≈y y≈z ∷ (_ ≋⟨ ♭ xs≈ys ⟩ ys⊑zs′)
 
 whnf⊑ (._ ⊑⟨ xs⊑ys ⟩ ys≈zs) with whnf⊑ xs⊑ys | whnf≈ ys≈zs
 ... | []           | _            = []
@@ -249,7 +249,7 @@ mutual
   value⊑ : ∀ {k} {a : U k} {xs ys} →
            PrefixOfWHNF a xs ys → PrefixOf a xs ys
   value⊑ []            = []
-  value⊑ (x≈y ∷ xs⊑ys) = x≈y ∷ ♯₁ ⟦ xs⊑ys ⟧⊑
+  value⊑ (x≈y ∷ xs⊑ys) = x≈y ∷ ♯ ⟦ xs⊑ys ⟧⊑
 
   ⟦_⟧⊑ : ∀ {k} {a : U k} {xs ys} →
          PrefixOfProg a xs ys → PrefixOf a xs ys
@@ -263,17 +263,17 @@ map-cong : ∀ {A B} (f : A → B) {t₁ t₂} →
            Eq (tree ⌈ B ⌉) (map f t₁) (map f t₂)
 map-cong f leaf                = leaf
 map-cong f (node l≈ ⌈ x≡ ⌉ r≈) =
-  node (♯₁ map-cong f (♭₁ l≈)) ⌈ PropEq.cong f x≡ ⌉
-       (♯₁ map-cong f (♭₁ r≈))
+  node (♯ map-cong f (♭ l≈)) ⌈ PropEq.cong f x≡ ⌉
+       (♯ map-cong f (♭ r≈))
 
 concat-cong : ∀ {k} {a : U k} {xss yss} →
               Eq (colist ⌈ List⁺ (El a) ⌉) xss yss →
               Eq (colist a) (concat xss) (concat yss)
 concat-cong []                                     = []
 concat-cong (_∷_ {x = [ x ]}  ⌈ ≡-refl ⌉ xss≈xss′) =
-  refl x ∷ ♯₁ concat-cong (♭₁ xss≈xss′)
+  refl x ∷ ♯ concat-cong (♭ xss≈xss′)
 concat-cong (_∷_ {x = x ∷ xs} ⌈ ≡-refl ⌉ xss≈xss′) =
-  refl x ∷ ♯₁ concat-cong (_∷_ {x = xs} ⌈ ≡-refl ⌉ xss≈xss′)
+  refl x ∷ ♯ concat-cong (_∷_ {x = xs} ⌈ ≡-refl ⌉ xss≈xss′)
 
 flatten-cong :
   ∀ {A} t₁ t₂ →
@@ -284,18 +284,18 @@ flatten-cong t₁ t₂ leaf                  | leaf             | leaf          
 flatten-cong t₁ t₂ ()                    | leaf             | node _ _ _
 flatten-cong t₁ t₂ ()                    | node _ _ _       | leaf
 flatten-cong t₁ t₂ (node l ⌈ ≡-refl ⌉ r) | node l′ ⌈ _ ⌉ r′ | node l″ ⌈ ._ ⌉ r″ =
-  ⌈ ≡-refl ⌉ ∷ ♯₁
+  ⌈ ≡-refl ⌉ ∷ ♯
     longZipWith-cong _⁺++⁺_ _ _ (flatten r′) (flatten r″)
-                     (flatten-cong l′ l″ (♭₁ l))
-                     (flatten-cong r′ r″ (♭₁ r))
+                     (flatten-cong l′ l″ (♭ l))
+                     (flatten-cong r′ r″ (♭ r))
 
 ⁺++∞-cong : ∀ {k} {a : U k} {xs xs′ ys ys′} →
             Eq ⌈ List⁺ (El a) ⌉ xs xs′ →
             Eq (stream a) ys ys′ →
             Eq (stream a) (xs ⁺++∞ ys) (xs′ ⁺++∞ ys′)
-⁺++∞-cong {xs = [ x ]}  ⌈ ≡-refl ⌉ ys≈ys′ = refl x ≺ ♯₁ ys≈ys′
+⁺++∞-cong {xs = [ x ]}  ⌈ ≡-refl ⌉ ys≈ys′ = refl x ≺ ♯ ys≈ys′
 ⁺++∞-cong {xs = x ∷ xs} ⌈ ≡-refl ⌉ ys≈ys′ =
-  refl x ≺ ♯₁ ⁺++∞-cong {xs = xs} ⌈ ≡-refl ⌉ ys≈ys′
+  refl x ≺ ♯ ⁺++∞-cong {xs = xs} ⌈ ≡-refl ⌉ ys≈ys′
 
 ------------------------------------------------------------------------
 -- More lemmas
@@ -303,12 +303,12 @@ flatten-cong t₁ t₂ (node l ⌈ ≡-refl ⌉ r) | node l′ ⌈ _ ⌉ r′ | 
 reflect-reify : ∀ {k} (a : U k) (x : El a) →
                 Eq a (reflect (reify a x)) x
 reflect-reify (tree a)   leaf         = leaf
-reflect-reify (tree a)   (node l x r) = node (♯₁ reflect-reify (tree a) (♭ l))
+reflect-reify (tree a)   (node l x r) = node (♯ reflect-reify (tree a) (♭ l))
                                              (reflect-reify a x)
-                                             (♯₁ reflect-reify (tree a) (♭ r))
-reflect-reify (stream a) (x ≺ xs)     = reflect-reify a x ≺ ♯₁ reflect-reify (stream a) (♭ xs)
+                                             (♯ reflect-reify (tree a) (♭ r))
+reflect-reify (stream a) (x ≺ xs)     = reflect-reify a x ≺ ♯ reflect-reify (stream a) (♭ xs)
 reflect-reify (colist a) []           = []
-reflect-reify (colist a) (x ∷ xs)     = reflect-reify a x ∷ ♯₁ reflect-reify (colist a) (♭ xs)
+reflect-reify (colist a) (x ∷ xs)     = reflect-reify a x ∷ ♯ reflect-reify (colist a) (♭ xs)
 reflect-reify (a ⊗ b)    (x , y)      = (reflect-reify a x , reflect-reify b y)
 reflect-reify ⌈ A ⌉      x            = ⌈ ≡-refl ⌉
 
@@ -320,8 +320,8 @@ right-inverse {ν} x = reflect-reify _ x
 
 ++-assoc : ∀ {k} {a : U k} xs ys zs →
            Eq (stream a) (xs ⁺++∞ (ys ⁺++∞ zs)) ((xs ⁺++⁺ ys) ⁺++∞ zs)
-++-assoc [ x ]    ys zs = refl x ≺ ♯₁ refl (ys ⁺++∞ zs)
-++-assoc (x ∷ xs) ys zs = refl x ≺ ♯₁ ++-assoc xs ys zs
+++-assoc [ x ]    ys zs = refl x ≺ ♯ refl (ys ⁺++∞ zs)
+++-assoc (x ∷ xs) ys zs = refl x ≺ ♯ ++-assoc xs ys zs
 
 zip-++-assoc : ∀ {k} {a : U k} xss yss (zss : Stream (Stream (El a))) →
                Eq (stream (stream a))
@@ -332,10 +332,10 @@ zip-++-assoc xss yss (zs ≺ zss) with whnf xss | whnf yss
 ... | []            | ys     ∷ yss′ = refl _
 ... | xs     ∷ xss′ | []            = refl _
 ... | ⌈ xs ⌉ ∷ xss′ | ⌈ ys ⌉ ∷ yss′ =
-  ++-assoc xs ys zs ≺ ♯₁ zip-++-assoc xss′ yss′ (♭ zss)
+  ++-assoc xs ys zs ≺ ♯ zip-++-assoc xss′ yss′ (♭ zss)
 
 concat-lemma : ∀ {k} {a : U k} xs xss →
                Eq (colist a) (concat (xs ∷ xss))
                              (xs ⁺++ concat (♭ xss))
-concat-lemma [ x ]    xss = refl x ∷ ♯₁ refl (concat (♭ xss))
-concat-lemma (x ∷ xs) xss = refl x ∷ ♯₁ concat-lemma xs xss
+concat-lemma [ x ]    xss = refl x ∷ ♯ refl (concat (♭ xss))
+concat-lemma (x ∷ xs) xss = refl x ∷ ♯ concat-lemma xs xss

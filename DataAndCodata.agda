@@ -23,7 +23,7 @@ data Rec : Set where
   ν : Rec
 
 ∞? : Rec → Set → Set
-∞? μ = id₁
+∞? μ = id
 ∞? ν = ∞
 
 ♯? : ∀ (r : Rec) {A} → A → ∞? r A

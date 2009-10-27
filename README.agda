@@ -4,8 +4,6 @@
 -- Nils Anders Danielsson
 ------------------------------------------------------------------------
 
--- The code has been tested using Agda 2.2.4.
-
 module README where
 
 ------------------------------------------------------------------------
@@ -83,7 +81,7 @@ import TotalRecognisers.NotOnlyContextFree
 -- Full parser combinators. Initially developed together with Ulf
 -- Norell; I added the use of mixed induction and coinduction.
 
-import StructurallyRecursiveDescentParsing.README
+import TotalParserCombinators.README
 
 ------------------------------------------------------------------------
 -- Section 6: Big-step semantics for both converging and diverging

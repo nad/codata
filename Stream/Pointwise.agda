@@ -17,7 +17,6 @@ open Vec  using (Vec;  _∷_)
 open Vec1 using (Vec₁; _∷_)
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality
-open import Relation.Binary.PropositionalEquality1
 private
   module IsEq {A} =
     IsEquivalence (Setoid.isEquivalence (Stream.setoid A))
@@ -76,7 +75,7 @@ private
   lookup-nat f (suc i) (x ∷ ρ) = lookup-nat f i ρ
 
   lookup-nat' : ∀ {A B : Set1} {n} (f : A → B) (x : Fin n) ρ →
-                f (Vec1.lookup x ρ) ≡₁ Vec1.lookup x (Vec1.map f ρ)
+                f (Vec1.lookup x ρ) ≡ Vec1.lookup x (Vec1.map f ρ)
   lookup-nat' f zero    (x ∷ ρ) = refl
   lookup-nat' f (suc i) (x ∷ ρ) = lookup-nat' f i ρ
 
@@ -89,7 +88,7 @@ private
 
   lift : ∀ {A B n} →
          (Vec A n → B) → Vec₁ (Prog A) n → Prog B
-  lift f xs = f (Vec1.map₁₀ headP xs) ≺ ♯₁ lift f (Vec1.map tailP xs)
+  lift f xs = f (Vec1.map₁₀ headP xs) ≺ ♯ lift f (Vec1.map tailP xs)
 
   -- lift is a congruence in its first argument.
 
@@ -97,7 +96,7 @@ private
               (∀ ρ → f ρ ≡ g ρ) →
               ∀ ρ → lift f ρ ≊ lift g ρ
   lift-cong hyp ρ = hyp (Vec1.map₁₀ headP ρ) ≺
-                    ♯₁ lift-cong hyp (Vec1.map tailP ρ)
+                    ♯ lift-cong hyp (Vec1.map tailP ρ)
 
   -- unfold xs ρ is the one-step unfolding of ⟦ xs ⟧ ρ. Note the
   -- similarity to lift.
@@ -113,8 +112,8 @@ private
       ≊⟨ ≊-η (Vec1.lookup x ρ) ⟩
     headP (Vec1.lookup x ρ) ≺♯ tailP (Vec1.lookup x ρ)
       ≊⟨ lookup-nat headP x ρ ≺
-         ♯₁ ≈⇒≅ (IsEq.reflexive
-                   (cong₁₀ Prog.⟦_⟧ (lookup-nat' tailP x ρ))) ⟩
+         ♯ ≈⇒≅ (IsEq.reflexive
+                  (cong Prog.⟦_⟧ (lookup-nat' tailP x ρ))) ⟩
     Vec.lookup x (Vec1.map₁₀ headP ρ) ≺♯
     Vec1.lookup x (Vec1.map tailP ρ)
       ≡⟨ refl ⟩
@@ -143,7 +142,7 @@ private
     unfold xs ρ
       ≡⟨ refl ⟩
     ⟪ xs ⟫ (Vec1.map₁₀ headP ρ) ≺♯ ⟦ xs ⟧ (Vec1.map tailP ρ)
-      ≊⟨ refl ≺ ♯₁ main-lemma xs (Vec1.map tailP ρ) ⟩
+      ≊⟨ refl ≺ ♯ main-lemma xs (Vec1.map tailP ρ) ⟩
     lift ⟪ xs ⟫ ρ
       ∎
 

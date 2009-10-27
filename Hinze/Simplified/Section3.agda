@@ -37,19 +37,19 @@ open Op (CommutativeSemiring.semiring Nat.commutativeSemiring)
 -- Definitions
 
 pot : Prog Bool
-pot = true ≺ ♯₁ (pot ⋎ false ∞)
+pot = true ≺ ♯ (pot ⋎ false ∞)
 
 msb : Prog ℕ
-msb = 1 ≺ ♯₁ (2* · msb ⋎ 2* · msb)
+msb = 1 ≺ ♯ (2* · msb ⋎ 2* · msb)
 
 ones′ : Prog ℕ
-ones′ = 1 ≺ ♯₁ (ones′ ⋎ 1+ · ones′)
+ones′ = 1 ≺ ♯ (ones′ ⋎ 1+ · ones′)
 
 ones : Prog ℕ
 ones = 0 ≺♯ ones′
 
 carry : Prog ℕ
-carry = 0 ≺ ♯₁ (1+ · carry ⋎ 0 ∞)
+carry = 0 ≺ ♯ (1+ · carry ⋎ 0 ∞)
 
 carry-folded : carry ≊ 0 ∞ ⋎ 1+ · carry
 carry-folded = carry ∎
@@ -64,10 +64,10 @@ turn 0      = []
 turn (1+ n) = turn n ++ [ n ] ++ turn n
 
 tree : ℕ → Prog ℕ
-tree n = n ≺ ♯₁ (turn n ≺≺ tree (1+ n))
+tree n = n ≺ ♯ (turn n ≺≺ tree (1+ n))
 
 frac : Prog ℕ
-frac = 0 ≺ ♯₁ (frac ⋎ 1+ · nat)
+frac = 0 ≺ ♯ (frac ⋎ 1+ · nat)
 
 frac-folded : frac ≊ nat ⋎ frac
 frac-folded = frac ∎
@@ -106,10 +106,10 @@ carry-god-nat =
   tailP nat
                                  ∎
   where
-  coih = ♯₁ ⋎-cong (2* · (2^ · carry ⟨ _*_ ⟩ god)) (2* · tailP nat)
-                   (·-cong 2* (2^ · carry ⟨ _*_ ⟩ god) (tailP nat)
-                           carry-god-nat)
-                   (tailP (1+2* · nat)) (tailP (1+2* · nat)) (tailP (1+2* · nat) ∎)
+  coih = ♯ ⋎-cong (2* · (2^ · carry ⟨ _*_ ⟩ god)) (2* · tailP nat)
+                  (·-cong 2* (2^ · carry ⟨ _*_ ⟩ god) (tailP nat)
+                          carry-god-nat)
+                  (tailP (1+2* · nat)) (tailP (1+2* · nat)) (tailP (1+2* · nat) ∎)
 
   lemma =
     2^ · carry
