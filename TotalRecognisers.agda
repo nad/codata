@@ -7,7 +7,7 @@ open import Relation.Binary.PropositionalEquality
 
 -- The recognisers are parametrised on the alphabet.
 
-module TotalParserCombinators
+module TotalRecognisers
          (Tok : Set)
          (_≟_ : Decidable (_≡_ {A = Tok}))
          -- The tokens must come with decidable equality.
@@ -90,14 +90,14 @@ data P : Bool → Set where
 -- Note that ∅, nonempty and cast could be defined as derived
 -- combinators. (For cast this is obvious, for ∅ and nonempty see
 -- below, and note that the proof in
--- TotalParserCombinators.ExpressiveStrength does not rely on these
+-- TotalRecognisers.ExpressiveStrength does not rely on these
 -- constructors.) However, Agda uses /guarded/ corecursion, so the
 -- fact that nonempty and cast are constructors can be very convenient
 -- when constructing other parsers.
 
 -- For an example of the use of nonempty, see the Kleene star example
 -- below. For an example of the use of cast, see
--- TotalParserCombinators.NotOnlyContextFree.)
+-- TotalRecognisers.NotOnlyContextFree.)
 
 ------------------------------------------------------------------------
 -- Semantics

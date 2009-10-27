@@ -76,9 +76,9 @@ import AdmissibleButNotPostulable
 -- of languages which can be decided by Agda programs (when the
 -- alphabet is {true, false}).
 
-import TotalParserCombinators
-import TotalParserCombinators.ExpressiveStrength
-import TotalParserCombinators.NotOnlyContextFree
+import TotalRecognisers
+import TotalRecognisers.ExpressiveStrength
+import TotalRecognisers.NotOnlyContextFree
 
 -- Full parser combinators. Initially developed together with Ulf
 -- Norell; I added the use of mixed induction and coinduction.

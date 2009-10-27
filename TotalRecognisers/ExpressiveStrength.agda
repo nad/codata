@@ -6,7 +6,7 @@
 
 -- This result could be generalised to other alphabets.
 
-module TotalParserCombinators.ExpressiveStrength where
+module TotalRecognisers.ExpressiveStrength where
 
 open import Coinduction
 open import Data.Bool hiding (_∧_)
@@ -19,8 +19,8 @@ open import Relation.Binary.PropositionalEquality
 open import Relation.Nullary
 open import Relation.Nullary.Decidable
 
-import TotalParserCombinators
-open TotalParserCombinators Bool _≟_
+import TotalRecognisers
+open TotalRecognisers Bool _≟_
 
 ------------------------------------------------------------------------
 -- A boring lemma
