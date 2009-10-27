@@ -69,14 +69,9 @@ import AdmissibleButNotPostulable
 ------------------------------------------------------------------------
 -- Section 5: Total parser combinators
 
--- Parser combinators which only handle recognition. It is proved that
--- the set of languages accepted by these parsers is exactly the set
--- of languages which can be decided by Agda programs (when the
--- alphabet is {true, false}).
+-- Parser combinators which only handle recognition.
 
 import TotalRecognisers
-import TotalRecognisers.ExpressiveStrength
-import TotalRecognisers.NotOnlyContextFree
 
 -- Full parser combinators. Initially developed together with Ulf
 -- Norell; I added the use of mixed induction and coinduction.
