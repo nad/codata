@@ -40,8 +40,8 @@ open import Induction.Nat
 
 ofe : OFE
 ofe = record
-  { carrier            = ℕ
-  ; domain             = Stream A
+  { Carrier            = ℕ
+  ; Domain             = Stream A
   ; _<_                = _<′_
   ; isWellFoundedOrder = <′-isWellFoundedOrder
   ; Eq                 = λ n xs ys → take (suc n) xs ≡ take (suc n) ys

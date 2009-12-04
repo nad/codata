@@ -23,8 +23,8 @@ open import Data.Empty
 
 ofe : OFE
 ofe = record
-  { carrier            = A
-  ; domain             = A → B
+  { Carrier            = A
+  ; Domain             = A → B
   ; _<_                = _<_
   ; isWellFoundedOrder = isWFO
   ; Eq                 = λ a f g → f a ≡ g a

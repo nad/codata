@@ -25,41 +25,41 @@ record IsWellFoundedOrder {A} (_<_ : Rel A) : Set where
 
 record OFE : Set1 where
   field
-    carrier            : Set
-    domain             : Set
-    _<_                : Rel carrier
+    Carrier            : Set
+    Domain             : Set
+    _<_                : Rel Carrier
     isWellFoundedOrder : IsWellFoundedOrder _<_
-    Eq                 : carrier → Rel domain
+    Eq                 : Carrier → Rel Domain
     isEquivalence      : ∀ a → IsEquivalence (Eq a)
 
   open IsWellFoundedOrder isWellFoundedOrder public
   open WF _<_ public using (WfRec)
   open WF.All _<_ isWellFounded public
 
-  setoid : carrier → Setoid
-  setoid a = record { carrier       = domain
+  setoid : Carrier → Setoid _ _
+  setoid a = record { Carrier       = Domain
                     ; _≈_           = Eq a
                     ; isEquivalence = isEquivalence a
                     }
 
-  module EqReasoning {a : carrier} where
+  module EqReasoning {a : Carrier} where
     open EqR    (setoid a) public
     open Setoid (setoid a) public using (refl; sym)
 
   -- The set of predecessors of a.
 
-  ↓ : carrier → Pred carrier
+  ↓ : Carrier → Pred Carrier
   ↓ a = λ a' → a' < a
 
   -- The intersection of all the equivalences.
 
-  _≅_ : Rel domain
+  _≅_ : Rel Domain
   x ≅ y = ∀ a → Eq a x y
 
-  Family : Pred carrier → Set
-  Family I = ∀ x → x ∈ I → domain
+  Family : Pred Carrier → Set
+  Family I = ∀ x → x ∈ I → Domain
 
-  lift : ∀ {I} → (carrier → domain) → Family I
+  lift : ∀ {I} → (Carrier → Domain) → Family I
   lift P = λ x _ → P x
 
   IsCoherent : ∀ {I} → Family I → Set
@@ -67,11 +67,11 @@ record OFE : Set1 where
     (a'∈I : a' ∈ I) (a∈I : a ∈ I) → a' < a →
     Eq a' (fam a' a'∈I) (fam a a∈I)
 
-  IsLimit : ∀ {I} → Family I → domain → Set
+  IsLimit : ∀ {I} → Family I → Domain → Set
   IsLimit {I} fam y = ∀ {a'}
     (a'∈I : a' ∈ I) → Eq a' (fam a' a'∈I) y
 
-  IsContractive : (domain → domain) → Set
+  IsContractive : (Domain → Domain) → Set
   IsContractive F = ∀ {x y a} →
     (∀ {a'} → a' < a → Eq a' x y) → Eq a (F x) (F y)
 
@@ -84,12 +84,12 @@ record COFE : Set1 where
   open OFE ofe
 
   field
-    limU     : (carrier → domain) → domain
+    limU     : (Carrier → Domain) → Domain
     isLimitU : ∀ {fam} →
                IsCoherent {U} (lift fam) →
                IsLimit {U} (lift fam) (limU fam)
 
-    lim↓     : ∀ a → Family (↓ a) → domain
+    lim↓     : ∀ a → Family (↓ a) → Domain
     isLimit↓ : ∀ a {fam : Family (↓ a)} →
                IsCoherent fam → IsLimit fam (lim↓ a fam)
 
@@ -101,17 +101,17 @@ record COFE : Set1 where
 record ContractiveFun (cofe : COFE) : Set where
   open COFE cofe
   field
-    F             : domain → domain
+    F             : Domain → Domain
     isContractive : IsContractive F
 
   open EqReasoning
 
   -- The fixpoint is the limit of the following family.
 
-  fam : carrier → domain
-  fam = wfRec (const domain) (λ a rec → F (lim↓ a rec))
+  fam : Carrier → Domain
+  fam = wfRec (const Domain) (λ a rec → F (lim↓ a rec))
 
-  fixpoint : domain
+  fixpoint : Domain
   fixpoint = limU fam
 
   -- I am not sure if this lemma can be proved without assuming some
@@ -126,7 +126,7 @@ record ContractiveFun (cofe : COFE) : Set where
   fam-isCoherent-↓ : ∀ a → IsCoherent {↓ a} (lift fam)
   fam-isCoherent-↓ = wfRec P step
     where
-    P : Pred carrier
+    P : Pred Carrier
     P a = IsCoherent {↓ a} (lift fam)
 
     step : ∀ a → WfRec P a → P a
@@ -143,7 +143,7 @@ record ContractiveFun (cofe : COFE) : Set where
   fam-isCoherent-U : IsCoherent {U} (lift fam)
   fam-isCoherent-U {a'} {a} _ _ = wfRec P step a a'
     where
-    P : Pred carrier
+    P : Pred Carrier
     P a = ∀ a' → a' < a → Eq a' (fam a') (fam a)
 
     step : ∀ a → WfRec P a → P a
