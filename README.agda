@@ -50,6 +50,15 @@ import BreadthFirst.Universe
 import BreadthFirst.Programs
 import BreadthFirst
 
+-- A solution to a problem posed by Venanzio Capretta: The equation
+--
+--   φ s = s ⋎ φ (evens (φ s))
+--
+-- has at most one solution. (Notice the nested uses of φ, and the use
+-- of evens which removes every other element from its input.)
+
+import VenanziosProblem
+
 ------------------------------------------------------------------------
 -- Section 4: Subtyping for recursive types
 
