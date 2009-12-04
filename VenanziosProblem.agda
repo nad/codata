@@ -156,8 +156,7 @@ module Solution {A : Set}
   ... | x ∷ reset xs₁≈xs₂′ | y ∷ reset ys₁≈ys₂′ =
     x ∷ y ∷ reset (♯ shift (♭ xs₁≈xs₂′) ⋎-cong ♭ ys₁≈ys₂′)
 
-  whnf (evens-cong xs₁≈xs₂) with whnf xs₁≈xs₂
-  ... | x ∷ reset xs₁≈xs₂′ = x ∷ reset (♯ odds-cong (♭ xs₁≈xs₂′))
+  whnf (evens-cong xs₁≈xs₂) = evens-congW (whnf xs₁≈xs₂)
 
   whnf (odds-cong xs₁≈xs₂) with whnf xs₁≈xs₂
   ... | x ∷ xs₁≈xs₂′ = evens-congW xs₁≈xs₂′
