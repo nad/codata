@@ -2,6 +2,8 @@
 -- Pointwise equalities can be lifted
 ------------------------------------------------------------------------
 
+{-# OPTIONS --universe-polymorphism #-}
+
 module Stream.Pointwise where
 
 open import Coinduction hiding (∞)
@@ -11,10 +13,8 @@ import Stream.Programs as Prog
 open Prog hiding (lift; ⟦_⟧)
 open import Data.Nat
 open import Data.Fin using (Fin; zero; suc)
-import Data.Vec  as Vec
-import Data.Vec1 as Vec1
-open Vec  using (Vec;  _∷_)
-open Vec1 using (Vec₁; _∷_)
+open import Data.Vec as Vec using (Vec; _∷_)
+open import Level
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality
 private
@@ -48,8 +48,8 @@ data Pointwise A n : Set where
 
 -- Stream semantics.
 
-⟦_⟧ : ∀ {A n} → Pointwise A n → (Vec₁ (Prog A) n → Prog A)
-⟦ var x ⟧         ρ = Vec1.lookup x ρ
+⟦_⟧ : ∀ {A n} → Pointwise A n → (Vec (Prog A) n → Prog A)
+⟦ var x ⟧         ρ = Vec.lookup x ρ
 ⟦ x ∞ ⟧           ρ = x ∞
 ⟦ f · xs ⟧        ρ = f · ⟦ xs ⟧ ρ
 ⟦ xs ⟨ _∙_ ⟩ ys ⟧ ρ = ⟦ xs ⟧ ρ ⟨ _∙_ ⟩ ⟦ ys ⟧ ρ
@@ -69,15 +69,11 @@ private
 
   -- lookup is natural.
 
-  lookup-nat : ∀ {A B n} (f : A → B) (x : Fin n) ρ →
-               f (Vec1.lookup x ρ) ≡ Vec.lookup x (Vec1.map₁₀ f ρ)
+  lookup-nat : ∀ {a b n} {A : Set a} {B : Set b}
+               (f : A → B) (x : Fin n) ρ →
+               f (Vec.lookup x ρ) ≡ Vec.lookup x (Vec.map f ρ)
   lookup-nat f zero    (x ∷ ρ) = refl
   lookup-nat f (suc i) (x ∷ ρ) = lookup-nat f i ρ
-
-  lookup-nat' : ∀ {A B : Set1} {n} (f : A → B) (x : Fin n) ρ →
-                f (Vec1.lookup x ρ) ≡ Vec1.lookup x (Vec1.map f ρ)
-  lookup-nat' f zero    (x ∷ ρ) = refl
-  lookup-nat' f (suc i) (x ∷ ρ) = lookup-nat' f i ρ
 
 ------------------------------------------------------------------------
 -- The two semantics above are related via the function lift
@@ -87,35 +83,35 @@ private
   -- Lifts a pointwise function to a function on stream programs.
 
   lift : ∀ {A B n} →
-         (Vec A n → B) → Vec₁ (Prog A) n → Prog B
-  lift f xs = f (Vec1.map₁₀ headP xs) ≺ ♯ lift f (Vec1.map tailP xs)
+         (Vec A n → B) → Vec (Prog A) n → Prog B
+  lift f xs = f (Vec.map headP xs) ≺ ♯ lift f (Vec.map tailP xs)
 
   -- lift is a congruence in its first argument.
 
   lift-cong : ∀ {A B n} {f g : Vec A n → B} →
               (∀ ρ → f ρ ≡ g ρ) →
               ∀ ρ → lift f ρ ≊ lift g ρ
-  lift-cong hyp ρ = hyp (Vec1.map₁₀ headP ρ) ≺
-                    ♯ lift-cong hyp (Vec1.map tailP ρ)
+  lift-cong hyp ρ = hyp (Vec.map headP ρ) ≺
+                    ♯ lift-cong hyp (Vec.map tailP ρ)
 
   -- unfold xs ρ is the one-step unfolding of ⟦ xs ⟧ ρ. Note the
   -- similarity to lift.
 
   unfold : ∀ {A n} (xs : Pointwise A n) ρ → Prog A
-  unfold xs ρ = ⟪ xs ⟫ (Vec1.map₁₀ headP ρ) ≺♯
-                ⟦ xs ⟧ (Vec1.map   tailP ρ)
+  unfold xs ρ = ⟪ xs ⟫ (Vec.map headP ρ) ≺♯
+                ⟦ xs ⟧ (Vec.map tailP ρ)
 
   unfold-lemma : ∀ {A n} (xs : Pointwise A n) ρ →
                  ⟦ xs ⟧ ρ ≊ unfold xs ρ
   unfold-lemma (var x) ρ =
-    Vec1.lookup x ρ
-      ≊⟨ ≊-η (Vec1.lookup x ρ) ⟩
-    headP (Vec1.lookup x ρ) ≺♯ tailP (Vec1.lookup x ρ)
+    Vec.lookup x ρ
+      ≊⟨ ≊-η (Vec.lookup x ρ) ⟩
+    headP (Vec.lookup x ρ) ≺♯ tailP (Vec.lookup x ρ)
       ≊⟨ lookup-nat headP x ρ ≺
          ♯ ≈⇒≅ (IsEq.reflexive
-                  (cong Prog.⟦_⟧ (lookup-nat' tailP x ρ))) ⟩
-    Vec.lookup x (Vec1.map₁₀ headP ρ) ≺♯
-    Vec1.lookup x (Vec1.map tailP ρ)
+                  (cong Prog.⟦_⟧ (lookup-nat tailP x ρ))) ⟩
+    Vec.lookup x (Vec.map headP ρ) ≺♯
+    Vec.lookup x (Vec.map tailP ρ)
       ≡⟨ refl ⟩
     unfold (var x) ρ
       ∎
@@ -141,8 +137,8 @@ private
       ≊⟨ unfold-lemma xs ρ ⟩
     unfold xs ρ
       ≡⟨ refl ⟩
-    ⟪ xs ⟫ (Vec1.map₁₀ headP ρ) ≺♯ ⟦ xs ⟧ (Vec1.map tailP ρ)
-      ≊⟨ refl ≺ ♯ main-lemma xs (Vec1.map tailP ρ) ⟩
+    ⟪ xs ⟫ (Vec.map headP ρ) ≺♯ ⟦ xs ⟧ (Vec.map tailP ρ)
+      ≊⟨ refl ≺ ♯ main-lemma xs (Vec.map tailP ρ) ⟩
     lift ⟪ xs ⟫ ρ
       ∎
 
@@ -168,7 +164,6 @@ pointwise' xs ys hyp ρ =
     ∎
 
 open import Data.Vec.N-ary
-import Data.Vec.N-ary1 as N1
 
 -- Applies the function to all possible variables.
 
@@ -182,12 +177,12 @@ app n f = f $ⁿ Vec.map var (Vec.allFin n)
 
 pointwise
   : ∀ {A} n (f g : N-ary n (Pointwise A n) (Pointwise A n)) →
-    Eq    n _≡_ (   curryⁿ ⟪ app n f ⟫) (   curryⁿ ⟪ app n g ⟫) →
-    N1.Eq n _≊_ (N1.curryⁿ ⟦ app n f ⟧) (N1.curryⁿ ⟦ app n g ⟧)
+    Eq n _≡_ (curryⁿ ⟪ app n f ⟫) (curryⁿ ⟪ app n g ⟫) →
+    Eq n _≊_ (curryⁿ ⟦ app n f ⟧) (curryⁿ ⟦ app n g ⟧)
 pointwise n f g hyp =
-  N1.curryⁿ-pres ⟦ app n f ⟧ ⟦ app n g ⟧
+  curryⁿ-cong ⟦ app n f ⟧ ⟦ app n g ⟧
     (pointwise' (app n f) (app n g)
-      (curryⁿ-pres⁻¹ ⟪ app n f ⟫ ⟪ app n g ⟫ hyp))
+      (curryⁿ-cong⁻¹ ⟪ app n f ⟫ ⟪ app n g ⟫ hyp))
 
 ------------------------------------------------------------------------
 -- Some examples
