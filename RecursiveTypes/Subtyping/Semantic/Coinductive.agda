@@ -10,6 +10,7 @@ open import Data.Fin using (Fin)
 open import Data.Function
 open import Data.Empty using (⊥-elim)
 open import Relation.Nullary
+open import Relation.Nullary.Negation hiding (stable)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 
 open import RecursiveTypes.Syntax
@@ -131,21 +132,21 @@ right-proj : ∀ {n} {σ₁ σ₂ τ₁ τ₂ : ∞ (Tree n)} →
 right-proj (τ₁≤σ₁ ⟶ σ₂≤τ₂) = ♭ σ₂≤τ₂
 
 ------------------------------------------------------------------------
--- Double-negation does not affect _≤∞_
+-- _≤∞_ is stable under double-negation
 
-drop-¬¬ : ∀ {n} (σ τ : Tree n) → ¬ ¬ σ ≤∞ τ → σ ≤∞ τ
-drop-¬¬ ⊥         τ         ¬≰ = ⊥
-drop-¬¬ σ         ⊤         ¬≰ = ⊤
-drop-¬¬ (var x)   (var  y)  ¬≰ with var x ≡? var y
-drop-¬¬ (var x)   (var .x)  ¬≰ | yes refl = var
-drop-¬¬ (var x)   (var  y)  ¬≰ | no  x≠y  = ⊥-elim (¬≰ (x≠y ∘ var:≤∞⟶≡))
-drop-¬¬ (σ₁ ⟶ σ₂) (τ₁ ⟶ τ₂) ¬≰ =
-  ♯ drop-¬¬ (♭ τ₁) (♭ σ₁) (λ ≰ → ¬≰ (≰ ∘  left-proj)) ⟶
-  ♯ drop-¬¬ (♭ σ₂) (♭ τ₂) (λ ≰ → ¬≰ (≰ ∘ right-proj))
-drop-¬¬ ⊤         ⊥         ¬≰ = ⊥-elim (¬≰ (λ ()))
-drop-¬¬ ⊤         (var x)   ¬≰ = ⊥-elim (¬≰ (λ ()))
-drop-¬¬ ⊤         (τ₁ ⟶ τ₂) ¬≰ = ⊥-elim (¬≰ (λ ()))
-drop-¬¬ (var x)   ⊥         ¬≰ = ⊥-elim (¬≰ (λ ()))
-drop-¬¬ (var x)   (τ₁ ⟶ τ₂) ¬≰ = ⊥-elim (¬≰ (λ ()))
-drop-¬¬ (σ₁ ⟶ σ₂) ⊥         ¬≰ = ⊥-elim (¬≰ (λ ()))
-drop-¬¬ (σ₁ ⟶ σ₂) (var x)   ¬≰ = ⊥-elim (¬≰ (λ ()))
+stable : ∀ {n} (σ τ : Tree n) → Stable (σ ≤∞ τ)
+stable ⊥         τ         ¬≰ = ⊥
+stable σ         ⊤         ¬≰ = ⊤
+stable (var x)   (var  y)  ¬≰ with var x ≡? var y
+stable (var x)   (var .x)  ¬≰ | yes refl = var
+stable (var x)   (var  y)  ¬≰ | no  x≠y  = ⊥-elim (¬≰ (x≠y ∘ var:≤∞⟶≡))
+stable (σ₁ ⟶ σ₂) (τ₁ ⟶ τ₂) ¬≰ =
+  ♯ stable (♭ τ₁) (♭ σ₁) (λ ≰ → ¬≰ (≰ ∘  left-proj)) ⟶
+  ♯ stable (♭ σ₂) (♭ τ₂) (λ ≰ → ¬≰ (≰ ∘ right-proj))
+stable ⊤         ⊥         ¬≰ = ⊥-elim (¬≰ (λ ()))
+stable ⊤         (var x)   ¬≰ = ⊥-elim (¬≰ (λ ()))
+stable ⊤         (τ₁ ⟶ τ₂) ¬≰ = ⊥-elim (¬≰ (λ ()))
+stable (var x)   ⊥         ¬≰ = ⊥-elim (¬≰ (λ ()))
+stable (var x)   (τ₁ ⟶ τ₂) ¬≰ = ⊥-elim (¬≰ (λ ()))
+stable (σ₁ ⟶ σ₂) ⊥         ¬≰ = ⊥-elim (¬≰ (λ ()))
+stable (σ₁ ⟶ σ₂) (var x)   ¬≰ = ⊥-elim (¬≰ (λ ()))
