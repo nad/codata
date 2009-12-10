@@ -45,7 +45,17 @@ module WeakEquality where
   laterˡ⁻¹ (laterʳ lx≈y) = laterʳ (laterˡ⁻¹ lx≈y)
   laterˡ⁻¹ (laterˡ x≈y)  = x≈y
 
-  -- Weak equality is transitive.
+  -- Weak equality is an equivalence relation.
+
+  refl : {A : Set} (x : A ⊥) → x ≈ x
+  refl (now v)   = now
+  refl (later x) = later (♯ refl (♭ x))
+
+  sym : {A : Set} {x y : A ⊥} → x ≈ y → y ≈ x
+  sym now          = now
+  sym (later  x≈y) = later (♯ sym (♭ x≈y))
+  sym (laterʳ x≈y) = laterˡ (sym x≈y)
+  sym (laterˡ x≈y) = laterʳ (sym x≈y)
 
   trans : {A : Set} {x y z : A ⊥} → x ≈ y → y ≈ z → x ≈ z
   trans {x = now v} {z = z} p q = tr p q
