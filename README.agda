@@ -82,10 +82,9 @@ import AdmissibleButNotPostulable
 
 import TotalRecognisers
 
--- Full parser combinators. Initially developed together with Ulf
--- Norell; I added the use of mixed induction and coinduction.
+-- Full parser combinators.
 
-import TotalParserCombinators.README
+import TotalParserCombinators.MixingInductionAndCoinduction
 
 ------------------------------------------------------------------------
 -- Section 6: Big-step semantics for both converging and diverging
