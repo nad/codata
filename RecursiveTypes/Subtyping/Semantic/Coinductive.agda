@@ -45,79 +45,85 @@ _≤Coind_ : ∀ {n} → Ty n → Ty n → Set
 -- A trick used to ensure guardedness of expressions using
 -- transitivity
 
-infix 4 _≤∞Prog_ _≤∞WHNF_
+infix 4 _≤∞P_ _≤∞W_
 
-data _≤∞Prog_ {n} : Tree n → Tree n → Set where
-  ⊥      : ∀ {τ} → ⊥ ≤∞Prog τ
-  ⊤      : ∀ {σ} → σ ≤∞Prog ⊤
-  var    : ∀ {x} → var x ≤∞Prog var x
+data _≤∞P_ {n} : Tree n → Tree n → Set where
+  ⊥      : ∀ {τ} → ⊥ ≤∞P τ
+  ⊤      : ∀ {σ} → σ ≤∞P ⊤
+  var    : ∀ {x} → var x ≤∞P var x
   _⟶_    : ∀ {σ₁ σ₂ τ₁ τ₂}
-           (τ₁≤σ₁ : ∞ (♭ τ₁ ≤∞Prog ♭ σ₁)) (σ₂≤τ₂ : ∞ (♭ σ₂ ≤∞Prog ♭ τ₂)) →
-           σ₁ ⟶ σ₂ ≤∞Prog τ₁ ⟶ τ₂
-  -- Reflexivity.
-  _∎     : ∀ τ → τ ≤∞Prog τ
+           (τ₁≤σ₁ : ∞ (♭ τ₁ ≤∞P ♭ σ₁)) (σ₂≤τ₂ : ∞ (♭ σ₂ ≤∞P ♭ τ₂)) →
+           σ₁ ⟶ σ₂ ≤∞P τ₁ ⟶ τ₂
   -- Transitivity.
   _≤⟨_⟩_ : ∀ τ₁ {τ₂ τ₃}
-           (τ₁≤τ₂ : τ₁ ≤∞Prog τ₂) (τ₂≤τ₃ : τ₂ ≤∞Prog τ₃) → τ₁ ≤∞Prog τ₃
+           (τ₁≤τ₂ : τ₁ ≤∞P τ₂) (τ₂≤τ₃ : τ₂ ≤∞P τ₃) → τ₁ ≤∞P τ₃
 
-data _≤∞WHNF_ {n} : Tree n → Tree n → Set where
-  ⊥   : ∀ {τ} → ⊥ ≤∞WHNF τ
-  ⊤   : ∀ {σ} → σ ≤∞WHNF ⊤
-  var : ∀ {x} → var x ≤∞WHNF var x
+data _≤∞W_ {n} : Tree n → Tree n → Set where
+  ⊥   : ∀ {τ} → ⊥ ≤∞W τ
+  ⊤   : ∀ {σ} → σ ≤∞W ⊤
+  var : ∀ {x} → var x ≤∞W var x
   _⟶_ : ∀ {σ₁ σ₂ τ₁ τ₂}
-        (τ₁≤σ₁ : ♭ τ₁ ≤∞Prog ♭ σ₁) (σ₂≤τ₂ : ♭ σ₂ ≤∞Prog ♭ τ₂) →
-        σ₁ ⟶ σ₂ ≤∞WHNF τ₁ ⟶ τ₂
+        (τ₁≤σ₁ : ♭ τ₁ ≤∞P ♭ σ₁) (σ₂≤τ₂ : ♭ σ₂ ≤∞P ♭ τ₂) →
+        σ₁ ⟶ σ₂ ≤∞W τ₁ ⟶ τ₂
 
-whnf : ∀ {n} {σ τ : Tree n} → σ ≤∞Prog τ → σ ≤∞WHNF τ
+transW : ∀ {n} {τ₁ τ₂ τ₃ : Tree n} →
+         τ₁ ≤∞W τ₂ → τ₂ ≤∞W τ₃ → τ₁ ≤∞W τ₃
+transW ⊥               _               = ⊥
+transW _               ⊤               = ⊤
+transW var             var             = var
+transW (τ₁≤σ₁ ⟶ σ₂≤τ₂) (χ₁≤τ₁ ⟶ τ₂≤χ₂) =
+  (_ ≤⟨ χ₁≤τ₁ ⟩ τ₁≤σ₁) ⟶ (_ ≤⟨ σ₂≤τ₂ ⟩ τ₂≤χ₂)
+
+whnf : ∀ {n} {σ τ : Tree n} → σ ≤∞P τ → σ ≤∞W τ
 whnf ⊥                    = ⊥
 whnf ⊤                    = ⊤
 whnf var                  = var
 whnf (τ₁≤σ₁ ⟶ σ₂≤τ₂)      = ♭ τ₁≤σ₁ ⟶ ♭ σ₂≤τ₂
-whnf (⊥ ∎)                = ⊥
-whnf (⊤ ∎)                = ⊤
-whnf (var x ∎)            = var
-whnf (σ ⟶ τ ∎)            = (♭ σ ∎) ⟶ (♭ τ ∎)
-whnf (σ ≤⟨ τ₁≤τ₂ ⟩ τ₂≤τ₃) with whnf τ₁≤τ₂ | whnf τ₂≤τ₃
-whnf (._ ≤⟨ τ₁≤τ₂ ⟩ τ₂≤τ₃) | ⊥             | _             = ⊥
-whnf (_  ≤⟨ τ₁≤τ₂ ⟩ τ₂≤τ₃) | _             | ⊤             = ⊤
-whnf (._ ≤⟨ τ₁≤τ₂ ⟩ τ₂≤τ₃) | var           | var           = var
-whnf (._ ≤⟨ τ₁≤τ₂ ⟩ τ₂≤τ₃) | τ₁≤σ₁ ⟶ σ₂≤τ₂ | χ₁≤τ₁ ⟶ τ₂≤χ₂ =
-  (_ ≤⟨ χ₁≤τ₁ ⟩ τ₁≤σ₁) ⟶ (_ ≤⟨ σ₂≤τ₂ ⟩ τ₂≤χ₂)
+whnf (σ ≤⟨ τ₁≤τ₂ ⟩ τ₂≤τ₃) = transW (whnf τ₁≤τ₂) (whnf τ₂≤τ₃)
 
 mutual
 
-  value : ∀ {n} {σ τ : Tree n} → σ ≤∞WHNF τ → σ ≤∞ τ
-  value ⊥               = ⊥
-  value ⊤               = ⊤
-  value var             = var
-  value (τ₁≤σ₁ ⟶ σ₂≤τ₂) = ♯ ⟦ τ₁≤σ₁ ⟧≤∞ ⟶ ♯ ⟦ σ₂≤τ₂ ⟧≤∞
+  ⟦_⟧W : ∀ {n} {σ τ : Tree n} → σ ≤∞W τ → σ ≤∞ τ
+  ⟦ ⊥             ⟧W = ⊥
+  ⟦ ⊤             ⟧W = ⊤
+  ⟦ var           ⟧W = var
+  ⟦ τ₁≤σ₁ ⟶ σ₂≤τ₂ ⟧W = ♯ ⟦ τ₁≤σ₁ ⟧P ⟶ ♯ ⟦ σ₂≤τ₂ ⟧P
 
-  ⟦_⟧≤∞ : ∀ {n} {σ τ : Tree n} → σ ≤∞Prog τ → σ ≤∞ τ
-  ⟦ σ≤τ ⟧≤∞ = value (whnf σ≤τ)
+  ⟦_⟧P : ∀ {n} {σ τ : Tree n} → σ ≤∞P τ → σ ≤∞ τ
+  ⟦ σ≤τ ⟧P = ⟦ whnf σ≤τ ⟧W
 
-prog : ∀ {n} {σ τ : Tree n} → σ ≤∞ τ → σ ≤∞Prog τ
-prog ⊥               = ⊥
-prog ⊤               = ⊤
-prog var             = var
-prog (τ₁≤σ₁ ⟶ σ₂≤τ₂) = ♯ prog (♭ τ₁≤σ₁) ⟶ ♯ prog (♭ σ₂≤τ₂)
+⌜_⌝ : ∀ {n} {σ τ : Tree n} → σ ≤∞ τ → σ ≤∞P τ
+⌜ ⊥             ⌝ = ⊥
+⌜ ⊤             ⌝ = ⊤
+⌜ var           ⌝ = var
+⌜ τ₁≤σ₁ ⟶ σ₂≤τ₂ ⌝ = ♯ ⌜ ♭ τ₁≤σ₁ ⌝ ⟶ ♯ ⌜ ♭ σ₂≤τ₂ ⌝
 
 ------------------------------------------------------------------------
 -- Some lemmas
 
+refl∞ : ∀ {n} (τ : Tree n) → τ ≤∞ τ
+refl∞ ⊥       = ⊥
+refl∞ ⊤       = ⊤
+refl∞ (var x) = var
+refl∞ (σ ⟶ τ) = ♯ refl∞ (♭ σ) ⟶ ♯ refl∞ (♭ τ)
+
+_∎ : ∀ {n} (τ : Tree n) → τ ≤∞P τ
+τ ∎ = ⌜ refl∞ τ ⌝
+
 trans : ∀ {n} {τ₁ τ₂ τ₃ : Tree n} →
         τ₁ ≤∞ τ₂ → τ₂ ≤∞ τ₃ → τ₁ ≤∞ τ₃
 trans {τ₁ = τ₁} {τ₂} {τ₃} τ₁≤τ₂ τ₂≤τ₃ =
-  ⟦ τ₁ ≤⟨ prog τ₁≤τ₂ ⟩
-    τ₂ ≤⟨ prog τ₂≤τ₃ ⟩
-    τ₃ ∎ ⟧≤∞
+  ⟦ τ₁ ≤⟨ ⌜ τ₁≤τ₂ ⌝ ⟩
+    τ₂ ≤⟨ ⌜ τ₂≤τ₃ ⌝ ⟩
+    τ₃ ∎ ⟧P
 
 unfold : ∀ {n} {τ₁ τ₂ : Ty (suc n)} →
          μ τ₁ ⟶ τ₂ ≤Coind unfold[μ τ₁ ⟶ τ₂ ]
-unfold = ♯ ⟦ _ ∎ ⟧≤∞ ⟶ ♯ ⟦ _ ∎ ⟧≤∞
+unfold = ♯ refl∞ _ ⟶ ♯ refl∞ _
 
 fold : ∀ {n} {τ₁ τ₂ : Ty (suc n)} →
        unfold[μ τ₁ ⟶ τ₂ ] ≤Coind μ τ₁ ⟶ τ₂
-fold = ♯ ⟦ _ ∎ ⟧≤∞ ⟶ ♯ ⟦ _ ∎ ⟧≤∞
+fold = ♯ refl∞ _ ⟶ ♯ refl∞ _
 
 var:≤∞⟶≡ : ∀ {n} {x y : Fin n} →
            var x ≤∞ var y → var x ≡ var y

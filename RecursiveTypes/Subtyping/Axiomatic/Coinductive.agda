@@ -11,7 +11,7 @@ open import RecursiveTypes.Syntax
 open import RecursiveTypes.Substitution
 open import RecursiveTypes.Semantics
 open import RecursiveTypes.Subtyping.Semantic.Coinductive as Sem
-  using (_≤∞Prog_; _≤Coind_; ⟦_⟧≤∞; ⊥; ⊤; var; _⟶_; _∎; _≤⟨_⟩_)
+  using (_≤∞P_; _≤Coind_; ⟦_⟧P; ⌜_⌝; ⊥; ⊤; var; _⟶_; _≤⟨_⟩_)
 
 ------------------------------------------------------------------------
 -- Definition
@@ -53,17 +53,17 @@ data _≤_ {n} : Ty n → Ty n → Set where
 -- The axiomatisation is equivalent to the semantic definitions of
 -- subtyping.
 
-sound′ : ∀ {n} {σ τ : Ty n} → σ ≤ τ → ⟦ σ ⟧ ≤∞Prog ⟦ τ ⟧
-sound′ ⊥                     = ⊥
-sound′ ⊤                     = ⊤
-sound′ (τ₁≤σ₁ ⟶ σ₂≤τ₂)       = ♯ sound′ (♭ τ₁≤σ₁) ⟶ ♯ sound′ (♭ σ₂≤τ₂)
-sound′ unfold                = Sem.prog Sem.unfold
-sound′ fold                  = Sem.prog Sem.fold
-sound′ (τ ∎)                 = _ ∎
-sound′ (τ₁ ≤⟨ τ₁≤τ₂ ⟩ τ₂≤τ₃) = _ ≤⟨ sound′ τ₁≤τ₂ ⟩ sound′ τ₂≤τ₃
+soundP : ∀ {n} {σ τ : Ty n} → σ ≤ τ → ⟦ σ ⟧ ≤∞P ⟦ τ ⟧
+soundP ⊥                     = ⊥
+soundP ⊤                     = ⊤
+soundP (τ₁≤σ₁ ⟶ σ₂≤τ₂)       = ♯ soundP (♭ τ₁≤σ₁) ⟶ ♯ soundP (♭ σ₂≤τ₂)
+soundP unfold                = ⌜ Sem.unfold  ⌝
+soundP fold                  = ⌜ Sem.fold    ⌝
+soundP (τ ∎)                 = ⌜ Sem.refl∞ _ ⌝
+soundP (τ₁ ≤⟨ τ₁≤τ₂ ⟩ τ₂≤τ₃) = _ ≤⟨ soundP τ₁≤τ₂ ⟩ soundP τ₂≤τ₃
 
 sound : ∀ {n} {σ τ : Ty n} → σ ≤ τ → σ ≤Coind τ
-sound σ≤τ = ⟦ sound′ σ≤τ ⟧≤∞
+sound σ≤τ = ⟦ soundP σ≤τ ⟧P
 
 complete : ∀ {n} (σ τ : Ty n) → σ ≤Coind τ → σ ≤ τ
 complete ⊥         _         _ = ⊥

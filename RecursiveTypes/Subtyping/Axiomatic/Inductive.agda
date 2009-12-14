@@ -14,7 +14,7 @@ open Any.Membership-≡ using (_∈_)
 import Data.List.Any.Properties as AnyP
 open import Data.List.All as All using (All; []; _∷_)
 open import Data.Product
-open import Data.Sum as Sum using (_⊎_; inj₁; inj₂)
+open import Data.Sum as Sum using (_⊎_; inj₁; inj₂; [_,_]′)
 open import Relation.Nullary
 open import Relation.Unary using (Pred)
 open import Relation.Binary.PropositionalEquality as PropEq
@@ -265,6 +265,8 @@ weaken (τ₁≤σ₁ ⟶ σ₂≤τ₂)       = weaken τ₁≤σ₁ ⟶ weaken
 
 complete : ∀ {n A} {σ τ : Ty n} →
            σ ≤ τ → A ⊢ σ ≤ τ
-complete {σ = σ} {τ} σ≤τ with Decidable.dec σ τ
-... | inj₁ ⊢σ≤τ = weaken ⊢σ≤τ
-... | inj₂ σ≰τ  = ⊥-elim (σ≰τ (Ax.sound σ≤τ))
+complete {σ = σ} {τ} σ≤τ =
+  [ weaken , ⊥-elim ∘′ flip _$_ σ≤τ ]′ (dec σ τ)
+  where
+  dec : ∀ {n} (σ τ : Ty n) → [] ⊢ σ ≤ τ ⊎ (¬ σ ≤ τ)
+  dec σ τ = Sum.map id (λ σ≰τ → σ≰τ ∘ Ax.sound) $ Decidable.dec σ τ

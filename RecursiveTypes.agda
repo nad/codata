@@ -27,6 +27,10 @@ import RecursiveTypes.Semantics
 
 import RecursiveTypes.Subtyping.Semantic.Coinductive
 
+-- An example.
+
+import RecursiveTypes.Subtyping.Example
+
 -- Another definition of subtyping, this time in terms of finite
 -- approximations. According to Brandt and Henglein this definition is
 -- due to Amadio and Cardelli.
