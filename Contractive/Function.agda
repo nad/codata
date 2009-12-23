@@ -7,10 +7,11 @@
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality
 open import Contractive
+open import Level
 
 module Contractive.Function
          {A B : Set}
-         {_<_ : Rel A}
+         {_<_ : Rel A zero}
          (isWFO : IsWellFoundedOrder _<_)
          (dec : Decidable _<_)
          (proof-irrelevance :

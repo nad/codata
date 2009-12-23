@@ -13,10 +13,11 @@ open import Relation.Binary
 import Relation.Binary.EqReasoning as EqR
 import Induction.WellFounded as WF
 open import Data.Function
+open import Level hiding (lift)
 
 -- Well-founded orders.
 
-record IsWellFoundedOrder {A} (_<_ : Rel A) : Set where
+record IsWellFoundedOrder {A} (_<_ : Rel A zero) : Set where
   field
     trans         : Transitive _<_
     isWellFounded : ∀ a → WF.Acc _<_ a
@@ -27,9 +28,9 @@ record OFE : Set1 where
   field
     Carrier            : Set
     Domain             : Set
-    _<_                : Rel Carrier
+    _<_                : Rel Carrier zero
     isWellFoundedOrder : IsWellFoundedOrder _<_
-    Eq                 : Carrier → Rel Domain
+    Eq                 : Carrier → Rel Domain zero
     isEquivalence      : ∀ a → IsEquivalence (Eq a)
 
   open IsWellFoundedOrder isWellFoundedOrder public
@@ -48,15 +49,15 @@ record OFE : Set1 where
 
   -- The set of predecessors of a.
 
-  ↓ : Carrier → Pred Carrier
+  ↓ : Carrier → Carrier → Set
   ↓ a = λ a' → a' < a
 
   -- The intersection of all the equivalences.
 
-  _≅_ : Rel Domain
+  _≅_ : Rel Domain zero
   x ≅ y = ∀ a → Eq a x y
 
-  Family : Pred Carrier → Set
+  Family : (Carrier → Set) → Set
   Family I = ∀ x → x ∈ I → Domain
 
   lift : ∀ {I} → (Carrier → Domain) → Family I
@@ -126,7 +127,7 @@ record ContractiveFun (cofe : COFE) : Set where
   fam-isCoherent-↓ : ∀ a → IsCoherent {↓ a} (lift fam)
   fam-isCoherent-↓ = wfRec P step
     where
-    P : Pred Carrier
+    P : Carrier → Set
     P a = IsCoherent {↓ a} (lift fam)
 
     step : ∀ a → WfRec P a → P a
@@ -143,7 +144,7 @@ record ContractiveFun (cofe : COFE) : Set where
   fam-isCoherent-U : IsCoherent {U} (lift fam)
   fam-isCoherent-U {a'} {a} _ _ = wfRec P step a a'
     where
-    P : Pred Carrier
+    P : Carrier → Set
     P a = ∀ a' → a' < a → Eq a' (fam a') (fam a)
 
     step : ∀ a → WfRec P a → P a

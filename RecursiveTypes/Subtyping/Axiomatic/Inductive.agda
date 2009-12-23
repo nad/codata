@@ -16,7 +16,6 @@ open import Data.List.All as All using (All; []; _∷_)
 open import Data.Product
 open import Data.Sum as Sum using (_⊎_; inj₁; inj₂; [_,_]′)
 open import Relation.Nullary
-open import Relation.Unary using (Pred)
 open import Relation.Binary.PropositionalEquality as PropEq
   using (_≡_; refl)
 
@@ -69,7 +68,7 @@ data _⊢_≤_ {n} (A : List (Hyp n)) : Ty n → Ty n → Set where
 
 -- A hypothesis is valid if there is a corresponding proof.
 
-Valid : ∀ {n} → (Ty n → Ty n → Set) → Pred (Hyp n)
+Valid : ∀ {n} → (Ty n → Ty n → Set) → Hyp n → Set
 Valid _≤_ (σ₁ ≲ σ₂) = σ₁ ≤ σ₂
 
 module Soundness where

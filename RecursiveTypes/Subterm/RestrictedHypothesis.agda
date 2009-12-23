@@ -21,6 +21,7 @@ open AnyP.Membership-≡
 import Data.List.Countdown as Countdown
 open import Data.Product as Prod
 open import Data.Sum as Sum
+open import Level
 open import Relation.Nullary
 open import Relation.Binary
 import Relation.Binary.On as On
@@ -56,7 +57,7 @@ RestrictedHyp = ∃ Subterm × ∃ Subterm
 
 -- Equality of restricted hypotheses (ignores the subterm proofs).
 
-_≈_ : Rel RestrictedHyp
+_≈_ : Rel RestrictedHyp zero
 _≈_ = _≡_ on ⟨_⟩
 
 -- List membership relation for restricted hypotheses.
