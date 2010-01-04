@@ -39,7 +39,7 @@ data Prog (A : Set) : ℕ → ℕ → Set1 where
             (xs : Prog B m n) (ys : Prog C m n) → Prog A m n
   map     : ∀ {m n B} (f : B → A) (xs : Prog B m n) → Prog A m n
   -- The implementation of merge becomes messy if the indices are
-  -- more general.
+  -- too general.
   merge   : (cmp : A → A → Ord)
             (xs : Prog A 1 1) (ys : Prog A 1 1) → Prog A 1 1
 
