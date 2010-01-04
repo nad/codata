@@ -24,6 +24,11 @@ import StreamProg
 
 import IndexedStreamProg
 
+-- Another variant which can handle tail. This one is perhaps less
+-- complicated, but perhaps also less general.
+
+import FibUsingTail
+
 -- A formalisation of parts of Ralf Hinze's paper "Streams and Unique
 -- Fixed Points".
 

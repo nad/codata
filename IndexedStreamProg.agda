@@ -3,6 +3,8 @@
 -- functions, but is more awkward to use and less efficient
 ------------------------------------------------------------------------
 
+-- For a potentially better approach, see FibUsingTail.
+
 module IndexedStreamProg where
 
 open import Coinduction
