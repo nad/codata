@@ -41,20 +41,23 @@ mutual
   -- longZipWith): the arguments cannot be Progs, since this would
   -- make the type negative.
 
+  -- The tree arguments to lab and flatten used to be tree programs,
+  -- but a number of lemmas could be removed when they were turned
+  -- into "actual" trees.
+
   data Prog : ∀ {k} → U k → Set1 where
     ↓_          : ∀ {k} {a : U k} (w : ∞? k (WHNF a)) → Prog a
     fst         : ∀ {k₁ k₂} {a : U k₁} {b : U k₂}
                   (p : Prog (a ⊗ b)) → Prog a
     snd         : ∀ {k₁ k₂} {a : U k₁} {b : U k₂}
                   (p : Prog (a ⊗ b)) → Prog b
-    lab         : ∀ {k} {a : U k} {B}
-                  (t : Prog (tree a)) (lss : Prog (stream ⌈ Stream B ⌉)) →
+    lab         : ∀ {A B}
+                  (t : Tree A) (lss : Prog (stream ⌈ Stream B ⌉)) →
                   Prog (tree ⌈ B ⌉ ⊗ stream ⌈ Stream B ⌉)
     longZipWith : ∀ {A}
                   (f : A → A → A) (xs ys : Prog (colist ⌈ A ⌉)) →
                   Prog (colist ⌈ A ⌉)
-    flatten     : ∀ {A}
-                  (t : Prog (tree ⌈ A ⌉)) → Prog (colist ⌈ List⁺ A ⌉)
+    flatten     : ∀ {A} (t : Tree A) → Prog (colist ⌈ List⁺ A ⌉)
 
 infixl 9 _·_ _⊛_
 
@@ -63,28 +66,6 @@ f · ⌈ x ⌉ = ⌈ f x ⌉
 
 _⊛_ : ∀ {A B} → WHNF ⌈ (A → B) ⌉ → WHNF ⌈ A ⌉ → WHNF ⌈ B ⌉
 ⌈ f ⌉ ⊛ x = f · x
-
-mutual
-
-  reify : ∀ {k} (a : U k) → El a → WHNF a
-  reify (tree a)   leaf         = leaf
-  reify (tree a)   (node l x r) = node (⟦ tree a ∣ ♭ l ⟧⁻¹ν)
-                                       (reify a x)
-                                       (⟦ tree a ∣ ♭ r ⟧⁻¹ν)
-  reify (colist a) []           = []
-  reify (colist a) (x ∷ xs)     = reify a x ∷ ⟦ colist a ∣ ♭ xs ⟧⁻¹ν
-  reify (stream a) (x ≺ xs)     = reify a x ≺ ⟦ stream a ∣ ♭ xs ⟧⁻¹ν
-  reify (a ⊗ b)    (x , y)      = (reify a x , reify b y)
-  reify ⌈ A ⌉      x            = ⌈ x ⌉
-
-  private
-
-    ⟦_∣_⟧⁻¹ν : (a : U ν) → El a → Prog a
-    ⟦ a ∣ x ⟧⁻¹ν = ↓ ♯ reify a x
-
-⟦_∣_⟧⁻¹ : ∀ {k} (a : U k) → El a → Prog a
-⟦_∣_⟧⁻¹ {μ} = λ a x → ↓ (reify a x)
-⟦_∣_⟧⁻¹ {ν} = ⟦_∣_⟧⁻¹ν
 
 whnf : ∀ {k} {a : U k} → Prog a → WHNF a
 whnf (↓_ {k} w) = ♭? k w
@@ -98,23 +79,22 @@ whnf (snd p) with whnf p
 
 -- Uses the n-th stream to label the n-th level in the tree. Returns
 -- the remaining stream elements (for every level).
-whnf (lab t lss) with whnf t
-... | leaf       = (leaf , whnf lss)
-... | node l _ r with whnf lss
-...              | ⌈ x ≺ ls ⌉ ≺ lss′ =
+whnf (lab leaf         lss) = (leaf , whnf lss)
+whnf (lab (node l _ r) lss) with whnf lss
+... | ⌈ x ≺ ls ⌉ ≺ lss′ =
   (node (fst l′,lss″) ⌈ x ⌉ (fst r′,lss‴) , ⌈ ♭ ls ⌉ ≺ snd r′,lss‴)
   where
-  l′,lss″ = lab l lss′
-  r′,lss‴ = lab r (snd l′,lss″)
+  l′,lss″ = lab (♭ l) lss′
+  r′,lss‴ = lab (♭ r) (snd l′,lss″)
 
 whnf (longZipWith f xs ys) with whnf xs | whnf ys
 ... | x ∷ xs′ | y ∷ ys′ = f · x ⊛ y ∷ longZipWith f xs′ ys′
 ... | xs′     | []      = xs′
 ... | []      | ys′     = ys′
 
-whnf (flatten t) with whnf t
-... | leaf       = []
-... | node l x r = [_] · x ∷ longZipWith _⁺++⁺_ (flatten l) (flatten r)
+whnf (flatten leaf)         = []
+whnf (flatten (node l x r)) =
+  ⌈ [ x ] ⌉ ∷ longZipWith _⁺++⁺_ (flatten (♭ l)) (flatten (♭ r))
 
 mutual
 
@@ -129,7 +109,3 @@ mutual
 
   ⟦_⟧ : ∀ {k} {a : U k} → Prog a → El a
   ⟦ p ⟧ = reflect (whnf p)
-
-lift : ∀ {k₁ k₂} {a : U k₁} {b : U k₂} →
-       (Prog a → Prog b) → El a → El b
-lift f x = ⟦ f ⟦ _ ∣ x ⟧⁻¹ ⟧

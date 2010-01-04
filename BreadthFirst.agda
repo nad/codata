@@ -15,74 +15,67 @@ open PropEq using () renaming (refl to ≡-refl)
 open import BreadthFirst.Universe
 open import BreadthFirst.Programs
 open import BreadthFirst.Lemmas
-open import Tree using (Tree; map)
+open import Tree using (Tree; leaf; node; map)
 open import Stream using (Stream; _≺_)
 
 ------------------------------------------------------------------------
 -- Breadth-first labelling
 
-label′ : ∀ {k} {a : U k} {B} → Prog (tree a) → Stream B →
+label′ : ∀ {A B} → Tree A → Stream B →
          Prog (tree ⌈ B ⌉ ⊗ stream ⌈ Stream B ⌉)
 label′ t ls = lab t (↓ ♯ (⌈ ls ⌉ ≺ snd (label′ t ls)))
 
 label : ∀ {A B} → Tree A → Stream B → Tree B
-label {A} t ls = ⟦ fst (label′ ⟦ tree ⌈ A ⌉ ∣ t ⟧⁻¹ ls) ⟧
+label {A} t ls = ⟦ fst (label′ t ls) ⟧
 
 ------------------------------------------------------------------------
 -- Breadth-first labelling preserves the shape of the tree
 
-shape-preserved′ : ∀ {k} {a : U k} {B} (t : Prog (tree a))
+shape-preserved′ : ∀ {A B} (t : Tree A)
                    (lss : Prog (stream ⌈ Stream B ⌉)) →
                    Eq (tree ⌈ ⊤ ⌉) (map (const tt) ⟦ fst (lab t lss) ⟧)
-                                   (map (const tt) ⟦ t ⟧)
-shape-preserved′ t lss with whnf t
-... | leaf       = leaf
-... | node l _ r with whnf lss
-...              | ⌈ x ≺ ls ⌉ ≺ lss′ =
-  node (♯ shape-preserved′ l lss′) ⌈ ≡-refl ⌉
-       (♯ shape-preserved′ r _)
+                                   (map (const tt) t)
+shape-preserved′ leaf         lss = leaf
+shape-preserved′ (node l _ r) lss with whnf lss
+... | ⌈ x ≺ ls ⌉ ≺ lss′ =
+  node (♯ shape-preserved′ (♭ l) lss′) ⌈ ≡-refl ⌉
+       (♯ shape-preserved′ (♭ r) _)
 
 shape-preserved : ∀ {A B} (t : Tree A) (ls : Stream B) →
                   Eq (tree ⌈ ⊤ ⌉) (map (const tt) (label t ls))
                                   (map (const tt) t)
-shape-preserved {A} t ls = ⟦
-  map (const tt) (label t ls)           ≈⟨ shape-preserved′ ⟦ a ∣ t ⟧⁻¹ _ ⟩
-  map (const tt) (reflect (reify a t))  ≈⟨ map-cong (const tt)
-                                                    (reflect-reify a t) ⟩
-  map (const tt) t                      ∎ ⟧≈
-  where a = tree ⌈ A ⌉
+shape-preserved t _ = shape-preserved′ t _
 
 ------------------------------------------------------------------------
 -- Breadth-first labelling uses the right labels
 
-invariant : ∀ {k} {a : U k} {B} (t : Prog (tree a)) lss →
+invariant : ∀ {A B} (t : Tree A) lss →
             EqProg (stream (stream ⌈ B ⌉))
                    ⟦ lss ⟧
-                   (zipWith _⁺++∞_ ⟦ flatten (fst (lab t lss)) ⟧
+                   (zipWith _⁺++∞_ ⟦ flatten ⟦ fst (lab t lss) ⟧ ⟧
                                    ⟦ snd (lab t lss) ⟧)
-invariant t lss with whnf t
-... | leaf       = ⟦ lss ⟧ ∎
-... | node l _ r with whnf lss
-...              | ⌈ x ≺ ls ⌉ ≺ lss′ =
+invariant leaf         lss = ⟦ lss ⟧ ∎
+invariant (node l _ r) lss with whnf lss
+... | ⌈ x ≺ ls ⌉ ≺ lss′ =
   (⌈ ≡-refl ⌉ ≺ ♯ refl (♭ ls)) ≺ ♯ (
-    ⟦ lss′ ⟧                                     ≊⟨ invariant l lss′ ⟩
-    zipWith _⁺++∞_ ⟦ flatten (fst l′) ⟧
-                   ⟦ snd l′ ⟧                    ≊⟨ zipWith-cong ⁺++∞-cong
-                                                      (⟦ flatten (fst l′) ⟧ ∎)
-                                                      (invariant r (snd l′)) ⟩
+    ⟦ lss′ ⟧                                       ≊⟨ invariant (♭ l) lss′ ⟩
+    zipWith _⁺++∞_ ⟦ flatten ⟦ fst l′ ⟧ ⟧
+                   ⟦ snd l′ ⟧                      ≊⟨ zipWith-cong ⁺++∞-cong
+                                                        (⟦ flatten ⟦ fst l′ ⟧ ⟧ ∎)
+                                                        (invariant (♭ r) (snd l′)) ⟩
     zipWith _⁺++∞_
-      ⟦ flatten (fst l′) ⟧
-      (zipWith _⁺++∞_ ⟦ flatten (fst r′) ⟧
-                      ⟦ snd r′ ⟧)                ≈⟨ zip-++-assoc (flatten (fst l′))
-                                                                 (flatten (fst r′))
-                                                                 ⟦ snd r′ ⟧ ⟩
+      ⟦ flatten ⟦ fst l′ ⟧ ⟧
+      (zipWith _⁺++∞_ ⟦ flatten ⟦ fst r′ ⟧ ⟧
+                      ⟦ snd r′ ⟧)                  ≈⟨ zip-++-assoc (flatten ⟦ fst l′ ⟧)
+                                                                   (flatten ⟦ fst r′ ⟧)
+                                                                   ⟦ snd r′ ⟧ ⟩
     zipWith _⁺++∞_
-      ⟦ longZipWith _⁺++⁺_ (flatten (fst l′))
-                           (flatten (fst r′)) ⟧
-      ⟦ snd r′ ⟧                                 ∎)
+      ⟦ longZipWith _⁺++⁺_ (flatten ⟦ fst l′ ⟧)
+                           (flatten ⟦ fst r′ ⟧) ⟧
+      ⟦ snd r′ ⟧                                   ∎)
   where
-  l′ = lab l lss′
-  r′ = lab r (snd l′)
+  l′ = lab (♭ l) lss′
+  r′ = lab (♭ r) (snd l′)
 
 prefix-lemma : ∀ {k} {a : U k} xs xss yss →
                Eq (stream (stream a))
@@ -101,16 +94,11 @@ prefix-lemma xs (xs′ ≺ xss) (ys ∷ yss) (xs≈ ≺ xss≈) =
     zipWith _⁺++∞_ (♭ yss) (♭ xss)  ∎
 
 is-prefix : ∀ {A B} (t : Tree A) (ls : Stream B) →
-            PrefixOf ⌈ B ⌉ (concat (lift flatten (label t ls))) ls
-is-prefix {A} {B} t ls = ⟦
-  concat ⟦ flatten fst-l  ⟧  ≋⟨ concat-cong ⟦ flatten-cong fst-l (fst l) (right-inverse ⟦ fst l ⟧) ⟧≈ ⟩
-  concat ⟦ flatten (fst l)⟧  ⊑⟨ prefix-lemma ls ⟦ snd l ⟧ ⟦ flatten (fst l) ⟧
-                                  ⟦ ls ≺ _ {- ♯ ⟦ snd l ⟧ -}                      ≈⟨ refl ls ≺ ♯ refl ⟦ snd l ⟧ ⟩
-                                    ⟦ ↓_ {a = stream ⌈ Stream B ⌉}
-                                         (♯ (⌈ ls ⌉ ≺ snd (label′ t′ ls))) ⟧      ≊⟨ invariant t′ _ ⟩
-                                    zipWith _⁺++∞_ ⟦ flatten (fst l) ⟧ ⟦ snd l ⟧  ∎ ⟧≈ ⟩
-  ls                         ∎ ⟧⊑
-  where
-  t′    = ⟦ tree ⌈ A ⌉ ∣ t ⟧⁻¹
-  l     = label′ t′ ls
-  fst-l = ⟦ _ ∣ ⟦ fst l ⟧ ⟧⁻¹
+            PrefixOf ⌈ B ⌉ (concat ⟦ flatten (label t ls) ⟧) ls
+is-prefix {B = B} t ls =
+  ⟦ prefix-lemma ls ⟦ snd l ⟧ ⟦ flatten ⟦ fst l ⟧ ⟧
+      ⟦ ls ≺ _ {- ♯ ⟦ snd l ⟧ -}                        ≈⟨ refl ls ≺ ♯ refl ⟦ snd l ⟧ ⟩
+        ⟦ ↓_ {a = stream ⌈ Stream B ⌉}
+             (♯ (⌈ ls ⌉ ≺ snd (label′ t ls))) ⟧         ≊⟨ invariant t _ ⟩
+        zipWith _⁺++∞_ ⟦ flatten ⟦ fst l ⟧ ⟧ ⟦ snd l ⟧  ∎ ⟧≈ ⟧⊑
+  where l = label′ t ls

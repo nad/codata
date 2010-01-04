@@ -111,13 +111,6 @@ data EqProg : ∀ {k} (a : U k) → El a → El a → Set1 where
     (ys≈ys′ : EqProg (stream b) ys ys′) →
     EqProg (stream b) (zipWith f xs ys) (zipWith f xs′ ys′)
 
-  longZipWith-cong :
-    ∀ {A} f xs₁ xs₂ ys₁ ys₂
-    (xs₁≈xs₂ : EqProg (colist ⌈ A ⌉) ⟦ xs₁ ⟧ ⟦ xs₂ ⟧)
-    (ys₁≈ys₂ : EqProg (colist ⌈ A ⌉) ⟦ ys₁ ⟧ ⟦ ys₂ ⟧) →
-    EqProg (colist ⌈ A ⌉) ⟦ longZipWith f xs₁ ys₁ ⟧
-                          ⟦ longZipWith f xs₂ ys₂ ⟧
-
 data EqWHNF : ∀ {k} (a : U k) → El a → El a → Set1 where
   leaf : ∀ {k} {a : U k} → EqWHNF (tree a) leaf leaf
   node : ∀ {k} {a : U k} {x x′ l l′ r r′}
@@ -171,20 +164,6 @@ whnf≈ (zipWith-cong cong xs≈xs′ ys≈ys′) with whnf≈ xs≈xs′ | whnf
 ... | []            | ys≈ys″        = ys≈ys″
 ... | x≈x′ ∷ xs≈xs″ | y≈y′ ≺ ys≈ys″ =
   cong x≈x′ y≈y′ ≺ zipWith-cong cong xs≈xs″ ys≈ys″
-
-whnf≈ (longZipWith-cong f xs₁ xs₂ ys₁ ys₂ xs₁≈xs₂ ys₁≈ys₂)
-  with whnf xs₁ | whnf xs₂ | whnf ys₁ | whnf ys₂
-     | whnf≈ xs₁≈xs₂ | whnf≈ ys₁≈ys₂
-... | ⌈ _ ⌉ ∷ _ | ⌈ _ ⌉ ∷ _ | ⌈ _ ⌉ ∷ ys′ | ⌈ _ ⌉ ∷ ys″
-    | ⌈ x ⌉ ∷ xs | ⌈ y ⌉ ∷ ys =
-  ⌈ PropEq.cong₂ f x y ⌉ ∷ longZipWith-cong f _ _ ys′ ys″ xs ys
-... | []    | []    | _ ∷ _ | _ ∷ _ | [] | ys = ys
-... | _ ∷ _ | _ ∷ _ | []    | []    | xs | [] = xs
-... | []    | []    | []    | []    | [] | [] = []
-... | _ ∷ _ | []    | _     | _     | () | _
-... | []    | _ ∷ _ | _     | _     | () | _
-... | _     | _     | _ ∷ _ | []    | _  | ()
-... | _     | _     | []    | _ ∷ _ | _  | ()
 
 mutual
 
@@ -256,38 +235,7 @@ mutual
   ⟦ xs⊑ys ⟧⊑ = value⊑ (whnf⊑ xs⊑ys)
 
 ------------------------------------------------------------------------
--- Some congruences
-
-map-cong : ∀ {A B} (f : A → B) {t₁ t₂} →
-           Eq (tree ⌈ A ⌉) t₁ t₂ →
-           Eq (tree ⌈ B ⌉) (map f t₁) (map f t₂)
-map-cong f leaf                = leaf
-map-cong f (node l≈ ⌈ x≡ ⌉ r≈) =
-  node (♯ map-cong f (♭ l≈)) ⌈ PropEq.cong f x≡ ⌉
-       (♯ map-cong f (♭ r≈))
-
-concat-cong : ∀ {k} {a : U k} {xss yss} →
-              Eq (colist ⌈ List⁺ (El a) ⌉) xss yss →
-              Eq (colist a) (concat xss) (concat yss)
-concat-cong []                                     = []
-concat-cong (_∷_ {x = [ x ]}  ⌈ ≡-refl ⌉ xss≈xss′) =
-  refl x ∷ ♯ concat-cong (♭ xss≈xss′)
-concat-cong (_∷_ {x = x ∷ xs} ⌈ ≡-refl ⌉ xss≈xss′) =
-  refl x ∷ ♯ concat-cong (_∷_ {x = xs} ⌈ ≡-refl ⌉ xss≈xss′)
-
-flatten-cong :
-  ∀ {A} t₁ t₂ →
-  Eq (tree ⌈ A ⌉) ⟦ t₁ ⟧ ⟦ t₂ ⟧ →
-  EqProg (colist ⌈ List⁺ A ⌉) ⟦ flatten t₁ ⟧ ⟦ flatten t₂ ⟧
-flatten-cong t₁ t₂ t₁≈t₂                 with whnf t₁ | whnf t₂
-flatten-cong t₁ t₂ leaf                  | leaf             | leaf              = []
-flatten-cong t₁ t₂ ()                    | leaf             | node _ _ _
-flatten-cong t₁ t₂ ()                    | node _ _ _       | leaf
-flatten-cong t₁ t₂ (node l ⌈ ≡-refl ⌉ r) | node l′ ⌈ _ ⌉ r′ | node l″ ⌈ ._ ⌉ r″ =
-  ⌈ ≡-refl ⌉ ∷ ♯
-    longZipWith-cong _⁺++⁺_ _ _ (flatten r′) (flatten r″)
-                     (flatten-cong l′ l″ (♭ l))
-                     (flatten-cong r′ r″ (♭ r))
+-- More lemmas
 
 ⁺++∞-cong : ∀ {k} {a : U k} {xs xs′ ys ys′} →
             Eq ⌈ List⁺ (El a) ⌉ xs xs′ →
@@ -296,27 +244,6 @@ flatten-cong t₁ t₂ (node l ⌈ ≡-refl ⌉ r) | node l′ ⌈ _ ⌉ r′ | 
 ⁺++∞-cong {xs = [ x ]}  ⌈ ≡-refl ⌉ ys≈ys′ = refl x ≺ ♯ ys≈ys′
 ⁺++∞-cong {xs = x ∷ xs} ⌈ ≡-refl ⌉ ys≈ys′ =
   refl x ≺ ♯ ⁺++∞-cong {xs = xs} ⌈ ≡-refl ⌉ ys≈ys′
-
-------------------------------------------------------------------------
--- More lemmas
-
-reflect-reify : ∀ {k} (a : U k) (x : El a) →
-                Eq a (reflect (reify a x)) x
-reflect-reify (tree a)   leaf         = leaf
-reflect-reify (tree a)   (node l x r) = node (♯ reflect-reify (tree a) (♭ l))
-                                             (reflect-reify a x)
-                                             (♯ reflect-reify (tree a) (♭ r))
-reflect-reify (stream a) (x ≺ xs)     = reflect-reify a x ≺ ♯ reflect-reify (stream a) (♭ xs)
-reflect-reify (colist a) []           = []
-reflect-reify (colist a) (x ∷ xs)     = reflect-reify a x ∷ ♯ reflect-reify (colist a) (♭ xs)
-reflect-reify (a ⊗ b)    (x , y)      = (reflect-reify a x , reflect-reify b y)
-reflect-reify ⌈ A ⌉      x            = ⌈ ≡-refl ⌉
-
--- ⟦_∣_⟧⁻¹ is a right inverse of ⟦_⟧.
-
-right-inverse : ∀ {k} {a : U k} (x : El a) → Eq a ⟦ ⟦ a ∣ x ⟧⁻¹ ⟧ x
-right-inverse {μ} x = reflect-reify _ x
-right-inverse {ν} x = reflect-reify _ x
 
 ++-assoc : ∀ {k} {a : U k} xs ys zs →
            Eq (stream a) (xs ⁺++∞ (ys ⁺++∞ zs)) ((xs ⁺++⁺ ys) ⁺++∞ zs)
