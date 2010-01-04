@@ -14,7 +14,7 @@ open import Data.List.Any.Properties as AnyProp
 open AnyProp.Membership-≡
 open import Data.Product
 open import Data.Sum
-open import Data.Function
+open import Function
 open import Relation.Binary.PropositionalEquality hiding (trans)
 open import Data.Fin.Substitution
 

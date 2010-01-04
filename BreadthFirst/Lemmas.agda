@@ -5,7 +5,7 @@
 module BreadthFirst.Lemmas where
 
 open import Coinduction
-open import Data.Function
+open import Function
 import Data.List.NonEmpty as List⁺
 open List⁺ using (List⁺; [_]; _∷_; _⁺++⁺_)
 import Data.Vec as Vec

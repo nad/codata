@@ -3,7 +3,7 @@ module Stream where
 open import Coinduction
 open import Data.Nat
 open import Data.Nat.Show
-open import Data.Function
+open import Function
 open import Data.Unit
 open import Relation.Binary.PropositionalEquality
 import IO; open IO using (IO)

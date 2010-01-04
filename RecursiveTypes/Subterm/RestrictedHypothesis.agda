@@ -11,7 +11,7 @@ module RecursiveTypes.Subterm.RestrictedHypothesis
          {n} (χ₁ χ₂ : Ty n) where
 
 open import Category.Monad
-open import Data.Function
+open import Function
 open import Data.List as List
 open RawMonad List.monad
 open import Data.List.Any as Any

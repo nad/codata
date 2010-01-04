@@ -6,7 +6,7 @@ module RecursiveTypes.Subtyping.Semantic.Equivalence where
 
 open import Data.Nat
 open import Coinduction
-open import Data.Function
+open import Function
 
 open import RecursiveTypes.Syntax
 open import RecursiveTypes.Subtyping.Semantic.Inductive

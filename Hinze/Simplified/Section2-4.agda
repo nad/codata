@@ -11,7 +11,7 @@ open import Hinze.Lemmas
 
 open import Coinduction hiding (∞)
 open import Data.Nat renaming (suc to 1+)
-open import Data.Function using (_∘_)
+open import Function using (_∘_)
 open import Relation.Binary.PropositionalEquality
 open ≡-Reasoning renaming (_≡⟨_⟩_ to _=⟨_⟩_; _∎ to _QED)
 open import Algebra.Structures

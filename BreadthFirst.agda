@@ -5,7 +5,7 @@
 module BreadthFirst where
 
 open import Coinduction
-open import Data.Function
+open import Function
 open import Data.Unit
 open import Data.List.NonEmpty using (_⁺++⁺_)
 open import Data.Colist using ([]; _∷_; concat)

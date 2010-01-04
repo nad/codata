@@ -12,7 +12,7 @@
 module DataAndCodata where
 
 open import Coinduction
-open import Data.Function
+open import Function
 open import Relation.Binary.PropositionalEquality
 
 ------------------------------------------------------------------------

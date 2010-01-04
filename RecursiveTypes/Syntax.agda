@@ -6,7 +6,7 @@ module RecursiveTypes.Syntax where
 
 open import Data.Nat
 open import Data.Fin
-open import Data.Function
+open import Function
 open import Data.Product
 open import Coinduction
 open import Relation.Nullary
@@ -86,7 +86,7 @@ _≡?_ : ∀ {n} (σ τ : Ty n) → Dec (σ ≡ τ)
 ⊤         ≡? μ τ₁ ⟶ τ₂   = no (λ ())
 var x     ≡? ⊥           = no (λ ())
 var x     ≡? ⊤           = no (λ ())
-var x     ≡? var  y      = Dec.map (cong var , drop-var) (x ≟F y)
+var x     ≡? var  y      = Dec.map′ (cong var) drop-var (x ≟F y)
 var x     ≡? τ₁ ⟶ τ₂     = no (λ ())
 var x     ≡? μ τ₁ ⟶ τ₂   = no (λ ())
 σ₁ ⟶ σ₂   ≡? ⊥           = no (λ ())

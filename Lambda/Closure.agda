@@ -6,7 +6,7 @@ module Lambda.Closure where
 
 open import Coinduction
 open import Data.Fin
-open import Data.Function
+open import Function
 open import Data.Nat
 open import Data.Vec
 open import Relation.Binary.PropositionalEquality

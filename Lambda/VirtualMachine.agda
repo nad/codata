@@ -6,7 +6,7 @@ module Lambda.VirtualMachine where
 
 open import Coinduction
 open import Data.Fin
-open import Data.Function
+open import Function
 open import Data.List
 open import Data.Nat
 open import Data.Star

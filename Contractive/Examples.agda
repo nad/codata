@@ -15,7 +15,7 @@ open import Data.Nat
 open import Data.Nat.Properties
 import Data.Vec as Vec
 open Vec using (_∷_; [])
-open import Data.Function
+open import Function
 open import Stream
 open import Contractive
 import Contractive.Stream as S

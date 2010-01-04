@@ -7,7 +7,7 @@ module RecursiveTypes.Subtyping.Semantic.Coinductive where
 open import Coinduction
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.Fin using (Fin)
-open import Data.Function
+open import Function
 open import Data.Empty using (⊥-elim)
 open import Relation.Nullary
 open import Relation.Nullary.Negation hiding (stable)

@@ -6,7 +6,7 @@ module RecursiveTypes.Subtyping.Axiomatic.Inductive where
 
 open import Coinduction
 open import Data.Empty using (⊥-elim)
-open import Data.Function
+open import Function
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.List using (List; []; _∷_; _++_)
 import Data.List.Any as Any

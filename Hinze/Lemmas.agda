@@ -9,7 +9,7 @@ open import Stream.Equality
 
 open import Coinduction hiding (∞)
 open import Relation.Binary.PropositionalEquality
-open import Data.Function using (_∘_; flip)
+open import Function using (_∘_; flip)
 
 ------------------------------------------------------------------------
 -- Some lemmas from Section 2.3 of Hinze's paper

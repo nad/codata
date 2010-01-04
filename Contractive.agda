@@ -12,7 +12,7 @@ open import Relation.Unary
 open import Relation.Binary
 import Relation.Binary.EqReasoning as EqR
 import Induction.WellFounded as WF
-open import Data.Function
+open import Function
 open import Level hiding (lift)
 
 -- Well-founded orders.
