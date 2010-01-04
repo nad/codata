@@ -9,6 +9,9 @@ open import Data.Nat
 open import Data.Stream as Stream
 open import Relation.Binary
 
+private
+  module S {A} = Setoid (Stream.setoid A)
+
 ------------------------------------------------------------------------
 -- Problem formulation
 
@@ -33,17 +36,14 @@ SatisfiesEquation φ = ∀ s → φ s ≈ rhs φ s
 -- The statement of the problem:
 
 Statement : Set₁
-Statement = {A : Set} (φ₁ φ₂ : Stream A → Stream A) →
+Statement = {A : Set} {φ₁ φ₂ : Stream A → Stream A} →
             SatisfiesEquation φ₁ → SatisfiesEquation φ₂ →
             ∀ s → φ₁ s ≈ φ₂ s
 
 ------------------------------------------------------------------------
 -- Solution
 
-module Solution {A : Set}
-                (φ₁ φ₂ : Stream A → Stream A)
-                (s₁ : SatisfiesEquation φ₁) (s₂ : SatisfiesEquation φ₂)
-                where
+module Solution {A : Set} where
 
   infixr 5 _∷_
   infix  4 _∣_∣_≈P_ _∣_∣_≈W_
@@ -102,7 +102,9 @@ module Solution {A : Set}
                    m ∣ n ∣ xs₁ ≈P xs₂
 
       -- A variation of the statement we want to prove.
-      goal′      : ∀ {xs₁ xs₂}
+      goal′      : ∀ {φ₁ φ₂ xs₁ xs₂}
+                   (s₁ : SatisfiesEquation φ₁)
+                   (s₂ : SatisfiesEquation φ₂)
                    (xs₁≈xs₂ : 0 ∣ 1 ∣ xs₁ ≈P xs₂) →
                    1 ∣ 1 ∣ rhs φ₁ xs₁ ≈P rhs φ₂ xs₂
 
@@ -115,13 +117,14 @@ module Solution {A : Set}
   -- If we can prove that the equality language is sound, then the
   -- following lemma implies the intended result.
 
-  goal : ∀ {xs₁ xs₂} → 0 ∣ 1 ∣ xs₁ ≈P xs₂ → 1 ∣ 1 ∣ φ₁ xs₁ ≈P φ₂ xs₂
-  goal {xs₁} {xs₂} xs₁≈xs₂ =
+  goal : ∀ {φ₁ φ₂ xs₁ xs₂}
+         (s₁ : SatisfiesEquation φ₁) (s₂ : SatisfiesEquation φ₂) →
+         0 ∣ 1 ∣ xs₁ ≈P xs₂ → 1 ∣ 1 ∣ φ₁ xs₁ ≈P φ₂ xs₂
+  goal {φ₁} {φ₂} {xs₁} {xs₂} s₁ s₂ xs₁≈xs₂ =
     φ₁ xs₁      ≈⟨ ↑ (completeW (s₁ xs₁)) ⟩
-    rhs φ₁ xs₁  ≈⟨ goal′ xs₁≈xs₂ ⟩
-    rhs φ₂ xs₂  ≈⟨ ↑ (completeW (sym (s₂ xs₂))) ⟩
+    rhs φ₁ xs₁  ≈⟨ goal′ s₁ s₂ xs₁≈xs₂ ⟩
+    rhs φ₂ xs₂  ≈⟨ ↑ (completeW (S.sym (s₂ xs₂))) ⟩
     φ₂ xs₂      ∎
-    where open Setoid (Stream.setoid A)
 
   -- Some lemmas about weak head normal forms.
 
@@ -166,9 +169,11 @@ module Solution {A : Set}
 
   whnf (shift xs₁≈xs₂) = shiftW _ (whnf xs₁≈xs₂)
 
-  whnf (goal′ xs₁≈xs₂) with whnf xs₁≈xs₂
+  whnf (goal′ s₁ s₂ xs₁≈xs₂) with whnf xs₁≈xs₂
   ... | (x ∷ reset xs₁≈xs₂′) =
-    x ∷ reset (♯ (goal (evens-cong (goal xs₁≈xs₂)) ⋎-cong ♭ xs₁≈xs₂′))
+    x ∷ reset (♯ (goal s₁ s₂ (evens-cong (goal s₁ s₂ xs₁≈xs₂))
+                    ⋎-cong
+                  ♭ xs₁≈xs₂′))
 
   -- Soundness follows by a corecursive repetition of the whnf
   -- procedure.
@@ -184,5 +189,5 @@ module Solution {A : Set}
 -- Wrapping up.
 
 solution : Statement
-solution φ₁ φ₂ s₁ s₂ s = ⟦ S.goal (s ∎) ⟧P
-  where open module S = Solution φ₁ φ₂ s₁ s₂
+solution s₁ s₂ s = ⟦ goal s₁ s₂ (s ∎) ⟧P
+  where open Solution
