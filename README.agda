@@ -29,6 +29,10 @@ import IndexedStreamProg
 
 import FibUsingTail
 
+-- Proofs of the map-iterate property and iterate fusion.
+
+import MapIterate
+
 -- A formalisation of parts of Ralf Hinze's paper "Streams and Unique
 -- Fixed Points".
 
