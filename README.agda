@@ -45,6 +45,11 @@ import Hinze.Section3
 import Hinze.Simplified.Section2-4
 import Hinze.Simplified.Section3
 
+-- By indexing the program and WHNF types on a universe one can handle
+-- several types at the same time.
+
+import Universe
+
 -- Breadth-first labelling of trees, /almost/ implementing the classic
 -- tie-the-recursive-knot algorithm due to Jeremy Gibbons and Geraint
 -- Jones (see "Linear-time Breadth-first Tree Algorithms: An Exercise
