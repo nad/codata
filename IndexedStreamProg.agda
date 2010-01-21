@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------
 -- A variant of StreamProg which allows the use of tail and similar
--- functions, but is more awkward to use and less efficient
+-- functions, but is more awkward to use
 ------------------------------------------------------------------------
 
 -- For a potentially better approach, see FibUsingTail.
@@ -78,14 +78,6 @@ mutual
 
 ------------------------------------------------------------------------
 -- Examples
-
--- Note that for every cycle another instance of forget is applied, so
--- after a while there will be a large number of forgets in the
--- unevaluated thunk. However, there will also be a large number of
--- _+_'s, so the forgets shouldn't change the asymptotic complexity of
--- the code. On the other hand, the asymptotic performance of merge
--- (defined above) is likely to be affected by the presence of the
--- forgets.
 
 fib : Prog ℕ 1 1
 fib = (0 ∷ []) ≺≺ ♯ (1 ≺ zipWith _+_ (forget fib) (tail fib))
