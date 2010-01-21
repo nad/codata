@@ -1,8 +1,8 @@
 ------------------------------------------------------------------------
--- Another implementation of the Fibonacci sequence using tail
+-- An implementation of the Fibonacci sequence using tail
 ------------------------------------------------------------------------
 
-module AnotherFibUsingTail where
+module SingletonChunks where
 
 open import Coinduction
 open import Data.Bool

@@ -22,17 +22,16 @@ import StreamProg
 -- A somewhat more elaborate/complicated variant of the method which
 -- can handle functions like tail.
 
-import IndexedStreamProg
+import SingletonChunks
 
--- Another variant which can handle tail. This one is perhaps less
--- complicated, but perhaps also less general.
+-- A generalised variant of SingletonChunks.
 
-import FibUsingTail
+import ArbitraryChunks
 
--- A third variant which can handle tail. This one is reasonably
--- general and reasonably easy to use.
+-- Another variant which can handle tail. I believe that this one has
+-- limited applicability.
 
-import AnotherFibUsingTail
+import LargeCombinators
 
 -- Proofs of the map-iterate property and iterate fusion.
 

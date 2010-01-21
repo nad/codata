@@ -1,8 +1,8 @@
 ------------------------------------------------------------------------
--- An easier way to define the Fibonacci sequence using tail
+-- Yet another implementation of the Fibonacci sequence using tail
 ------------------------------------------------------------------------
 
-module FibUsingTail where
+module LargeCombinators where
 
 open import Coinduction
 open import Data.Nat
