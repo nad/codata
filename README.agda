@@ -29,6 +29,11 @@ import IndexedStreamProg
 
 import FibUsingTail
 
+-- A third variant which can handle tail. This one is reasonably
+-- general and reasonably easy to use.
+
+import AnotherFibUsingTail
+
 -- Proofs of the map-iterate property and iterate fusion.
 
 import MapIterate
