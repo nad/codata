@@ -57,6 +57,12 @@ mutual
 fib : Prog ℕ
 fib = 0 ≺ ♯ zipWith _+_ fib (1 ≺ ♯ fib)
 
+-- Alternative definition showing that definitions do not need to
+-- start with a cons constructor.
+
+fib′ : Prog ℕ
+fib′ = zipWith _+_ (0 ≺ ♯ fib′) (0 ≺ ♯ (1 ≺ ♯ fib′))
+
 cmp : ℕ → ℕ → Ord
 cmp m n = toOrd (compare m n)
   where
