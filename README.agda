@@ -37,6 +37,11 @@ import ArbitraryChunks
 
 import LargeCombinators
 
+-- An example which shows that nested applications of the defined
+-- function can be handled.
+
+import Nested
+
 -- A formalisation of parts of Ralf Hinze's paper "Streams and Unique
 -- Fixed Points".
 
