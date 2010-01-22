@@ -63,10 +63,19 @@ mutual
   ⟦ xs ⟧P = ⟦ whnf xs ⟧W
 
 ------------------------------------------------------------------------
--- The Fibonacci sequence
+-- Some examples
+
+-- The Fibonacci sequence.
 
 fib : StreamP 1 1 ℕ
 fib = 0 ∷ [ ♯ (1 ∷ zipWith _+_ (forget fib) (tail fib)) ]
+
+-- Some sequence which is defined using (tail ∘ tail).
+
+someSequence : StreamP 2 2 ℕ
+someSequence =
+  0 ∷ 1 ∷ [ ♯ (1 ∷ 2 ∷ zipWith _+_ (tail (tail someSequence))
+                                   (forget (forget someSequence))) ]
 
 ------------------------------------------------------------------------
 -- The definition of fib is correct
