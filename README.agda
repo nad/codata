@@ -19,6 +19,10 @@ import Stream
 
 import StreamProg
 
+-- Proofs of the map-iterate property and iterate fusion.
+
+import MapIterate
+
 -- A somewhat more elaborate/complicated variant of the method which
 -- can handle functions like tail.
 
@@ -32,10 +36,6 @@ import ArbitraryChunks
 -- limited applicability.
 
 import LargeCombinators
-
--- Proofs of the map-iterate property and iterate fusion.
-
-import MapIterate
 
 -- A formalisation of parts of Ralf Hinze's paper "Streams and Unique
 -- Fixed Points".
