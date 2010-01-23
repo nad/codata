@@ -5,12 +5,12 @@
 module BreadthFirst.Universe where
 
 open import Data.Product using (_×_; _,_)
-open import Data.Colist  using (Colist; []; _∷_)
+open import Data.Colist using (Colist; []; _∷_)
 open import Relation.Binary.PropositionalEquality using (_≡_)
 open import Coinduction
 
-open import Tree   using (Tree; node; leaf)
 open import Stream using (Stream; _≺_)
+open import Tree using (Tree; node; leaf)
 
 infixr 5 _≺_ _∷_
 infixr 4 _,_
@@ -22,7 +22,7 @@ data Kind : Set where
   μ : Kind -- Codata.
   ν : Kind -- Data.
 
-data U : Kind → Set1 where
+data U : Kind → Set₁ where
   tree   : ∀ {k} (a : U k) → U ν
   stream : ∀ {k} (a : U k) → U ν
   colist : ∀ {k} (a : U k) → U ν
@@ -31,14 +31,14 @@ data U : Kind → Set1 where
 
 El : ∀ {k} → U k → Set
 El (tree a)   = Tree.Tree (El a)
-El (stream a) = Stream.Stream (El a)
+El (stream a) = Stream (El a)
 El (colist a) = Colist (El a)
 El (a ⊗ b)    = El a × El b
 El ⌈ A ⌉      = A
 
 -- Equality.
 
-data Eq : ∀ {k} (a : U k) → El a → El a → Set1 where
+data Eq : ∀ {k} (a : U k) → El a → El a → Set₁ where
   leaf : ∀ {k} {a : U k} → Eq (tree a) leaf leaf
   node : ∀ {k} {a : U k} {x x′ l l′ r r′}
          (l≈l′ : ∞ (Eq (tree a) (♭ l) (♭ l′)))
@@ -61,7 +61,7 @@ data Eq : ∀ {k} (a : U k) → El a → El a → Set1 where
 
 -- PrefixOf a xs ys is inhabited iff xs is a prefix of ys.
 
-data PrefixOf {k} (a : U k) : Colist (El a) → Stream (El a) → Set1 where
+data PrefixOf {k} (a : U k) : Colist (El a) → Stream (El a) → Set₁ where
   []  : ∀ {ys} → PrefixOf a [] ys
   _∷_ : ∀ {x y xs ys}
         (x≈y : Eq a x y) (p : ∞ (PrefixOf a (♭ xs) (♭ ys))) →
@@ -69,7 +69,7 @@ data PrefixOf {k} (a : U k) : Colist (El a) → Stream (El a) → Set1 where
 
 -- Conditional coinduction.
 
-∞? : Kind → Set1 → Set1
+∞? : Kind → Set₁ → Set₁
 ∞? μ = λ A → A
 ∞? ν = ∞
 

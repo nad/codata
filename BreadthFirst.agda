@@ -9,8 +9,8 @@ open import Function
 open import Data.Unit
 open import Data.List.NonEmpty using (_⁺++⁺_)
 open import Data.Colist using ([]; _∷_; concat)
-import Relation.Binary.PropositionalEquality as PropEq
-open PropEq using () renaming (refl to ≡-refl)
+open import Relation.Binary.PropositionalEquality as PropEq
+  using () renaming (refl to ≡-refl)
 
 open import BreadthFirst.Universe
 open import BreadthFirst.Programs
@@ -22,17 +22,17 @@ open import Stream using (Stream; _≺_)
 -- Breadth-first labelling
 
 label′ : ∀ {A B} → Tree A → Stream B →
-         Prog (tree ⌈ B ⌉ ⊗ stream ⌈ Stream B ⌉)
+         ElP (tree ⌈ B ⌉ ⊗ stream ⌈ Stream B ⌉)
 label′ t ls = lab t (↓ ♯ (⌈ ls ⌉ ≺ snd (label′ t ls)))
 
 label : ∀ {A B} → Tree A → Stream B → Tree B
-label {A} t ls = ⟦ fst (label′ t ls) ⟧
+label t ls = ⟦ fst (label′ t ls) ⟧
 
 ------------------------------------------------------------------------
 -- Breadth-first labelling preserves the shape of the tree
 
 shape-preserved′ : ∀ {A B} (t : Tree A)
-                   (lss : Prog (stream ⌈ Stream B ⌉)) →
+                   (lss : ElP (stream ⌈ Stream B ⌉)) →
                    Eq (tree ⌈ ⊤ ⌉) (map (const tt) ⟦ fst (lab t lss) ⟧)
                                    (map (const tt) t)
 shape-preserved′ leaf         lss = leaf
@@ -50,10 +50,10 @@ shape-preserved t _ = shape-preserved′ t _
 -- Breadth-first labelling uses the right labels
 
 invariant : ∀ {A B} (t : Tree A) lss →
-            EqProg (stream (stream ⌈ B ⌉))
-                   ⟦ lss ⟧
-                   (zipWith _⁺++∞_ ⟦ flatten ⟦ fst (lab t lss) ⟧ ⟧
-                                   ⟦ snd (lab t lss) ⟧)
+            EqP (stream (stream ⌈ B ⌉))
+                ⟦ lss ⟧
+                (zipWith _⁺++∞_ ⟦ flatten ⟦ fst (lab t lss) ⟧ ⟧
+                                ⟦ snd (lab t lss) ⟧)
 invariant leaf         lss = ⟦ lss ⟧ ∎
 invariant (node l _ r) lss with whnf lss
 ... | ⌈ x ≺ ls ⌉ ≺ lss′ =
@@ -80,7 +80,7 @@ invariant (node l _ r) lss with whnf lss
 prefix-lemma : ∀ {k} {a : U k} xs xss yss →
                Eq (stream (stream a))
                   (xs ≺ ♯ xss) (zipWith _⁺++∞_ yss xss) →
-               PrefixOfProg a (concat yss) xs
+               PrefixOfP a (concat yss) xs
 prefix-lemma xs xss         []         _            = []
 prefix-lemma xs (xs′ ≺ xss) (ys ∷ yss) (xs≈ ≺ xss≈) =
   concat (ys ∷ yss)      ≋⟨ concat-lemma ys yss ⟩

@@ -11,63 +11,62 @@ open import Data.Colist hiding ([_])
 open import Data.Product
 
 open import BreadthFirst.Universe
-open import Tree
 open import Stream hiding (zipWith)
+open import Tree
 
-infixr 5 _∷_ _≺_
+infixr 5 _≺_ _∷_
 infixr 4 _,_
 infix  3 ↓_
 
 mutual
 
   -- The term WHNF is a bit of a misnomer here; only recursive
-  -- /coinductive/ arguments are suspended (in the form of Progs).
+  -- /coinductive/ arguments are suspended (in the form of programs).
 
-  data WHNF : ∀ {k} → U k → Set1 where
-    leaf : ∀ {k} {a : U k} → WHNF (tree a)
+  data ElW : ∀ {k} → U k → Set₁ where
+    leaf : ∀ {k} {a : U k} → ElW (tree a)
     node : ∀ {k} {a : U k}
-           (l : Prog (tree a)) (x : WHNF a) (r : Prog (tree a)) →
-           WHNF (tree a)
+           (l : ElP (tree a)) (x : ElW a) (r : ElP (tree a)) →
+           ElW (tree a)
     _≺_  : ∀ {k} {a : U k}
-           (x : WHNF a) (xs : Prog (stream a)) → WHNF (stream a)
-    []   : ∀ {k} {a : U k} → WHNF (colist a)
+           (x : ElW a) (xs : ElP (stream a)) → ElW (stream a)
+    []   : ∀ {k} {a : U k} → ElW (colist a)
     _∷_  : ∀ {k} {a : U k}
-           (x : WHNF a) (xs : Prog (colist a)) → WHNF (colist a)
+           (x : ElW a) (xs : ElP (colist a)) → ElW (colist a)
     _,_  : ∀ {k₁ k₂} {a : U k₁} {b : U k₂}
-           (x : WHNF a) (y : WHNF b) → WHNF (a ⊗ b)
-    ⌈_⌉  : ∀ {A} (x : A) → WHNF ⌈ A ⌉
+           (x : ElW a) (y : ElW b) → ElW (a ⊗ b)
+    ⌈_⌉  : ∀ {A} (x : A) → ElW ⌈ A ⌉
 
   -- Note that higher-order functions are not handled well (see
-  -- longZipWith): the arguments cannot be Progs, since this would
+  -- longZipWith): the arguments cannot be programs, since this would
   -- make the type negative.
 
   -- The tree arguments to lab and flatten used to be tree programs,
   -- but a number of lemmas could be removed when they were turned
   -- into "actual" trees.
 
-  data Prog : ∀ {k} → U k → Set1 where
-    ↓_          : ∀ {k} {a : U k} (w : ∞? k (WHNF a)) → Prog a
+  data ElP : ∀ {k} → U k → Set₁ where
+    ↓_          : ∀ {k} {a : U k} (w : ∞? k (ElW a)) → ElP a
     fst         : ∀ {k₁ k₂} {a : U k₁} {b : U k₂}
-                  (p : Prog (a ⊗ b)) → Prog a
+                  (p : ElP (a ⊗ b)) → ElP a
     snd         : ∀ {k₁ k₂} {a : U k₁} {b : U k₂}
-                  (p : Prog (a ⊗ b)) → Prog b
+                  (p : ElP (a ⊗ b)) → ElP b
     lab         : ∀ {A B}
-                  (t : Tree A) (lss : Prog (stream ⌈ Stream B ⌉)) →
-                  Prog (tree ⌈ B ⌉ ⊗ stream ⌈ Stream B ⌉)
-    longZipWith : ∀ {A}
-                  (f : A → A → A) (xs ys : Prog (colist ⌈ A ⌉)) →
-                  Prog (colist ⌈ A ⌉)
-    flatten     : ∀ {A} (t : Tree A) → Prog (colist ⌈ List⁺ A ⌉)
+                  (t : Tree A) (lss : ElP (stream ⌈ Stream B ⌉)) →
+                  ElP (tree ⌈ B ⌉ ⊗ stream ⌈ Stream B ⌉)
+    longZipWith : ∀ {A} (f : A → A → A) (xs ys : ElP (colist ⌈ A ⌉)) →
+                  ElP (colist ⌈ A ⌉)
+    flatten     : ∀ {A} (t : Tree A) → ElP (colist ⌈ List⁺ A ⌉)
 
 infixl 9 _·_ _⊛_
 
-_·_ : ∀ {A B} → (A → B) → WHNF ⌈ A ⌉ → WHNF ⌈ B ⌉
+_·_ : ∀ {A B} → (A → B) → ElW ⌈ A ⌉ → ElW ⌈ B ⌉
 f · ⌈ x ⌉ = ⌈ f x ⌉
 
-_⊛_ : ∀ {A B} → WHNF ⌈ (A → B) ⌉ → WHNF ⌈ A ⌉ → WHNF ⌈ B ⌉
+_⊛_ : ∀ {A B} → ElW ⌈ (A → B) ⌉ → ElW ⌈ A ⌉ → ElW ⌈ B ⌉
 ⌈ f ⌉ ⊛ x = f · x
 
-whnf : ∀ {k} {a : U k} → Prog a → WHNF a
+whnf : ∀ {k} {a : U k} → ElP a → ElW a
 whnf (↓_ {k} w) = ♭? k w
 
 -- Note: Sharing is lost here.
@@ -98,14 +97,14 @@ whnf (flatten (node l x r)) =
 
 mutual
 
-  reflect : ∀ {k} {a : U k} → WHNF a → El a
-  reflect {ν} leaf         = leaf
-  reflect {ν} (node l x r) = node (♯ ⟦ l ⟧) (reflect x) (♯ ⟦ r ⟧)
-  reflect {ν} []           = []
-  reflect {ν} (x ∷ xs)     = reflect x ∷ ♯ ⟦ xs ⟧
-  reflect {ν} (x ≺ xs)     = reflect x ≺ ♯ ⟦ xs ⟧
-  reflect {μ} (x , y)      = (reflect x , reflect y)
-  reflect {μ} ⌈ x ⌉        = x
+  ⟦_⟧W : ∀ {k} {a : U k} → ElW a → El a
+  ⟦_⟧W {ν} leaf         = leaf
+  ⟦_⟧W {ν} (node l x r) = node (♯ ⟦ l ⟧) ⟦ x ⟧W (♯ ⟦ r ⟧)
+  ⟦_⟧W {ν} (x ≺ xs)     = ⟦ x ⟧W ≺ ♯ ⟦ xs ⟧
+  ⟦_⟧W {ν} []           = []
+  ⟦_⟧W {ν} (x ∷ xs)     = ⟦ x ⟧W ∷ ♯ ⟦ xs ⟧
+  ⟦_⟧W {μ} (x , y)      = (⟦ x ⟧W , ⟦ y ⟧W)
+  ⟦_⟧W {μ} ⌈ x ⌉        = x
 
-  ⟦_⟧ : ∀ {k} {a : U k} → Prog a → El a
-  ⟦ p ⟧ = reflect (whnf p)
+  ⟦_⟧ : ∀ {k} {a : U k} → ElP a → El a
+  ⟦ p ⟧ = ⟦ whnf p ⟧W

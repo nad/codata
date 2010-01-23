@@ -18,9 +18,9 @@ module Contractive.Stream {A : Set} where
 
 open import Coinduction
 open import Contractive
-open import Stream
 open import Data.Nat
 open import Data.Nat.Properties
+open import Data.Stream
 import Data.Vec as Vec
 open Vec using (_∷_; [])
 open import Function
@@ -57,10 +57,10 @@ open OFE ofe
 private
 
   limU : (ℕ → Stream A) → Stream A
-  limU s = head (s 0) ≺ ♯ limU (tail ∘ s ∘ suc)
+  limU s = head (s 0) ∷ ♯ limU (tail ∘ s ∘ suc)
 
-  η : ∀ {n} {xs : Stream A} → Eq n xs (head xs ≺ ♯ tail xs)
-  η {xs = x ≺ xs} = refl
+  η : ∀ {n} {xs : Stream A} → Eq n xs (head xs ∷ ♯ tail xs)
+  η {xs = x ∷ xs} = refl
 
   step : ∀ s →
          IsCoherent {U} (lift s) →
@@ -75,7 +75,7 @@ private
 
     lem : ∀ {n} (xs : Stream A) →
           take n (tail xs) ≡ Vec.tail (take (1 + n) xs)
-    lem (x ≺ xs) = refl
+    lem (x ∷ xs) = refl
 
   isLimitU : ∀ s →
              IsCoherent {U} (lift s) →
@@ -94,7 +94,7 @@ private
 
     lem₂ : ∀ {n} (xs ys : Stream A) →
            Eq n xs ys → head xs ≡ head ys
-    lem₂ (x ≺ xs) (y ≺ ys) = cong Vec.head
+    lem₂ (x ∷ xs) (y ∷ ys) = cong Vec.head
 
     lem₁ : head (s (1 + n)) ≡ head (s 0)
     lem₁ = lem₂ _ _ $ sym $ coh {0} {suc n} _ _ (s≤′s z≤′n)

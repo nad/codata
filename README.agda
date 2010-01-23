@@ -10,10 +10,6 @@ module README where
 -- Section 3: An ad-hoc method for making corecursive definitions
 -- guarded
 
--- Streams. (Mostly reexported from Agda's standard library.)
-
-import Stream
-
 -- A definition of the stream of Fibonacci numbers, as well
 -- as a definition of the Hamming numbers.
 
@@ -45,6 +41,7 @@ import Nested
 -- A formalisation of parts of Ralf Hinze's paper "Streams and Unique
 -- Fixed Points".
 
+import Stream
 import Stream.Programs
 import Stream.Equality
 import Stream.Pointwise
@@ -68,6 +65,7 @@ import Universe
 -- though, so this implementation is far from being linear in the size
 -- of the tree.
 
+import Stream
 import Tree
 import BreadthFirst.Universe
 import BreadthFirst.Programs
