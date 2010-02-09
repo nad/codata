@@ -11,6 +11,8 @@
 module AdmissibleButNotPostulable where
 
 open import Coinduction using (∞; ♯_; ♭)
+open import Relation.Binary.PropositionalEquality as P
+  using (_with-≡_)
 open import Relation.Nullary using (¬_)
 
 ------------------------------------------------------------------------
@@ -170,29 +172,27 @@ module Capretta'sEquality where
     now   : ∀ {x y v} (x⇓v : x ⇓ v) (y⇓v : y ⇓ v) → x ≈W y
     later : ∀ {x y} (x≈y : ♭ x ≈P ♭ y) → later x ≈W later y
 
-  laterʳ⁻¹ : ∀ {A : Set} {x : A ⊥} {y} → x ≈P later y → x ≈P ♭ y
-  laterʳ⁻¹ (now x⇓v (later y⇓v)) = now x⇓v y⇓v
-  laterʳ⁻¹ (later  x≈y)          = laterˡ        (♭ x≈y)
-  laterʳ⁻¹ (laterʳ x≈y)          = x≈y
-  laterʳ⁻¹ (laterˡ x≈ly)         = laterˡ (laterʳ⁻¹ x≈ly)
+  laterʳW : ∀ {A : Set} {x : A ⊥} {y} → x ≈W ♭ y → x ≈W later y
+  laterʳW {y = y} x≈y with P.inspect (♭ y)
+  laterʳW x≈y | y′ with-≡ eq rewrite eq with x≈y
+  laterʳW x≈y | y′ with-≡ eq | now {v = v} x⇓v y⇓v =
+    now x⇓v (later (P.subst (λ y → y ⇓ v) (P.sym eq) y⇓v))
+  laterʳW x≈y | later y′ with-≡ eq | later x′≈y′ =
+    later (P.subst (_≈P_ _) (P.sym eq) (laterʳ x′≈y′))
 
-  laterˡ⁻¹ : ∀ {A : Set} {x} {y : A ⊥} → later x ≈P y → ♭ x ≈P y
-  laterˡ⁻¹ (now (later x⇓v) y⇓v) = now x⇓v y⇓v
-  laterˡ⁻¹ (later  x≈y)          = laterʳ         (♭ x≈y)
-  laterˡ⁻¹ (laterʳ lx≈y)         = laterʳ (laterˡ⁻¹ lx≈y)
-  laterˡ⁻¹ (laterˡ x≈y)          = x≈y
+  laterˡW : ∀ {A : Set} {x} {y : A ⊥} → ♭ x ≈W y → later x ≈W y
+  laterˡW {x = x} x≈y with P.inspect (♭ x)
+  laterˡW x≈y | x′ with-≡ eq rewrite eq with x≈y
+  laterˡW x≈y | x′ with-≡ eq | now {v = v} x⇓v y⇓v =
+    now (later (P.subst (λ x → x ⇓ v) (P.sym eq) x⇓v)) y⇓v
+  laterˡW x≈y | later x′ with-≡ eq | later {y = y′} x′≈y′ =
+    later (P.subst (λ x → x ≈P ♭ y′) (P.sym eq) (laterˡ x′≈y′))
 
   whnf : {A : Set} {x y : A ⊥} → x ≈P y → x ≈W y
   whnf (now x⇓v y⇓v) = now x⇓v y⇓v
-  whnf (later x≈y)   = later (♭ x≈y)
-
-  whnf {x = later x} (laterʳ x≈y) = later (laterˡ⁻¹ x≈y)
-  whnf {x = now v}   (laterʳ x≈y) with whnf x≈y
-  ... | now x⇓v y⇓v = now x⇓v (later y⇓v)
-
-  whnf {y = later y} (laterˡ x≈y) = later (laterʳ⁻¹ x≈y)
-  whnf {y = now v}   (laterˡ x≈y) with whnf x≈y
-  ... | now x⇓v y⇓v = now (later x⇓v) y⇓v
+  whnf (later  x≈y)  = later (♭ x≈y)
+  whnf (laterʳ x≈y)  = laterʳW (whnf x≈y)
+  whnf (laterˡ x≈y)  = laterˡW (whnf x≈y)
 
   mutual
 
