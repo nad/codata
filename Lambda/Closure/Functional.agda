@@ -16,14 +16,17 @@ open import Data.Product
 open import Data.Sum
 open import Data.Vec using (Vec; []; _∷_; lookup)
 open import Function
+open import Relation.Binary.PropositionalEquality as P using (_≡_)
 open import Relation.Nullary.Negation
 
 open RelReasoning
 
 open import Lambda.Syntax
 open Closure Tm
-open import Lambda.VirtualMachine as VM renaming (⟦_⟧ to ⟦_⟧t)
-open VM.Functional
+open import Lambda.VirtualMachine renaming (⟦_⟧ to ⟦_⟧t)
+open Functional
+private
+  module VM = Closure Code
 
 ------------------------------------------------------------------------
 -- A monad with partiality and failure
@@ -235,57 +238,90 @@ open PF
 ------------------------------------------------------------------------
 -- Compiler correctness
 
--- Note that the proof below is not accepted by the termination
--- checker. _≈_ does not admit unrestricted use of transitivity in
--- corecursive proofs, so my usual trick for working around the
--- limitations of the productivity checker does not help here.
+module Correctness where
 
-correct′ : ∀ {n} t {ρ : Env n} {c s} →
-           exec ⟨ ⟦ t ⟧t c , s , ⟦ ρ ⟧ρ ⟩ ≈
-           (⟦ t ⟧ ρ >>= λ v → exec ⟨ c , val ⟦ v ⟧v ∷ s , ⟦ ρ ⟧ρ ⟩)
-correct′ (con i)                               = laterˡ (_ ∎)
-correct′ (var x) {ρ} rewrite VM.lookup-hom x ρ = laterˡ (_ ∎)
-correct′ (ƛ t)                                 = laterˡ (_ ∎)
-correct′ (t₁ · t₂) {ρ} {c} {s} =
-  exec ⟨ ⟦ t₁ ⟧t (⟦ t₂ ⟧t (App ∷ c)) , s , ⟦ ρ ⟧ρ ⟩            ≈⟨ correct′ t₁ ⟩
+  infix  4 _≈P_ _≈W_
+  infixr 2 _≡⟨_⟩W_ _≈⟨_⟩P_ _≈⟨_⟩W_
 
-  (⟦ t₁ ⟧ ρ >>= λ v₁ →
-   exec ⟨ (⟦ t₂ ⟧t (App ∷ c)) , val ⟦ v₁ ⟧v ∷ s , ⟦ ρ ⟧ρ ⟩)    ≈⟨ ((⟦ t₁ ⟧ ρ ∎) >>=-cong λ _ → correct′ t₂) ⟩
+  mutual
 
-  (⟦ t₁ ⟧ ρ >>= λ v₁ →
-   ⟦ t₂ ⟧ ρ >>= λ v₂ →
-   exec ⟨ App ∷ c , val ⟦ v₂ ⟧v ∷ val ⟦ v₁ ⟧v ∷ s , ⟦ ρ ⟧ρ ⟩)  ≈⟨ ((⟦ t₁ ⟧ ρ ∎) >>=-cong λ v₁ →
-                                                                   (⟦ t₂ ⟧ ρ ∎) >>=-cong λ v₂ →
-                                                                   helper v₁ v₂) ⟩
-  (⟦ t₁ ⟧ ρ     >>= λ v₁ →
-   ⟦ t₂ ⟧ ρ     >>= λ v₂ →
-   ⟪ v₁ ∙ v₂ ⟫P >>= λ v  →
-   exec ⟨ c , val ⟦ v ⟧v ∷ s , ⟦ ρ ⟧ρ ⟩)                       ≅⟨ ((⟦ t₁ ⟧ ρ ∎) >>=-cong λ _ →
-                                                                   sym $ associative (⟦ t₂ ⟧ ρ) _ _) ⟩
-  (⟦ t₁ ⟧ ρ >>= λ v₁ →
-   (⟦ t₂ ⟧ ρ >>= λ v₂ → ⟪ v₁ ∙ v₂ ⟫P) >>= λ v →
-   exec ⟨ c , val ⟦ v ⟧v ∷ s , ⟦ ρ ⟧ρ ⟩)                       ≅⟨ sym $ associative (⟦ t₁ ⟧ ρ) _ _ ⟩
+    data _≈P_ : Maybe VM.Value ⊥ → Maybe VM.Value ⊥ → Set where
+      _≈⟨_⟩P_ : ∀ x {y z} (x≈y : x ≈P y) (y≅z : y ≅ z) → x ≈P z
+      correct :
+        ∀ {n} t {ρ : Env n} {c s} {f : Value → Maybe VM.Value ⊥} →
+        (hyp : ∀ v → exec ⟨ c , val ⟦ v ⟧v ∷ s , ⟦ ρ ⟧ρ ⟩ ≈W f v) →
+        exec ⟨ ⟦ t ⟧t c , s , ⟦ ρ ⟧ρ ⟩ ≈P (⟦ t ⟧ ρ >>= f)
 
-  (⟦ t₁ ⟧ ρ ⟦·⟧ ⟦ t₂ ⟧ ρ >>= λ v →
-   exec ⟨ c , val ⟦ v ⟧v ∷ s , ⟦ ρ ⟧ρ ⟩)                       ≅⟨ sym (·-comp t₁ t₂ >>=-cong λ _ → _ ∎) ⟩
+    data _≈W_ : Maybe VM.Value ⊥ → Maybe VM.Value ⊥ → Set where
+      done   : ∀ {x y} (x≈y :   x ≈    y) →       x ≈W       y
+      later  : ∀ {x y} (x≈y : ♭ x ≈P ♭ y) → later x ≈W later y
+      laterˡ : ∀ {x y} (x≈y : ♭ x ≈W   y) → later x ≈W       y
 
-  (⟦ t₁ · t₂ ⟧ ρ >>= λ v →
-   exec ⟨ c , val ⟦ v ⟧v ∷ s , ⟦ ρ ⟧ρ ⟩)                       ∎
-  where
-  helper :
-    ∀ v₁ v₂ →
-    exec ⟨ App ∷ c , val ⟦ v₂ ⟧v ∷ val ⟦ v₁ ⟧v ∷ s , ⟦ ρ ⟧ρ ⟩ ≈
-    PF._>>=_ ⟪ v₁ ∙ v₂ ⟫P (λ v → exec ⟨ c , val ⟦ v ⟧v ∷ s , ⟦ ρ ⟧ρ ⟩)
-  helper (con i)   v₂ = _ ∎
-  helper (ƛ t₁ ρ′) v₂ = later (♯ (
-    exec ⟨ ⟦ t₁ ⟧t [ Ret ] , ret c ⟦ ρ ⟧ρ ∷ s , ⟦ v₂ ∷ ρ′ ⟧ρ ⟩         ≈⟨ correct′ t₁ ⟩
+  _≡⟨_⟩W_ : ∀ x {y z} → x ≡ y → y ≈W z → x ≈W z
+  _ ≡⟨ P.refl ⟩W y≈z = y≈z
 
-    (⟦ t₁ ⟧ (v₂ ∷ ρ′) >>= λ v →
-     exec ⟨ [ Ret ] , val ⟦ v ⟧v ∷ ret c ⟦ ρ ⟧ρ ∷ s , ⟦ v₂ ∷ ρ′ ⟧ρ ⟩)  ≳⟨ ((⟦ t₁ ⟧ (v₂ ∷ ρ′) ∎) >>=-cong λ _ →
-                                                                           laterˡ (_ ∎)) ⟩
+  _≈⟨_⟩W_ : ∀ x {y z} → x ≈W y → y ≅ z → x ≈W z
+  _  ≈⟨ done   x≈y ⟩W       y≅z = done (_ ≈⟨ x≈y ⟩ ≅⇒ y≅z)
+  ._ ≈⟨ later  x≈y ⟩W later y≅z = later  (_ ≈⟨ x≈y ⟩P ♭ y≅z)
+  ._ ≈⟨ laterˡ x≈y ⟩W       y≅z = laterˡ (_ ≈⟨ x≈y ⟩W   y≅z)
 
-    (⟦ t₁ ⟧ (v₂ ∷ ρ′) >>= λ v →
-     exec ⟨ c , val ⟦ v ⟧v ∷ s , ⟦ ρ ⟧ρ ⟩)                             ∎))
+  -- The relation _≈_ does not admit unrestricted use of transitivity
+  -- in corecursive proofs, so I have formulated the correctness proof
+  -- using a continuation. Note that the proof would most likely be
+  -- easier if the semantics was also formulated in
+  -- continuation-passing style.
+
+  correctW :
+    ∀ {n} t {ρ : Env n} {c s} {f : Value → Maybe VM.Value ⊥} →
+    (∀ v → exec ⟨ c , val ⟦ v ⟧v ∷ s , ⟦ ρ ⟧ρ ⟩ ≈W f v) →
+    exec ⟨ ⟦ t ⟧t c , s , ⟦ ρ ⟧ρ ⟩ ≈W (⟦ t ⟧ ρ >>= f)
+  correctW (con i) {ρ} {c} {s} {f} hyp = laterˡ (
+    exec ⟨ c , val (con i) ∷ s , ⟦ ρ ⟧ρ ⟩  ≈⟨ hyp (con i) ⟩W
+    f (con i)                              ∎)
+  correctW (var x) {ρ} {c} {s} {f} hyp = laterˡ (
+    exec ⟨ c , val (lookup x ⟦ ρ ⟧ρ) ∷ s , ⟦ ρ ⟧ρ ⟩  ≡⟨ P.cong (λ v → exec ⟨ c , val v ∷ s , ⟦ ρ ⟧ρ ⟩) $
+                                                          lookup-hom x ρ ⟩W
+    exec ⟨ c , val ⟦ lookup x ρ ⟧v   ∷ s , ⟦ ρ ⟧ρ ⟩  ≈⟨ hyp (lookup x ρ) ⟩W
+    f (lookup x ρ)                                   ∎)
+  correctW (ƛ t) {ρ} {c} {s} {f} hyp = laterˡ (
+    exec ⟨ c , val ⟦ ƛ t ρ ⟧v ∷ s , ⟦ ρ ⟧ρ ⟩  ≈⟨ hyp (ƛ t ρ) ⟩W
+    f (ƛ t ρ)                                 ∎)
+  correctW (t₁ · t₂) {ρ} {c} {s} {f} hyp =
+    exec ⟨ ⟦ t₁ ⟧t (⟦ t₂ ⟧t (App ∷ c)) , s , ⟦ ρ ⟧ρ ⟩  ≈⟨ correctW t₁ (λ v₁ → correctW t₂ (λ v₂ → ∙-correctW v₁ v₂)) ⟩W
+
+    (⟦ t₁ ⟧ ρ     >>= λ v₁ →
+     ⟦ t₂ ⟧ ρ     >>= λ v₂ →
+     ⟪ v₁ ∙ v₂ ⟫P >>= f)                               ≅⟨ ((⟦ t₁ ⟧ ρ ∎) >>=-cong λ _ →
+                                                           sym $ associative (⟦ t₂ ⟧ ρ) _ _) ⟩
+    (⟦ t₁ ⟧ ρ >>= λ v₁ →
+     (⟦ t₂ ⟧ ρ >>= λ v₂ → ⟪ v₁ ∙ v₂ ⟫P) >>= f)         ≅⟨ sym $ associative (⟦ t₁ ⟧ ρ) _ _ ⟩
+
+    (⟦ t₁ ⟧ ρ ⟦·⟧ ⟦ t₂ ⟧ ρ >>= f)                      ≅⟨ sym (·-comp t₁ t₂ >>=-cong λ v → f v ∎) ⟩
+
+    (⟦ t₁ · t₂ ⟧ ρ >>= f)                              ∎
+    where
+    ∙-correctW :
+      ∀ v₁ v₂ →
+      exec ⟨ App ∷ c , val ⟦ v₂ ⟧v ∷ val ⟦ v₁ ⟧v ∷ s , ⟦ ρ ⟧ρ ⟩ ≈W
+      (⟪ v₁ ∙ v₂ ⟫P >>= f)
+    ∙-correctW (con i)   v₂ = done (PF.fail ∎)
+    ∙-correctW (ƛ t₁ ρ′) v₂ = later (
+      exec ⟨ ⟦ t₁ ⟧t [ Ret ] , ret c ⟦ ρ ⟧ρ ∷ s , ⟦ v₂ ∷ ρ′ ⟧ρ ⟩  ≈⟨ correct t₁ (λ v → laterˡ (hyp v)) ⟩P
+      (⟦ t₁ ⟧ (v₂ ∷ ρ′) >>= f)                                    ∎)
+
+  whnf : ∀ {x y} → x ≈P y → x ≈W y
+  whnf (x ≈⟨ x≈y ⟩P y≅z) = x ≈⟨ whnf x≈y ⟩W y≅z
+  whnf (correct t hyp)   = correctW t hyp
+
+  mutual
+
+    soundW : ∀ {x y} → x ≈W y → x ≈ y
+    soundW (done   x≈y) = x≈y
+    soundW (later  x≈y) = later (♯ soundP x≈y)
+    soundW (laterˡ x≈y) = laterˡ (soundW x≈y)
+
+    soundP : ∀ {x y} → x ≈P y → x ≈ y
+    soundP x≈y = soundW (whnf x≈y)
 
 -- Note that the statement of compiler correctness used here is more
 -- useful, and less involved, than the one in
@@ -293,8 +329,13 @@ correct′ (t₁ · t₂) {ρ} {c} {s} =
 -- terms which crash. Furthermore it is not a self-contained
 -- correctness statement, but relies on a separate proof which shows
 -- that the VM is deterministic.
+--
+-- Note also that it would be easy to modify this proof to show that
+-- the LHS is greater than the RHS, not merely weakly equal to it.
 
 correct : ∀ t →
           exec ⟨ ⟦ t ⟧t [] , [] , [] ⟩ ≈
           (⟦ t ⟧ [] >>= λ v → PF.return ⟦ v ⟧v)
-correct t = correct′ t
+correct t =
+  soundP $ Correctness.correct t (λ v → done (PF.return ⟦ v ⟧v ∎))
+  where open Correctness
