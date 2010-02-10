@@ -71,3 +71,10 @@ import Lambda.VirtualMachine
 -- not sure if my workaround would work in Coq, though.
 
 import Lambda.Closure.Relational
+
+-- A semantics for the untyped λ-calculus which uses the partiality
+-- monad, along with another compiler correctness proof. An advantage
+-- of formulating the semantics in this way is that it is very easy to
+-- state compiler correctness.
+
+import Lambda.Closure.Functional
