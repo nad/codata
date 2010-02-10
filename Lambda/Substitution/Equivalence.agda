@@ -2,13 +2,14 @@
 -- The semantics given in OneSemantics and TwoSemantics are equivalent
 ------------------------------------------------------------------------
 
-module Lambda.Equivalence where
+module Lambda.Substitution.Equivalence where
 
 open import Coinduction
 
 open import Lambda.Syntax
-open import Lambda.OneSemantics
-open import Lambda.TwoSemantics
+open WHNF
+open import Lambda.Substitution.OneSemantics
+open import Lambda.Substitution.TwoSemantics
 
 ⇒⟶⇓ : ∀ {n t} {v : Value n} → t ⇒ val v → t ⇓ v
 ⇒⟶⇓ val                 = val

@@ -2,7 +2,7 @@
 -- Big-step semantics for the untyped λ-calculus
 ------------------------------------------------------------------------
 
-module Lambda.OneSemantics where
+module Lambda.Substitution.OneSemantics where
 
 open import Coinduction
 open import Data.Fin
@@ -10,6 +10,7 @@ open import Function
 open import Data.Nat
 
 open import Lambda.Syntax
+open WHNF
 open import Lambda.Substitution
 
 -- Semantic domain. ⊥ represents non-termination.

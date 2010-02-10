@@ -9,6 +9,9 @@ module Lambda where
 
 import Lambda.Syntax
 
+------------------------------------------------------------------------
+-- Semantics based on substitutions
+
 -- Substitutions.
 
 import Lambda.Substitution
@@ -22,7 +25,7 @@ import Lambda.Substitution
 -- interpreted in the framework of bi-induction rather than the
 -- framework of mixed induction and (conditional) coinduction.
 
-import Lambda.OneSemantics
+import Lambda.Substitution.OneSemantics
 
 -- Two separate semantics for the language, one for converging terms
 -- and the other for diverging terms, as given by Leroy and Grall in
@@ -35,28 +38,36 @@ import Lambda.OneSemantics
 -- definition for converging terms; the definition in OneSemantics
 -- does not satisfy this criterion.
 
-import Lambda.TwoSemantics
+import Lambda.Substitution.TwoSemantics
 
 -- The two definitions are equivalent.
 
-import Lambda.Equivalence
+import Lambda.Substitution.Equivalence
 
--- A formulation of the semantics which uses closures and
+------------------------------------------------------------------------
+-- Virtual machine
+
+-- A virtual machine with two semantics (one relational and one
+-- functional), a compiler from the λ-calculus defined above into the
+-- language of the virtual machine, and a proof showing that the two
+-- semantics are equivalent.
+
+import Lambda.VirtualMachine
+
+------------------------------------------------------------------------
+-- Semantics based on closures
+
+-- A semantics for the untyped λ-calculus, based on closures and
 -- environments. Leroy and Grall define a similar semantics but split
--- it up into several definitions, like in TwoSemantics above.
-
-import Lambda.Closure
-
--- A virtual machine, a compiler from the λ-calculus defined above
--- into the language of the virtual machine, and a proof showing that
--- the compiler preserves the semantics defined in Lambda.Closure
--- (assuming that the virtual machine is deterministic).
+-- it up into several definitions, like in Lambda.TwoSemantics above.
 --
--- Leroy and Grall prove almost the same thing. In their proof they
--- use a relation indexed by a natural number to work around
--- limitations in Coq's productivity checker. Agda has similar
--- limitations, but I work around them using mixed
+-- The module also contains a proof which shows that the compiler in
+-- Lambda.VirtualMachine preserves the semantics (assuming that the
+-- virtual machine is deterministic). Leroy and Grall prove almost the
+-- same thing. In their proof they use a relation indexed by a natural
+-- number to work around limitations in Coq's productivity checker.
+-- Agda has similar limitations, but I work around them using mixed
 -- induction/coinduction, which in my opinion is more elegant. I am
 -- not sure if my workaround would work in Coq, though.
 
-import Lambda.VirtualMachine
+import Lambda.Closure.Relational

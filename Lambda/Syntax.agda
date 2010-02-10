@@ -6,7 +6,11 @@ module Lambda.Syntax where
 
 open import Data.Nat
 open import Data.Fin
+open import Data.Vec
 open import Relation.Nullary.Decidable
+
+------------------------------------------------------------------------
+-- Terms
 
 -- Variables are represented using de Bruijn indices.
 
@@ -23,12 +27,37 @@ data Tm (n : ℕ) : Set where
 vr : ∀ m {n} {m<n : True (suc m ≤? n)} → Tm n
 vr _ {m<n = m<n} = var (#_ _ {m<n = m<n})
 
--- Values.
+------------------------------------------------------------------------
+-- Values, potentially with free variables
 
-data Value (n : ℕ) : Set where
-  con : (i : ℕ) → Value n
-  ƛ   : (t : Tm (suc n)) → Value n
+module WHNF where
 
-⌜_⌝ : ∀ {n} → Value n → Tm n
-⌜ con i ⌝ = con i
-⌜ ƛ t   ⌝ = ƛ t
+  data Value (n : ℕ) : Set where
+    con : (i : ℕ) → Value n
+    ƛ   : (t : Tm (suc n)) → Value n
+
+  ⌜_⌝ : ∀ {n} → Value n → Tm n
+  ⌜ con i ⌝ = con i
+  ⌜ ƛ t   ⌝ = ƛ t
+
+------------------------------------------------------------------------
+-- Closure-based definition of values
+
+-- Environments and values. Defined in a module parametrised on the
+-- type of terms.
+
+module Closure (Tm : ℕ → Set) where
+
+  mutual
+
+    -- Environments.
+
+    Env : ℕ → Set
+    Env n = Vec Value n
+
+    -- Values. Lambdas are represented using closures, so values do
+    -- not contain any free variables.
+
+    data Value : Set where
+      con : (i : ℕ) → Value
+      ƛ   : ∀ {n} (t : Tm (suc n)) (ρ : Env n) → Value

@@ -3,11 +3,12 @@
 -- big-step operational semantics"
 ------------------------------------------------------------------------
 
-module Lambda.TwoSemantics where
+module Lambda.Substitution.TwoSemantics where
 
 open import Coinduction
 
 open import Lambda.Syntax
+open WHNF
 open import Lambda.Substitution
 
 -- Big-step semantics for terminating computations.
