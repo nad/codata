@@ -70,7 +70,7 @@ mutual
   ⟦ con i ⟧v = con i
   ⟦ ƛ t ρ ⟧v = ƛ (⟦ t ⟧ [ Ret ]) ⟦ ρ ⟧ρ
 
--- lookup is homomorphic.
+-- ⟦_⟧ρ/⟦_⟧v is homomorphic with respect to lookup.
 
 lookup-hom : ∀ {n} (x : Fin n) ρ → lookup x ⟦ ρ ⟧ρ ≡ ⟦ lookup x ρ ⟧v
 lookup-hom zero    (v ∷ ρ) = PE.refl
