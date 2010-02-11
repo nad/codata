@@ -16,6 +16,7 @@ open import Data.Product
 open import Data.Sum
 open import Data.Vec using (Vec; []; _∷_; lookup)
 open import Function
+open import Relation.Binary using (module Preorder)
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
 open import Relation.Nullary.Negation
 
@@ -126,7 +127,7 @@ module Workaround where
 
       ⟪_⟫W : ∀ {A} → Maybe A ⊥W → Maybe A ⊥
       ⟪ fail     ⟫W = PF.fail
-      ⟪ return x ⟫W = now (just x)
+      ⟪ return x ⟫W = PF.return x
       ⟪ later x  ⟫W = later (♯ ⟪ x ⟫P)
 
     ⟪_⟫P : ∀ {A} → Maybe A ⊥P → Maybe A ⊥
@@ -239,7 +240,7 @@ open PF
 ------------------------------------------------------------------------
 -- Compiler correctness
 
-module Correctness where
+module Correctness {k : OtherKind} where
 
   infix  4 _≈P_ _≈W_
   infixr 2 _≡⟨_⟩W_ _≈⟨_⟩P_ _≈⟨_⟩W_
@@ -254,7 +255,7 @@ module Correctness where
         exec ⟨ ⟦ t ⟧t c , s , ⟦ ρ ⟧ρ ⟩ ≈P (⟦ t ⟧ ρ >>= f)
 
     data _≈W_ : Maybe VM.Value ⊥ → Maybe VM.Value ⊥ → Set where
-      done   : ∀ {x y} (x≈y :   x ≈    y) →       x ≈W       y
+      ⌈_⌉    : ∀ {x y} (x≈y : Rel (other k) x y) → x ≈W y
       later  : ∀ {x y} (x≈y : ♭ x ≈P ♭ y) → later x ≈W later y
       laterˡ : ∀ {x y} (x≈y : ♭ x ≈W   y) → later x ≈W       y
 
@@ -262,9 +263,10 @@ module Correctness where
   _ ≡⟨ P.refl ⟩W y≈z = y≈z
 
   _≈⟨_⟩W_ : ∀ x {y z} → x ≈W y → y ≅ z → x ≈W z
-  _  ≈⟨ done   x≈y ⟩W       y≅z = done (_ ≈⟨ x≈y ⟩ ≅⇒ y≅z)
   ._ ≈⟨ later  x≈y ⟩W later y≅z = later  (_ ≈⟨ x≈y ⟩P ♭ y≅z)
   ._ ≈⟨ laterˡ x≈y ⟩W       y≅z = laterˡ (_ ≈⟨ x≈y ⟩W   y≅z)
+  _  ≈⟨ ⌈ x≈y ⌉    ⟩W       y≅z = ⌈ trans x≈y (≅⇒ y≅z) ⌉
+    where trans = Preorder.trans (Partiality.preorder _ _)
 
   -- The relation _≈_ does not admit unrestricted use of transitivity
   -- in corecursive proofs, so I have formulated the correctness proof
@@ -305,7 +307,7 @@ module Correctness where
       ∀ v₁ v₂ →
       exec ⟨ App ∷ c , val ⟦ v₂ ⟧v ∷ val ⟦ v₁ ⟧v ∷ s , ⟦ ρ ⟧ρ ⟩ ≈W
       (⟪ v₁ ∙ v₂ ⟫P >>= f)
-    ∙-correctW (con i)   v₂ = done (PF.fail ∎)
+    ∙-correctW (con i)   v₂ = ⌈ PF.fail ∎ ⌉
     ∙-correctW (ƛ t₁ ρ′) v₂ = later (
       exec ⟨ ⟦ t₁ ⟧t [ Ret ] , ret c ⟦ ρ ⟧ρ ∷ s , ⟦ v₂ ∷ ρ′ ⟧ρ ⟩  ≈⟨ correct t₁ (λ v → laterˡ (hyp v)) ⟩P
       (⟦ t₁ ⟧ (v₂ ∷ ρ′) >>= f)                                    ∎)
@@ -316,12 +318,12 @@ module Correctness where
 
   mutual
 
-    soundW : ∀ {x y} → x ≈W y → x ≈ y
-    soundW (done   x≈y) = x≈y
+    soundW : ∀ {x y} → x ≈W y → Rel (other k) x y
+    soundW ⌈ x≈y ⌉      = x≈y
     soundW (later  x≈y) = later (♯ soundP x≈y)
     soundW (laterˡ x≈y) = laterˡ (soundW x≈y)
 
-    soundP : ∀ {x y} → x ≈P y → x ≈ y
+    soundP : ∀ {x y} → x ≈P y → Rel (other k) x y
     soundP x≈y = soundW (whnf x≈y)
 
 -- Note that the statement of compiler correctness used here is more
@@ -330,13 +332,10 @@ module Correctness where
 -- terms which crash. Furthermore it is not a self-contained
 -- correctness statement, but relies on a separate proof which shows
 -- that the VM is deterministic.
---
--- Note also that it would be easy to modify this proof to show that
--- the LHS is greater than the RHS, not merely weakly equal to it.
 
 correct : ∀ t →
-          exec ⟨ ⟦ t ⟧t [] , [] , [] ⟩ ≈
+          exec ⟨ ⟦ t ⟧t [] , [] , [] ⟩ ≳
           (⟦ t ⟧ [] >>= λ v → PF.return ⟦ v ⟧v)
 correct t =
-  soundP $ Correctness.correct t (λ v → done (PF.return ⟦ v ⟧v ∎))
+  soundP $ Correctness.correct t (λ v → ⌈ PF.return ⟦ v ⟧v ∎ ⌉)
   where open Correctness
