@@ -78,15 +78,16 @@ module PF where
 
   >>=-inversion-⇑ :
     Excluded-Middle _ →
-    ∀ {A B : Set} x {f : A → Maybe B ⊥} →
-    (x >>= f) ≳ never →
-    x ≳ never ⊎ ∃ λ y → x ≳ return y × f y ≳ never
+    ∀ {k} {A B : Set} x {f : A → Maybe B ⊥} →
+    Rel (other k) (x >>= f) never →
+    Rel (other k) x never ⊎
+    ∃ λ y → Rel (other k) x (return y) × Rel (other k) (f y) never
   >>=-inversion-⇑ em x {f} x>>=f⇑
     with decidable-stable em $ Partiality.>>=-inversion-⇑ x x>>=f⇑
   ... | inj₁ x⇑                         = inj₁ x⇑
   ... | inj₂ (just y  , x⇓ , fy⇑)       = inj₂ (y , x⇓ , fy⇑)
-  ... | inj₂ (nothing , x↯ , now≳never) =
-    ⊥-elim (now≉never (≳⇒ now≳never))
+  ... | inj₂ (nothing , x↯ , now∼never) =
+    ⊥-elim (now≉never now∼never)
 
 ------------------------------------------------------------------------
 -- A workaround for the limitations of guardedness

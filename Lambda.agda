@@ -78,3 +78,7 @@ import Lambda.Closure.Relational
 -- state compiler correctness.
 
 import Lambda.Closure.Functional
+
+-- The relational and functional semantics are equivalent.
+
+import Lambda.Closure.Equivalence
