@@ -82,3 +82,8 @@ import Lambda.Closure.Functional
 -- The relational and functional semantics are equivalent.
 
 import Lambda.Closure.Equivalence
+
+-- An alternative definition of the functional semantics. This
+-- definition uses continuation-passing style instead of bind.
+
+import Lambda.Closure.Functional.Alternative
