@@ -18,6 +18,7 @@ open import Data.Vec using (Vec; []; _∷_; lookup)
 open import Function
 open import Relation.Binary using (module Preorder)
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
+open import Relation.Nullary
 open import Relation.Nullary.Negation
 
 open RelReasoning
@@ -78,17 +79,20 @@ module PF where
   ... | (just z  , x⇓ , fz⇓) = (z , x⇓ , fz⇓)
 
   >>=-inversion-⇑ :
-    Excluded-Middle _ →
     ∀ {k} {A B : Set} x {f : A → Maybe B ⊥} →
     Rel (other k) (x >>= f) never →
-    Rel (other k) x never ⊎
-    ∃ λ y → Rel (other k) x (return y) × Rel (other k) (f y) never
-  >>=-inversion-⇑ em x {f} x>>=f⇑
-    with decidable-stable em $ Partiality.>>=-inversion-⇑ x x>>=f⇑
-  ... | inj₁ x⇑                         = inj₁ x⇑
-  ... | inj₂ (just y  , x⇓ , fy⇑)       = inj₂ (y , x⇓ , fy⇑)
-  ... | inj₂ (nothing , x↯ , now∼never) =
-    ⊥-elim (now≉never now∼never)
+    ¬ ¬ (Rel (other k) x never ⊎
+         ∃ λ y → Rel (other k) x (return y) × Rel (other k) (f y) never)
+  >>=-inversion-⇑ {k} x {f} x>>=f⇑ =
+    helper ⟨$⟩ Partiality.>>=-inversion-⇑ x x>>=f⇑
+    where
+    open RawMonad ¬¬-Monad renaming (_<$>_ to _⟨$⟩_)
+
+    helper : (_ ⊎ ∃ λ (y : Maybe _) → _ × _) → _
+    helper (inj₁ x⇑                        ) = inj₁ x⇑
+    helper (inj₂ (just y  , x⇓ , fy⇑)      ) = inj₂ (y , x⇓ , fy⇑)
+    helper (inj₂ (nothing , x↯ , now∼never)) =
+      ⊥-elim (now≉never now∼never)
 
 ------------------------------------------------------------------------
 -- A workaround for the limitations of guardedness

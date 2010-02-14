@@ -198,13 +198,13 @@ sound⇑ em (con i)       ⇑ = ⊥-elim (now≉never ⇑)
 sound⇑ em (var x)       ⇑ = ⊥-elim (now≉never ⇑)
 sound⇑ em (ƛ t)         ⇑ = ⊥-elim (now≉never ⇑)
 sound⇑ em (t₁ · t₂) {ρ} ⇑
-  with >>=-inversion-⇑ em (⟦ t₁ ⟧ ρ) (
+  with decidable-stable em $ >>=-inversion-⇑ (⟦ t₁ ⟧ ρ) (
          ⟦ t₁ ⟧ ρ ⟦·⟧ ⟦ t₂ ⟧ ρ  ≅⟨ sym $ ·-comp t₁ t₂ ⟩
          ⟦ t₁ · t₂ ⟧ ρ          ≈⟨ ⇑ ⟩
          never                  ∎)
 sound⇑ em (t₁ · t₂)     ⇑ | inj₁ t₁⇑               = ·ˡ (♯ sound⇑ em t₁ t₁⇑)
 sound⇑ em (t₁ · t₂) {ρ} ⇑ | inj₂ (v₁ , t₁⇓ , t₂∙⇑)
-  with >>=-inversion-⇑ em (⟦ t₂ ⟧ ρ) t₂∙⇑
+  with decidable-stable em $ >>=-inversion-⇑ (⟦ t₂ ⟧ ρ) t₂∙⇑
 sound⇑ em (t₁ · t₂) ⇑ | inj₂ (v₁    , t₁⇓ , t₂∙⇑) | inj₁ t₂⇑             = ·ʳ (sound⇓ t₁ t₁⇓) (♯ sound⇑ em t₂ t₂⇑)
 sound⇑ em (t₁ · t₂) ⇑ | inj₂ (con i , t₁⇓ , t₂∙⇑) | inj₂ (v₂ , t₂⇓ , ∙⇑) = ⊥-elim (now≉never ∙⇑)
 sound⇑ em (t₁ · t₂) ⇑ | inj₂ (ƛ t _ , t₁⇓ , t₂∙⇑) | inj₂ (v₂ , t₂⇓ , ∙⇑) =
