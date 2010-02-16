@@ -17,7 +17,8 @@ open RawMonad List.monad
 open import Data.List.Any as Any
 open Membership-≡ using (_∈_)
 import Data.List.Any.Properties as AnyP
-open AnyP.Membership-≡
+import Data.List.Any.Membership as ∈
+open ∈.Membership-≡
 import Data.List.Countdown as Countdown
 open import Data.Product as Prod
 open import Data.Sum as Sum

@@ -10,8 +10,9 @@ open import Data.List using (List; []; _∷_; [_]; _++_)
 open import Data.List.Properties
 open import Data.List.Any
 open Membership-≡
-open import Data.List.Any.Properties as AnyProp
-open AnyProp.Membership-≡
+open import Data.List.Any.Properties
+import Data.List.Any.Membership as ∈
+open ∈.Membership-≡
 open import Data.Product
 open import Data.Sum
 open import Function
