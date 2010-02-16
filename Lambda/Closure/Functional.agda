@@ -12,6 +12,7 @@ open import Coinduction
 open import Data.Empty using (⊥-elim)
 open import Data.List
 open import Data.Maybe as Maybe
+open import Data.Nat
 open import Data.Product
 open import Data.Sum
 open import Data.Vec using (Vec; []; _∷_; lookup)
@@ -71,18 +72,20 @@ module PF where
 
   >>=-inversion-⇓ :
     ∀ {k} {A B : Set} x {f : A → Maybe B ⊥} {y} →
-    Rel k (x >>= f) (return y) →
-    ∃ λ z → Rel k x (return z) × Rel k (f z) (return y)
+    (x>>=f⇓ : (x >>= f) ⇓[ k ] just y) →
+    ∃ λ z → ∃₂ λ (x⇓ : x ⇓[ k ] just z)
+                 (fz⇓ : f z ⇓[ k ] just y) →
+                 steps x⇓ + steps fz⇓ ≡ steps x>>=f⇓
   >>=-inversion-⇓ x {f} x>>=f⇓
     with Partiality.>>=-inversion-⇓ x x>>=f⇓
-  ... | (nothing , x↯ , ())
-  ... | (just z  , x⇓ , fz⇓) = (z , x⇓ , fz⇓)
+  ... | (nothing , x↯ , ()  , _)
+  ... | (just z  , x⇓ , fz⇓ , eq) = (z , x⇓ , fz⇓ , eq)
 
   >>=-inversion-⇑ :
     ∀ {k} {A B : Set} x {f : A → Maybe B ⊥} →
-    Rel (other k) (x >>= f) never →
-    ¬ ¬ (Rel (other k) x never ⊎
-         ∃ λ y → Rel (other k) x (return y) × Rel (other k) (f y) never)
+    (x >>= f) ⇑[ other k ] →
+    ¬ ¬ (x ⇑[ other k ] ⊎
+         ∃ λ y → x ⇓[ other k ] just y × f y ⇑[ other k ])
   >>=-inversion-⇑ {k} x {f} x>>=f⇑ =
     helper ⟨$⟩ Partiality.>>=-inversion-⇑ x x>>=f⇑
     where

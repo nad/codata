@@ -28,7 +28,7 @@ open PF
 -- The functional semantics is complete for terminating computations.
 
 complete⇓ : ∀ {n} {t : Tm n} {ρ v} →
-            ρ ⊢ t ⇒ val v → ⟦ t ⟧ ρ ≈ return v
+            ρ ⊢ t ⇒ val v → ⟦ t ⟧ ρ ⇓ just v
 complete⇓ var = _ ∎
 complete⇓ con = _ ∎
 complete⇓ ƛ   = _ ∎
@@ -164,7 +164,7 @@ module Complete⇑ where
     never                  ∎
 
 complete⇑ : ∀ {n} {t : Tm n} {ρ : Env n} →
-            ρ ⊢ t ⇒ R.⊥ → ⟦ t ⟧ ρ ≈ never
+            ρ ⊢ t ⇒ R.⊥ → ⟦ t ⟧ ρ ⇑
 complete⇑ = Complete⇑.soundP ∘ Complete⇑.complete⇑
 
 -- The functional semantics is sound for terminating computations.
@@ -174,7 +174,7 @@ complete⇑ = Complete⇑.soundP ∘ Complete⇑.complete⇑
 -- to terminate.
 
 sound⇓ : ∀ {n} (t : Tm n) {ρ : Env n} {v} →
-         ⟦ t ⟧ ρ ≈ return v → ρ ⊢ t ⇒ val v
+         ⟦ t ⟧ ρ ⇓ just v → ρ ⊢ t ⇒ val v
 sound⇓ (con i)           now   = con
 sound⇓ (var x)           now   = var
 sound⇓ (ƛ t)             now   = ƛ
@@ -182,10 +182,10 @@ sound⇓ (t₁ · t₂) {ρ} {v} t₁t₂⇓
   with >>=-inversion-⇓ (⟦ t₁ ⟧ ρ) (
          ⟦ t₁ ⟧ ρ ⟦·⟧ ⟦ t₂ ⟧ ρ  ≅⟨ sym $ ·-comp t₁ t₂ ⟩
          ⟦ t₁ · t₂ ⟧ ρ          ≈⟨ t₁t₂⇓ ⟩
-         return v            ∎)
-sound⇓ (t₁ · t₂) {ρ} t₁t₂⇓ | (v₁    , t₁⇓ , t₂∙⇓) with >>=-inversion-⇓ (⟦ t₂ ⟧ ρ) t₂∙⇓
-sound⇓ (t₁ · t₂)     t₁t₂⇓ | (con i , t₁⇓ , t₂∙⇓) | (v₂ , t₂⇓ , ())
-sound⇓ (t₁ · t₂)     t₁t₂⇓ | (ƛ t _ , t₁⇓ , t₂∙⇓) | (v₂ , t₂⇓ , laterˡ ∙⇓) =
+         return v               ∎)
+sound⇓ (t₁ · t₂) {ρ} t₁t₂⇓ | (v₁    , t₁⇓ , t₂∙⇓ , _) with >>=-inversion-⇓ (⟦ t₂ ⟧ ρ) t₂∙⇓
+sound⇓ (t₁ · t₂)     t₁t₂⇓ | (con i , t₁⇓ , t₂∙⇓ , _) | (v₂ , t₂⇓ , ()        , _)
+sound⇓ (t₁ · t₂)     t₁t₂⇓ | (ƛ t _ , t₁⇓ , t₂∙⇓ , _) | (v₂ , t₂⇓ , laterˡ ∙⇓ , _) =
   app (sound⇓ t₁ t₁⇓) (sound⇓ t₂ t₂⇓) (sound⇓ t ∙⇓)
 
 -- The functional semantics is sound for non-terminating computations.
@@ -193,14 +193,14 @@ sound⇓ (t₁ · t₂)     t₁t₂⇓ | (ƛ t _ , t₁⇓ , t₂∙⇓) | (v�
 -- is used "infinitely often".
 
 sound⇑ : Excluded-Middle _ → ∀ {n} (t : Tm n) {ρ : Env n} →
-         ⟦ t ⟧ ρ ≈ never → ρ ⊢ t ⇒ R.⊥
-sound⇑ em (con i)       ⇑ = ⊥-elim (now≉never ⇑)
-sound⇑ em (var x)       ⇑ = ⊥-elim (now≉never ⇑)
-sound⇑ em (ƛ t)         ⇑ = ⊥-elim (now≉never ⇑)
-sound⇑ em (t₁ · t₂) {ρ} ⇑
+         ⟦ t ⟧ ρ ⇑ → ρ ⊢ t ⇒ R.⊥
+sound⇑ em (con i)       i⇑    = ⊥-elim (now≉never i⇑)
+sound⇑ em (var x)       x⇑    = ⊥-elim (now≉never x⇑)
+sound⇑ em (ƛ t)         ƛ⇑    = ⊥-elim (now≉never ƛ⇑)
+sound⇑ em (t₁ · t₂) {ρ} t₁t₂⇑
   with decidable-stable em $ >>=-inversion-⇑ (⟦ t₁ ⟧ ρ) (
          ⟦ t₁ ⟧ ρ ⟦·⟧ ⟦ t₂ ⟧ ρ  ≅⟨ sym $ ·-comp t₁ t₂ ⟩
-         ⟦ t₁ · t₂ ⟧ ρ          ≈⟨ ⇑ ⟩
+         ⟦ t₁ · t₂ ⟧ ρ          ≈⟨ t₁t₂⇑ ⟩
          never                  ∎)
 sound⇑ em (t₁ · t₂)     ⇑ | inj₁ t₁⇑               = ·ˡ (♯ sound⇑ em t₁ t₁⇑)
 sound⇑ em (t₁ · t₂) {ρ} ⇑ | inj₂ (v₁ , t₁⇓ , t₂∙⇑)
@@ -213,7 +213,7 @@ sound⇑ em (t₁ · t₂) ⇑ | inj₂ (ƛ t _ , t₁⇓ , t₂∙⇑) | inj₂
 -- The functional semantics is complete for crashing computations.
 
 complete↯ : Excluded-Middle _ → ∀ {n} (t : Tm n) (ρ : Env n) →
-            ∄ (λ s → ρ ⊢ t ⇒ s) → ⟦ t ⟧ ρ ≈ now nothing
+            ∄ (λ s → ρ ⊢ t ⇒ s) → ⟦ t ⟧ ρ ⇓ nothing
 complete↯ em t ρ ¬⇒
   with decidable-stable em $ now-or-never {k = weak} (⟦ t ⟧ ρ)
 ... | inj₂ t⇑             = ⊥-elim (¬⇒ (, sound⇑ em t t⇑))
@@ -223,7 +223,7 @@ complete↯ em t ρ ¬⇒
 -- The functional semantics is sound for crashing computations.
 
 sound↯ : ∀ {n} {t : Tm n} {ρ : Env n} →
-         ⟦ t ⟧ ρ ≈ now nothing → ∄ λ s → ρ ⊢ t ⇒ s
+         ⟦ t ⟧ ρ ⇓ nothing → ∄ λ s → ρ ⊢ t ⇒ s
 sound↯ {t = t} {ρ} t↯ (val v , t⇓)
   with now nothing  ≈⟨ sym t↯ ⟩
        ⟦ t ⟧ ρ      ≈⟨ complete⇓ t⇓ ⟩

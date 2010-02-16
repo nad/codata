@@ -5,7 +5,7 @@
 module Lambda.VirtualMachine where
 
 open import Category.Monad
-open import Category.Monad.Partiality as P hiding (Kind)
+open import Category.Monad.Partiality as P hiding (Kind; _⇓_; _⇑)
 open import Coinduction
 open import Data.Empty using (⊥-elim)
 open import Data.Fin
