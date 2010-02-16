@@ -139,3 +139,12 @@ import Contractive
 import Contractive.Function
 import Contractive.Stream
 import Contractive.Examples
+
+------------------------------------------------------------------------
+-- Code which is not directly related to any particular section in the
+-- paper
+
+-- Various definitions of "true infinitely often", along with
+-- comparisons of the definitions.
+
+import InfinitelyOften
