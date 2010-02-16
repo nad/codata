@@ -10,14 +10,17 @@ open import Category.Monad.Partiality
 open import Coinduction
 open import Data.Empty using (⊥-elim)
 open import Data.Maybe
+open import Data.Nat
+import Data.Nat.Properties as ℕ
 open import Data.Product
 open import Data.Sum
 open import Data.Vec using (Vec; []; _∷_)
 open import Function
-open import Relation.Nullary
+open import Induction.Nat
+open import Relation.Binary.PropositionalEquality as P using (_≡_)
 open import Relation.Nullary.Negation
 
-open RelReasoning
+open RelReasoning renaming (_∎ to _□)
 
 open import Lambda.Syntax
 open Closure Tm
@@ -29,15 +32,15 @@ open PF
 
 complete⇓ : ∀ {n} {t : Tm n} {ρ v} →
             ρ ⊢ t ⇒ val v → ⟦ t ⟧ ρ ⇓ just v
-complete⇓ var = _ ∎
-complete⇓ con = _ ∎
-complete⇓ ƛ   = _ ∎
+complete⇓ var = _ □
+complete⇓ con = _ □
+complete⇓ ƛ   = _ □
 complete⇓ {ρ = ρ} {v′} (app {t₁} {t₂} {t = t} {ρ′} {v} t₁⇓ t₂⇓ t₁t₂⇓) =
   ⟦ t₁ · t₂ ⟧ ρ                 ≅⟨ ·-comp t₁ t₂ ⟩
   ⟦ t₁ ⟧ ρ ⟦·⟧ ⟦ t₂ ⟧ ρ         ≈⟨ complete⇓ t₁⇓ ⟦·⟧-cong complete⇓ t₂⇓ ⟩
-  return (ƛ t ρ′) ⟦·⟧ return v  ≳⟨ laterˡ (_ ∎) ⟩
+  return (ƛ t ρ′) ⟦·⟧ return v  ≳⟨ laterˡ (_ □) ⟩
   ⟦ t ⟧ (v ∷ ρ′)                ≈⟨ complete⇓ t₁t₂⇓ ⟩
-  return v′                     ∎
+  return v′                     □
 
 -- The functional semantics is complete for non-terminating computations.
 
@@ -77,7 +80,7 @@ module Complete⇑ where
     program : ∀ {x y} → x ≈W y → x ≈P y
     program now          = ⌈ now ⌉
     program (later  x≈y) = later (♯ x≈y)
-    program (laterˡ x≈y) = _ ≳⟪ laterˡ (_ ∎) ⟫ program x≈y
+    program (laterˡ x≈y) = _ ≳⟪ laterˡ (_ □) ⟫ program x≈y
 
     _>>=W_ : ∀ {x₁ x₂ f₁ f₂} →
              x₁ ≈W x₂ → (∀ x → f₁ x ≈W f₂ x) →
@@ -92,7 +95,7 @@ module Complete⇑ where
     v₁₁≈v₂₁ ⟦·⟧W v₁₂≈v₂₂ =
       v₁₁≈v₂₁ >>=W λ v₁ →
       v₁₂≈v₂₂ >>=W λ v₂ →
-      ⌈ ⟪ v₁ ∙ v₂ ⟫P ∎ ⌉W
+      ⌈ ⟪ v₁ ∙ v₂ ⟫P □ ⌉W
       where open F.Workaround
 
     trans≅≈W : ∀ {x y z} → x ≅ y → y ≈W z → x ≈W z
@@ -149,44 +152,85 @@ module Complete⇑ where
     ⟦ t₁ · t₂ ⟧ ρ                 ≅⟪ ·-comp t₁ t₂ ⟫
     ⟦ t₁ ⟧ ρ ⟦·⟧ ⟦ t₂ ⟧ ρ         ≳⟪ now⇒now (complete⇓ t₁⇓) ⟦·⟧-cong
                                      now⇒now (complete⇓ t₂⇓) ⟫
-    return (ƛ t ρ′) ⟦·⟧ return v  ≅⟪ later (♯ (_ ∎)) ⟫
+    return (ƛ t ρ′) ⟦·⟧ return v  ≅⟪ later (♯ (_ □)) ⟫
     later (♯ ⟦ t ⟧ (v ∷ ρ′))      ≈⟪ later (♯ complete⇑ (♭ t₁t₂⇑)) ⟫
-    never                         ∎
+    never                         □
   complete⇑ {ρ = ρ} (·ˡ {t₁} {t₂} t₁⇑) =
     ⟦ t₁ · t₂ ⟧ ρ          ≅⟪ ·-comp t₁ t₂ ⟫
-    ⟦ t₁ ⟧ ρ ⟦·⟧ ⟦ t₂ ⟧ ρ  ≈⟪ complete⇑ (♭ t₁⇑) ⟦·⟧P ⌈ ⟦ t₂ ⟧ ρ ∎ ⌉ ⟫
+    ⟦ t₁ ⟧ ρ ⟦·⟧ ⟦ t₂ ⟧ ρ  ≈⟪ complete⇑ (♭ t₁⇑) ⟦·⟧P ⌈ ⟦ t₂ ⟧ ρ □ ⌉ ⟫
     never ⟦·⟧ ⟦ t₂ ⟧ ρ     ≅⟨ left-zero _ ⟩
-    never                  ∎
+    never                  □
   complete⇑ {ρ = ρ} (·ʳ {t₁} {t₂} {v} t₁⇓ t₂⇑) =
     ⟦ t₁ · t₂ ⟧ ρ          ≅⟪ ·-comp t₁ t₂ ⟫
     ⟦ t₁ ⟧ ρ ⟦·⟧ ⟦ t₂ ⟧ ρ  ≈⟪ ⌈ now⇒now (complete⇓ t₁⇓) ⌉ ⟦·⟧P complete⇑ (♭ t₂⇑) ⟫
     return v ⟦·⟧ never     ≅⟨ left-zero _ ⟩
-    never                  ∎
+    never                  □
 
 complete⇑ : ∀ {n} {t : Tm n} {ρ : Env n} →
             ρ ⊢ t ⇒ R.⊥ → ⟦ t ⟧ ρ ⇑
 complete⇑ = Complete⇑.soundP ∘ Complete⇑.complete⇑
 
 -- The functional semantics is sound for terminating computations.
--- Note that this proof is not accepted by the termination checker. It
--- is terminating, though (at least in the empty context): the proof
--- follows the structure of the computation ⟦ t ⟧ ρ, which is assumed
--- to terminate.
 
 sound⇓ : ∀ {n} (t : Tm n) {ρ : Env n} {v} →
          ⟦ t ⟧ ρ ⇓ just v → ρ ⊢ t ⇒ val v
-sound⇓ (con i)           now   = con
-sound⇓ (var x)           now   = var
-sound⇓ (ƛ t)             now   = ƛ
-sound⇓ (t₁ · t₂) {ρ} {v} t₁t₂⇓
-  with >>=-inversion-⇓ (⟦ t₁ ⟧ ρ) (
-         ⟦ t₁ ⟧ ρ ⟦·⟧ ⟦ t₂ ⟧ ρ  ≅⟨ sym $ ·-comp t₁ t₂ ⟩
-         ⟦ t₁ · t₂ ⟧ ρ          ≈⟨ t₁t₂⇓ ⟩
-         return v               ∎)
-sound⇓ (t₁ · t₂) {ρ} t₁t₂⇓ | (v₁    , t₁⇓ , t₂∙⇓ , _) with >>=-inversion-⇓ (⟦ t₂ ⟧ ρ) t₂∙⇓
-sound⇓ (t₁ · t₂)     t₁t₂⇓ | (con i , t₁⇓ , t₂∙⇓ , _) | (v₂ , t₂⇓ , ()        , _)
-sound⇓ (t₁ · t₂)     t₁t₂⇓ | (ƛ t _ , t₁⇓ , t₂∙⇓ , _) | (v₂ , t₂⇓ , laterˡ ∙⇓ , _) =
-  app (sound⇓ t₁ t₁⇓) (sound⇓ t₂ t₂⇓) (sound⇓ t ∙⇓)
+sound⇓ t t⇓ = <-rec P sound⇓′ (steps t⇓) t t⇓ P.refl
+  where
+  P : ℕ → Set
+  P s = ∀ {n} (t : Tm n) {ρ : Env n} {v}
+          (t⇓ : ⟦ t ⟧ ρ ⇓ just v) → steps t⇓ ≡ s → ρ ⊢ t ⇒ val v
+
+  sound⇓′ : ∀ s → <-Rec P s → P s
+  sound⇓′ s rec (con i)           now   _  = con
+  sound⇓′ s rec (var x)           now   _  = var
+  sound⇓′ s rec (ƛ t)             now   _  = ƛ
+  sound⇓′ s rec (t₁ · t₂) {ρ} {v} t₁t₂⇓ eq
+    with >>=-inversion-⇓ (⟦ t₁ ⟧ ρ) (
+           ⟦ t₁ ⟧ ρ ⟦·⟧ ⟦ t₂ ⟧ ρ  ≅⟨ sym $ ·-comp t₁ t₂ ⟩
+           ⟦ t₁ · t₂ ⟧ ρ          ≈⟨ t₁t₂⇓ ⟩
+           return v               □)
+  sound⇓′ s rec (t₁ · t₂) {ρ} t₁t₂⇓ eq | (v₁    , t₁⇓ , t₂∙⇓ , eq₁) with >>=-inversion-⇓ (⟦ t₂ ⟧ ρ) t₂∙⇓
+  sound⇓′ s rec (t₁ · t₂)     t₁t₂⇓ eq | (con i , t₁⇓ , t₂∙⇓ , eq₁) | (v₂ , t₂⇓ , ()        , _  )
+  sound⇓′ s rec (t₁ · t₂)     t₁t₂⇓ eq | (ƛ t _ , t₁⇓ , t₂∙⇓ , eq₁) | (v₂ , t₂⇓ , laterˡ ∙⇓ , eq₂) =
+    app (sound⇓′ _ (λ _ s′< → rec _ (s′<s _ s′<)) t₁ t₁⇓ P.refl)
+        (sound⇓′ _ (λ _ s″< → rec _ (s″<s _ s″<)) t₂ t₂⇓ P.refl)
+        (rec (steps ∙⇓) ∙< t ∙⇓ P.refl)
+    where
+    ≡s = begin
+      steps t₁⇓ + steps t₂∙⇓  ≡⟨ eq₁ ⟩
+      _                       ≡⟨ Steps.left-identity _ _ ⟩
+      steps t₁t₂⇓             ≡⟨ eq ⟩
+      s                       ∎
+      where open P.≡-Reasoning
+
+    ≤s = begin
+      steps t₂⇓ + suc (steps ∙⇓)  ≡⟨ eq₂ ⟩
+      steps t₂∙⇓                  ≤⟨ ℕ.n≤m+n (steps t₁⇓) _ ⟩
+      steps t₁⇓ + steps t₂∙⇓      ≡⟨ ≡s ⟩
+      s                           ∎
+      where open ≤-Reasoning
+
+    s′<s : ∀ s′ → s′ <′ steps t₁⇓ → s′ <′ s
+    s′<s s′ s′< = ℕ.≤⇒≤′ (begin
+      s′                      <⟨ ℕ.≤′⇒≤ s′< ⟩
+      steps t₁⇓               ≤⟨ ℕ.m≤m+n (steps t₁⇓) _ ⟩
+      steps t₁⇓ + steps t₂∙⇓  ≡⟨ ≡s ⟩
+      s                       ∎)
+      where open ≤-Reasoning
+
+    s″<s : ∀ s″ → s″ <′ steps t₂⇓ → s″ <′ s
+    s″<s s″ s″< = ℕ.≤⇒≤′ (begin
+      s″                          <⟨ ℕ.≤′⇒≤ s″< ⟩
+      steps t₂⇓                   ≤⟨ ℕ.m≤m+n (steps t₂⇓) _ ⟩
+      steps t₂⇓ + suc (steps ∙⇓)  ≤⟨ ≤s ⟩
+      s                           ∎)
+      where open ≤-Reasoning
+
+    ∙< = ℕ.≤⇒≤′ (begin
+      steps ∙⇓                    <⟨ ℕ.n≤m+n (steps t₂⇓) _ ⟩
+      steps t₂⇓ + suc (steps ∙⇓)  ≤⟨ ≤s ⟩
+      s                           ∎)
+      where open ≤-Reasoning
 
 -- The functional semantics is sound for non-terminating computations.
 -- I assume excluded middle here because double-negation elimination
@@ -201,7 +245,7 @@ sound⇑ em (t₁ · t₂) {ρ} t₁t₂⇑
   with decidable-stable em $ >>=-inversion-⇑ (⟦ t₁ ⟧ ρ) (
          ⟦ t₁ ⟧ ρ ⟦·⟧ ⟦ t₂ ⟧ ρ  ≅⟨ sym $ ·-comp t₁ t₂ ⟩
          ⟦ t₁ · t₂ ⟧ ρ          ≈⟨ t₁t₂⇑ ⟩
-         never                  ∎)
+         never                  □)
 sound⇑ em (t₁ · t₂)     ⇑ | inj₁ t₁⇑               = ·ˡ (♯ sound⇑ em t₁ t₁⇑)
 sound⇑ em (t₁ · t₂) {ρ} ⇑ | inj₂ (v₁ , t₁⇓ , t₂∙⇑)
   with decidable-stable em $ >>=-inversion-⇑ (⟦ t₂ ⟧ ρ) t₂∙⇑
@@ -227,9 +271,9 @@ sound↯ : ∀ {n} {t : Tm n} {ρ : Env n} →
 sound↯ {t = t} {ρ} t↯ (val v , t⇓)
   with now nothing  ≈⟨ sym t↯ ⟩
        ⟦ t ⟧ ρ      ≈⟨ complete⇓ t⇓ ⟩
-       return v     ∎
+       return v     □
 ... | ()
 sound↯ {t = t} {ρ} t↯ (R.⊥ , t⇑) = now≉never (
   now nothing  ≈⟨ sym t↯ ⟩
   ⟦ t ⟧ ρ      ≈⟨ complete⇑ t⇑ ⟩
-  never        ∎)
+  never        □)
