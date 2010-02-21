@@ -6,15 +6,17 @@ module RecursiveTypes.Subtyping.Axiomatic.Inductive where
 
 open import Coinduction
 open import Data.Empty using (⊥-elim)
-open import Function
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.List using (List; []; _∷_; _++_)
 import Data.List.Any as Any
 open Any.Membership-≡ using (_∈_)
-import Data.List.Any.Properties as AnyP
+open import Data.List.Any.Properties
 open import Data.List.All as All using (All; []; _∷_)
 open import Data.Product
 open import Data.Sum as Sum using (_⊎_; inj₁; inj₂; [_,_]′)
+open import Function
+open import Function.Equality using (_⟨$⟩_)
+open import Function.Inverse using (module Inverse)
 open import Relation.Nullary
 open import Relation.Binary.PropositionalEquality as PropEq
   using (_≡_; refl)
@@ -205,7 +207,7 @@ module Decidable {n} (χ₁ χ₂ : Ty n) where
 
     T ⊪ σ₁ ⟶ σ₂ , σ⊑ ≤? τ₁ ⟶ τ₂ , τ⊑
       with lookupOrInsert T ((, σ⊑) ≲ (, τ⊑))
-    ... | inj₁ σ≲τ = inj₁ $ hyp $ AnyP.map⁺ σ≲τ
+    ... | inj₁ σ≲τ = inj₁ $ hyp $ Inverse.to map⇿ ⟨$⟩ σ≲τ
     ... | inj₂ (_ , refl , T′)
           with T′ ⊢ τ₁ , anti-mono ST.⟶ˡ′ τ⊑ ≤? σ₁ , anti-mono ST.⟶ˡ′ σ⊑
              | T′ ⊢ σ₂ , anti-mono ST.⟶ʳ′ σ⊑ ≤? τ₂ , anti-mono ST.⟶ʳ′ τ⊑
@@ -256,7 +258,7 @@ weaken unfold                = unfold
 weaken fold                  = fold
 weaken (τ ∎)                 = τ ∎
 weaken (τ₁ ≤⟨ τ₁≤τ₂ ⟩ τ₂≤τ₃) = τ₁ ≤⟨ weaken τ₁≤τ₂ ⟩ weaken τ₂≤τ₃
-weaken (hyp h)               = hyp (AnyP.++⁺ˡ h)
+weaken (hyp h)               = hyp (Inverse.to ++⇿ ⟨$⟩ inj₁ h)
 weaken (τ₁≤σ₁ ⟶ σ₂≤τ₂)       = weaken τ₁≤σ₁ ⟶ weaken σ₂≤τ₂
 
 -- The subtyping relation defined above is complete with respect to

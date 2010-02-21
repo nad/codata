@@ -12,13 +12,14 @@ module RecursiveTypes.Subterm.RestrictedHypothesis
 
 open import Category.Monad
 open import Function
+open import Function.Equality using (_⟨$⟩_)
+open import Function.Inverse using (module Inverse)
 open import Data.List as List
 open RawMonad List.monad
 open import Data.List.Any as Any
 open Membership-≡ using (_∈_)
-import Data.List.Any.Properties as AnyP
-import Data.List.Any.Membership as ∈
-open ∈.Membership-≡
+open import Data.List.Any.Properties
+open import Data.List.Any.Membership
 import Data.List.Countdown as Countdown
 open import Data.Product as Prod
 open import Data.Sum as Sum
@@ -80,7 +81,8 @@ subtermsOf-complete :
   ∀ {τ} (f : ∀ {σ} → σ ⊑ τ → Subterm σ) {σ} →
   σ ⊑ τ → ∃ λ σ⊑τ → (σ , f σ⊑τ) ∈ subtermsOf τ f
 subtermsOf-complete f σ⊑τ =
-  Prod.map id map-∈⁺ $ ST.subtermsOf-complete σ⊑τ
+  Prod.map id (λ ∈ → Inverse.to map-∈⇿ ⟨$⟩ (_ , ∈ , refl)) $
+    ST.subtermsOf-complete σ⊑τ
 
 subtermsOf²-complete :
   ∀ {σ₁ τ₁ σ₂ τ₂}
@@ -91,8 +93,10 @@ subtermsOf²-complete :
     (subtermsOf τ₁ f ⊗ subtermsOf τ₂ g)
 subtermsOf²-complete f g σ₁⊑τ₁ σ₂⊑τ₂ =
   Any.map (cong $ Prod.map proj₁ proj₁) $
-    ⊗-∈⁺ (proj₂ $ subtermsOf-complete f σ₁⊑τ₁)
-         (proj₂ $ subtermsOf-complete g σ₂⊑τ₂)
+    Inverse.to ⊗-∈⇿ ⟨$⟩
+      ( proj₂ (subtermsOf-complete f σ₁⊑τ₁)
+      , proj₂ (subtermsOf-complete g σ₂⊑τ₂)
+      )
 
 -- All subterms of χ₁.
 
@@ -112,22 +116,22 @@ restrictedHyps = (⊑-χ₁ ⊗ ⊑-χ₂) ++ (⊑-χ₂ ⊗ ⊑-χ₁) ++
 
 complete : ∀ h → h ⟨∈⟩ restrictedHyps
 complete ((σ , inj₁ σ⊑χ₁) ≲ (τ , inj₂ τ⊑χ₂)) =
-  AnyP.++⁺ˡ $
-  subtermsOf²-complete inj₁ inj₂ σ⊑χ₁ τ⊑χ₂
+  Inverse.to ++⇿ ⟨$⟩ (inj₁ $
+  subtermsOf²-complete inj₁ inj₂ σ⊑χ₁ τ⊑χ₂)
 complete ((σ , inj₂ σ⊑χ₂) ≲ (τ , inj₁ τ⊑χ₁)) =
-  AnyP.++⁺ʳ (⊑-χ₁ ⊗ ⊑-χ₂) $
-  AnyP.++⁺ˡ $
-  subtermsOf²-complete inj₂ inj₁ σ⊑χ₂ τ⊑χ₁
+  Inverse.to (++⇿ {xs = ⊑-χ₁ ⊗ ⊑-χ₂}) ⟨$⟩ (inj₂ $
+  Inverse.to ++⇿                      ⟨$⟩ (inj₁ $
+  subtermsOf²-complete inj₂ inj₁ σ⊑χ₂ τ⊑χ₁))
 complete ((σ , inj₁ σ⊑χ₁) ≲ (τ , inj₁ τ⊑χ₁)) =
-  AnyP.++⁺ʳ (⊑-χ₁ ⊗ ⊑-χ₂) $
-  AnyP.++⁺ʳ (⊑-χ₂ ⊗ ⊑-χ₁) $
-  AnyP.++⁺ˡ $
-  subtermsOf²-complete inj₁ inj₁ σ⊑χ₁ τ⊑χ₁
+  Inverse.to (++⇿ {xs = ⊑-χ₁ ⊗ ⊑-χ₂}) ⟨$⟩ (inj₂ $
+  Inverse.to (++⇿ {xs = ⊑-χ₂ ⊗ ⊑-χ₁}) ⟨$⟩ (inj₂ $
+  Inverse.to ++⇿                      ⟨$⟩ (inj₁ $
+  subtermsOf²-complete inj₁ inj₁ σ⊑χ₁ τ⊑χ₁)))
 complete ((σ , inj₂ σ⊑χ₂) ≲ (τ , inj₂ τ⊑χ₂)) =
-  AnyP.++⁺ʳ (⊑-χ₁ ⊗ ⊑-χ₂) $
-  AnyP.++⁺ʳ (⊑-χ₂ ⊗ ⊑-χ₁) $
-  AnyP.++⁺ʳ (⊑-χ₁ ⊗ ⊑-χ₁) $
-  subtermsOf²-complete inj₂ inj₂ σ⊑χ₂ τ⊑χ₂
+  Inverse.to (++⇿ {xs = ⊑-χ₁ ⊗ ⊑-χ₂}) ⟨$⟩ (inj₂ $
+  Inverse.to (++⇿ {xs = ⊑-χ₂ ⊗ ⊑-χ₁}) ⟨$⟩ (inj₂ $
+  Inverse.to (++⇿ {xs = ⊑-χ₁ ⊗ ⊑-χ₁}) ⟨$⟩ (inj₂ $
+  subtermsOf²-complete inj₂ inj₂ σ⊑χ₂ τ⊑χ₂)))
 
 ------------------------------------------------------------------------
 -- A countdown structure for restricted hypotheses
