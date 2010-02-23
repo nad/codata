@@ -13,7 +13,7 @@ open import Data.List.Any as Any using (here; there)
 open Any.Membership-≡
 open import Data.List.Any.Properties
 open import Data.List.Any.Membership
-open import Data.List.Any.SetEquality as SetEq
+open import Data.List.Any.BagAndSetEquality as BSEq
 open import Data.Product
 open import Data.Sum
 open import Function
@@ -27,8 +27,8 @@ open import Data.Fin.Substitution
 
 private
   open module SetM {A : Set} =
-         CommutativeMonoid (SetEq.commutativeMonoid A)
-           using (_≈_)
+    CommutativeMonoid (BSEq.commutativeMonoid set A)
+      using (_≈_)
 
 open import RecursiveTypes.Syntax
 open import RecursiveTypes.Substitution
@@ -141,7 +141,7 @@ sound (var x) (there ())
     ys ++ zs                     ∎) ⟩
   xs ++ (ys ++ zs)          ≈⟨ SetM.sym $ SetM.assoc xs ys zs ⟩
   (xs ++ ys) ++ zs          ∎
-  where open EqR Set-equality
+  where open EqR ([ set ]-Equality _)
 
 open ⊆-Reasoning
 
