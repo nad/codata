@@ -68,3 +68,10 @@ import RecursiveTypes.Subtyping.Axiomatic.Inductive
 import RecursiveTypes.Subterm
 import RecursiveTypes.Subterm.RestrictedHypothesis
 import RecursiveTypes.Syntax.UnfoldedOrFixpoint
+
+-- An incorrect "subtyping" relation which illustrates the fact that
+-- taking the transitive closure of a coinductively defined relation
+-- is not in general equivalent to adding an inductive transitivity
+-- constructor to it.
+
+import RecursiveTypes.Subtyping.Axiomatic.Incorrect
