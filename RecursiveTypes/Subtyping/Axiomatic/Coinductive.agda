@@ -4,8 +4,11 @@
 
 module RecursiveTypes.Subtyping.Axiomatic.Coinductive where
 
+import Data.Empty as E
+open import Data.Fin using (Fin; zero; suc)
 open import Data.Nat using (ℕ; zero; suc)
 open import Coinduction
+open import Relation.Nullary
 
 open import RecursiveTypes.Syntax
 open import RecursiveTypes.Substitution
@@ -98,3 +101,52 @@ complete (μ σ₁ ⟶ σ₂) (μ τ₁ ⟶ τ₂) (τ₁≤σ₁ ⟶ σ₂≤τ
                          ♯ complete _ _ (♭ σ₂≤τ₂) ⟩
   unfold[μ τ₁ ⟶ τ₂ ]  ≤⟨ fold ⟩
   μ τ₁ ⟶ τ₂           ∎
+
+------------------------------------------------------------------------
+-- The reflexivity constructor is essential
+
+-- Minor point: the constructor _∎ cannot be omitted. In
+-- RecursiveTypes.Subtyping.Axiomatic.Incorrect it is shown that
+-- _≤⟨_⟩_ is also essential.
+
+module ∎-Is-Essential where
+
+  infixr 10 _⟶_
+  infix  4  _≤′_
+  infixr 2  _≤⟨_⟩_
+
+  data _≤′_ {n} : Ty n → Ty n → Set where
+    ⊥   : ∀ {τ} → ⊥ ≤′ τ
+    ⊤   : ∀ {σ} → σ ≤′ ⊤
+    _⟶_ : ∀ {σ₁ σ₂ τ₁ τ₂}
+          (τ₁≤σ₁ : ∞ (τ₁ ≤′ σ₁)) (σ₂≤τ₂ : ∞ (σ₂ ≤′ τ₂)) →
+          σ₁ ⟶ σ₂ ≤′ τ₁ ⟶ τ₂
+
+    unfold : ∀ {τ₁ τ₂} → μ τ₁ ⟶ τ₂ ≤′ unfold[μ τ₁ ⟶ τ₂ ]
+    fold   : ∀ {τ₁ τ₂} → unfold[μ τ₁ ⟶ τ₂ ] ≤′ μ τ₁ ⟶ τ₂
+
+    _≤⟨_⟩_ : ∀ τ₁ {τ₂ τ₃}
+             (τ₁≤τ₂ : τ₁ ≤′ τ₂) (τ₂≤τ₃ : τ₂ ≤′ τ₃) → τ₁ ≤′ τ₃
+
+  sound′ : ∀ {n} {σ τ : Ty n} → σ ≤′ τ → σ ≤ τ
+  sound′ ⊥                    = ⊥
+  sound′ ⊤                    = ⊤
+  sound′ (τ₁≤σ₁ ⟶ σ₂≤τ₂)      = ♯ sound′ (♭ τ₁≤σ₁) ⟶ ♯ sound′ (♭ σ₂≤τ₂)
+  sound′ unfold               = unfold
+  sound′ fold                 = fold
+  sound′ (_ ≤⟨ τ₁≤τ₂ ⟩ τ₂≤τ₃) = _ ≤⟨ sound′ τ₁≤τ₂ ⟩ sound′ τ₂≤τ₃
+
+  x : Ty 1
+  x = var zero
+
+  x≰′x : ¬ x ≤′ x
+  x≰′x (.x ≤⟨ x≤′σ ⟩ σ≤x) = helper x≤′σ σ≤x
+    where
+    helper : ∀ {σ} → x ≤′ σ → σ ≤′ x → E.⊥
+    helper (.x ≤⟨ x≤σ₁ ⟩ σ₁≤σ₂) σ₂≤′x = helper x≤σ₁ (_ ≤⟨ σ₁≤σ₂ ⟩ σ₂≤′x)
+    helper ⊤                    ⊤≤′x  with sound (sound′ ⊤≤′x)
+    ... | ()
+
+  incomplete : ¬ (∀ {n} {σ τ : Ty n} → σ ≤ τ → σ ≤′ τ)
+  incomplete hyp with x≰′x (hyp (x ∎))
+  ... | ()

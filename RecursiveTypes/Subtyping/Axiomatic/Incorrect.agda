@@ -33,6 +33,8 @@ infix  4  _≤_ _≤′_
 infixr 2  _≤⟨_⟩_
 infix  2  _∎
 
+-- A definition which does not include a transitivity constructor.
+
 data _≤′_ {n} : Ty n → Ty n → Set where
   ⊥   : ∀ {τ} → ⊥ ≤′ τ
   ⊤   : ∀ {σ} → σ ≤′ ⊤
@@ -45,31 +47,48 @@ data _≤′_ {n} : Ty n → Ty n → Set where
 
   _∎ : ∀ τ → τ ≤′ τ
 
--- Transitive closure.
+-- The transitive closure of this relation.
 
 data _≤_ {n} : Ty n → Ty n → Set where
   include : ∀ {σ τ} (σ≤τ : σ ≤′ τ) → σ ≤ τ
   _≤⟨_⟩_  : ∀ τ₁ {τ₂ τ₃} (τ₁≤τ₂ : τ₁ ≤ τ₂) (τ₂≤τ₃ : τ₂ ≤ τ₃) → τ₁ ≤ τ₃
 
 ------------------------------------------------------------------------
--- Soundness
+-- Some types used in counterexamples below
 
--- The relation is sound with respect to the other ones.
+σ : Ty zero
+σ = μ ⊤ ⟶ var zero
+
+τ : Ty zero
+τ = μ ⊥ ⟶ var zero
+
+σ≤τ : σ ≤Coind τ
+σ≤τ = ♯ ⊥ ⟶ ♯ σ≤τ
+
+------------------------------------------------------------------------
+-- Soundness and incompleteness of _≤′_
+
+sound′ : ∀ {n} {σ τ : Ty n} → σ ≤′ τ → σ ≤Coind τ
+sound′ ⊥               = ⊥
+sound′ ⊤               = ⊤
+sound′ (τ₁≤σ₁ ⟶ σ₂≤τ₂) = ♯ sound′ (♭ τ₁≤σ₁) ⟶ ♯ sound′ (♭ σ₂≤τ₂)
+sound′ unfold          = Sem.unfold
+sound′ fold            = Sem.fold
+sound′ (τ ∎)           = Sem.refl∞ _
+
+incomplete′ : ¬ (∀ {n} {σ τ : Ty n} → σ ≤Coind τ → σ ≤′ τ)
+incomplete′ hyp with hyp {σ = σ} {τ = τ} σ≤τ
+... | ()
+
+------------------------------------------------------------------------
+-- Soundness of _≤_
 
 sound : ∀ {n} {σ τ : Ty n} → σ ≤ τ → σ ≤Coind τ
 sound (τ₁ ≤⟨ τ₁≤τ₂ ⟩ τ₂≤τ₃) = Sem.trans (sound τ₁≤τ₂) (sound τ₂≤τ₃)
 sound (include σ≤τ)         = sound′ σ≤τ
-  where
-  sound′ : ∀ {n} {σ τ : Ty n} → σ ≤′ τ → σ ≤Coind τ
-  sound′ ⊥               = ⊥
-  sound′ ⊤               = ⊤
-  sound′ (τ₁≤σ₁ ⟶ σ₂≤τ₂) = ♯ sound′ (♭ τ₁≤σ₁) ⟶ ♯ sound′ (♭ σ₂≤τ₂)
-  sound′ unfold          = Sem.unfold
-  sound′ fold            = Sem.fold
-  sound′ (τ ∎)           = Sem.refl∞ _
 
 ------------------------------------------------------------------------
--- An alternative definition of transitive closure
+-- An alternative definition of the transitive closure of _≤′_
 
 infixr 5 _∷_
 infix  4 _≲_
@@ -130,19 +149,11 @@ mutual
   ... | ()
 
 ------------------------------------------------------------------------
--- Incompleteness
-
--- The relation is not complete with respect to the other ones.
+-- Incompleteness of _≤_
 
 incomplete : ¬ (∀ {n} {σ τ : Ty n} → σ ≤Coind τ → σ ≤ τ)
 incomplete hyp = σ≴τ $ ≲-complete $ hyp σ≤τ
   where
-  σ : Ty zero
-  σ = μ ⊤ ⟶ var zero
-
-  τ : Ty zero
-  τ = μ ⊥ ⟶ var zero
-
   σ≴τ : ¬ σ ≲ τ
   σ≴τ σ≲τ = <-rec Pred ≴ _ σ≲τ refl
     where
@@ -150,12 +161,9 @@ incomplete hyp = σ≴τ $ ≲-complete $ hyp σ≤τ
     Pred n = (σ≲τ : σ ≲ τ) → length σ≲τ ≢ n
 
     ≴ : ∀ n → <-Rec Pred n → Pred n
-    ≴ n        rec [ () ] _
-    ≴ .(suc _) rec ((._ ∎) ∷ τ₂≲τ₃) refl = rec _ ≤′-refl τ₂≲τ₃ refl
-    ≴ .(suc _) rec (unfold ∷ τ₂≲τ₃) refl with codomain-⟶μ τ₂≲τ₃
+    ≴ n  rec [ () ]           _
+    ≴ ._ rec ((._ ∎) ∷ τ₂≲τ₃) refl = rec _ ≤′-refl τ₂≲τ₃ refl
+    ≴ ._ rec (unfold ∷ τ₂≲τ₃) refl with codomain-⟶μ τ₂≲τ₃
     ... | (τ₂≲τ₃′ , not-longer) = rec _ (≤⇒≤′ $ s≤s not-longer) τ₂≲τ₃′ refl
-    ≴ n        rec (⊤      ∷ τ₂≲τ₃) _    with sound (≲-sound τ₂≲τ₃)
+    ≴ n  rec (⊤      ∷ τ₂≲τ₃) _    with sound (≲-sound τ₂≲τ₃)
     ... | ()
-
-  σ≤τ : σ ≤Coind τ
-  σ≤τ = ♯ ⊥ ⟶ ♯ σ≤τ
