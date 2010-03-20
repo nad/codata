@@ -78,35 +78,34 @@ module Soundness where
   -- The soundness proof uses my trick to show that the code is
   -- productive.
 
-  infix 4 _≤Prog_ _≤WHNF_
+  infix 4 _≤P_ _≤W_
 
   mutual
 
     -- Soundness proof programs.
 
-    data _≤Prog_ {n} : Ty n → Ty n → Set where
+    data _≤P_ {n} : Ty n → Ty n → Set where
       sound : ∀ {A σ τ} →
-              (valid : All (Valid _≤WHNF_) A) (σ≤τ : A ⊢ σ ≤ τ) →
-              σ ≤Prog τ
+              (valid : All (Valid _≤W_) A) (σ≤τ : A ⊢ σ ≤ τ) → σ ≤P τ
 
     -- Weak head normal forms of soundness proof programs. Note that
     -- _⟶_ takes (suspended) /programs/ as arguments, while _≤⟨_⟩_
     -- takes /WHNFs/.
 
-    data _≤WHNF_ {n} : Ty n → Ty n → Set where
-      done   : ∀ {σ τ} (σ≤τ : σ ≤ τ) → σ ≤WHNF τ
+    data _≤W_ {n} : Ty n → Ty n → Set where
+      done   : ∀ {σ τ} (σ≤τ : σ ≤ τ) → σ ≤W τ
       _⟶_    : ∀ {σ₁ σ₂ τ₁ τ₂}
-               (τ₁≤σ₁ : ∞ (τ₁ ≤Prog σ₁)) (σ₂≤τ₂ : ∞ (σ₂ ≤Prog τ₂)) →
-               σ₁ ⟶ σ₂ ≤WHNF τ₁ ⟶ τ₂
+               (τ₁≤σ₁ : ∞ (τ₁ ≤P σ₁)) (σ₂≤τ₂ : ∞ (σ₂ ≤P τ₂)) →
+               σ₁ ⟶ σ₂ ≤W τ₁ ⟶ τ₂
       _≤⟨_⟩_ : ∀ τ₁ {τ₂ τ₃}
-               (τ₁≤τ₂ : τ₁ ≤WHNF τ₂) (τ₂≤τ₃ : τ₂ ≤WHNF τ₃) → τ₁ ≤WHNF τ₃
+               (τ₁≤τ₂ : τ₁ ≤W τ₂) (τ₂≤τ₃ : τ₂ ≤W τ₃) → τ₁ ≤W τ₃
 
   -- The following two functions compute the WHNF of a soundness
   -- program. Note the circular, but productive, definition of proof
   -- below.
 
   soundW : ∀ {n} {σ τ : Ty n} {A} →
-           All (Valid _≤WHNF_) A → A ⊢ σ ≤ τ → σ ≤WHNF τ
+           All (Valid _≤W_) A → A ⊢ σ ≤ τ → σ ≤W τ
   soundW valid ⊥                     = done ⊥
   soundW valid ⊤                     = done ⊤
   soundW valid unfold                = done unfold
@@ -120,22 +119,20 @@ module Soundness where
                   ♯ sound (proof ∷ valid) σ₂≤τ₂
 
   whnf : ∀ {n} {σ τ : Ty n} →
-         σ ≤Prog τ → σ ≤WHNF τ
+         σ ≤P τ → σ ≤W τ
   whnf (sound valid σ≤τ) = soundW valid σ≤τ
 
   -- Computes actual proofs.
 
   mutual
 
-    value : ∀ {n} {σ τ : Ty n} →
-            σ ≤WHNF τ → σ ≤ τ
-    value (done σ≤τ)            = σ≤τ
-    value (τ₁≤σ₁ ⟶ σ₂≤τ₂)       = ♯ ⟦ ♭ τ₁≤σ₁ ⟧≤ ⟶ ♯ ⟦ ♭ σ₂≤τ₂ ⟧≤
-    value (τ₁ ≤⟨ τ₁≤τ₂ ⟩ τ₂≤τ₃) = τ₁ ≤⟨ value τ₁≤τ₂ ⟩ value τ₂≤τ₃
+    ⟦_⟧W : ∀ {n} {σ τ : Ty n} → σ ≤W τ → σ ≤ τ
+    ⟦ done σ≤τ            ⟧W = σ≤τ
+    ⟦ τ₁≤σ₁ ⟶ σ₂≤τ₂       ⟧W = ♯ ⟦ ♭ τ₁≤σ₁ ⟧P ⟶ ♯ ⟦ ♭ σ₂≤τ₂ ⟧P
+    ⟦ τ₁ ≤⟨ τ₁≤τ₂ ⟩ τ₂≤τ₃ ⟧W = τ₁ ≤⟨ ⟦ τ₁≤τ₂ ⟧W ⟩ ⟦ τ₂≤τ₃ ⟧W
 
-    ⟦_⟧≤ : ∀ {n} {σ τ : Ty n} →
-           σ ≤Prog τ → σ ≤ τ
-    ⟦ σ≤τ ⟧≤ = value (whnf σ≤τ)
+    ⟦_⟧P : ∀ {n} {σ τ : Ty n} → σ ≤P τ → σ ≤ τ
+    ⟦ σ≤τ ⟧P = ⟦ whnf σ≤τ ⟧W
 
 -- The subtyping relation defined above is sound with respect to the
 -- others.
@@ -143,11 +140,11 @@ module Soundness where
 sound : ∀ {n A} {σ τ : Ty n} →
         All (Valid _≤_) A → A ⊢ σ ≤ τ → σ ≤ τ
 sound {n} valid σ≤τ =
-  ⟦ S.sound (All.map (λ {h} → done′ h) valid) σ≤τ ⟧≤
+  ⟦ S.sound (All.map (λ {h} → done′ h) valid) σ≤τ ⟧P
   where
   open module S = Soundness
 
-  done′ : (σ₁≲σ₂ : Hyp n) → Valid _≤_ σ₁≲σ₂ → Valid _≤WHNF_ σ₁≲σ₂
+  done′ : (σ₁≲σ₂ : Hyp n) → Valid _≤_ σ₁≲σ₂ → Valid _≤W_ σ₁≲σ₂
   done′ (_ ≲ _) = done
 
 ------------------------------------------------------------------------
