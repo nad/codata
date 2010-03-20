@@ -101,24 +101,27 @@ module Soundness where
       _≤⟨_⟩_ : ∀ τ₁ {τ₂ τ₃}
                (τ₁≤τ₂ : τ₁ ≤WHNF τ₂) (τ₂≤τ₃ : τ₂ ≤WHNF τ₃) → τ₁ ≤WHNF τ₃
 
-  -- Computes the WHNF of a soundness program. Note the circular, but
-  -- productive, definition of proof below.
+  -- The following two functions compute the WHNF of a soundness
+  -- program. Note the circular, but productive, definition of proof
+  -- below.
+
+  soundW : ∀ {n} {σ τ : Ty n} {A} →
+           All (Valid _≤WHNF_) A → A ⊢ σ ≤ τ → σ ≤WHNF τ
+  soundW valid ⊥                     = done ⊥
+  soundW valid ⊤                     = done ⊤
+  soundW valid unfold                = done unfold
+  soundW valid fold                  = done fold
+  soundW valid (τ ∎)                 = done (τ ∎)
+  soundW valid (τ₁ ≤⟨ τ₁≤τ₂ ⟩ τ₂≤τ₃) = τ₁ ≤⟨ soundW valid τ₁≤τ₂ ⟩
+                                             soundW valid τ₂≤τ₃
+  soundW valid (hyp σ≤τ)             = All.lookup valid σ≤τ
+  soundW valid (τ₁≤σ₁ ⟶ σ₂≤τ₂)       = proof
+    where proof = ♯ sound (proof ∷ valid) τ₁≤σ₁ ⟶
+                  ♯ sound (proof ∷ valid) σ₂≤τ₂
 
   whnf : ∀ {n} {σ τ : Ty n} →
          σ ≤Prog τ → σ ≤WHNF τ
-  whnf (sound {A} valid σ≤τ) = w-s σ≤τ
-    where
-    w-s : ∀ {σ τ} → A ⊢ σ ≤ τ → σ ≤WHNF τ
-    w-s ⊥                     = done ⊥
-    w-s ⊤                     = done ⊤
-    w-s unfold                = done unfold
-    w-s fold                  = done fold
-    w-s (τ ∎)                 = done (τ ∎)
-    w-s (τ₁ ≤⟨ τ₁≤τ₂ ⟩ τ₂≤τ₃) = τ₁ ≤⟨ w-s τ₁≤τ₂ ⟩ w-s τ₂≤τ₃
-    w-s (hyp σ≤τ)             = All.lookup valid σ≤τ
-    w-s (τ₁≤σ₁ ⟶ σ₂≤τ₂)       = proof
-      where proof = ♯ sound (proof ∷ valid) τ₁≤σ₁ ⟶
-                    ♯ sound (proof ∷ valid) σ₂≤τ₂
+  whnf (sound valid σ≤τ) = soundW valid σ≤τ
 
   -- Computes actual proofs.
 
