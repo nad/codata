@@ -5,7 +5,6 @@
 module RecursiveTypes.Subtyping.Axiomatic.Inductive where
 
 open import Coinduction
-open import Data.Empty using (⊥-elim)
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.List using (List; []; _∷_; _++_)
 import Data.List.Any as Any
@@ -225,8 +224,9 @@ module Decidable {n} (χ₁ χ₂ : Ty n) where
 
   -- Finally we have to prove that an upper bound ℓ actually exists.
 
-  dec : [] ⊢ χ₁ ≤ χ₂ ⊎ (¬ χ₁ ≤Coind χ₂)
-  dec = empty ⊢ χ₁ , inj₁ ST.refl ≤? χ₂ , inj₂ ST.refl
+  dec : [] ⊢ χ₁ ≤ χ₂ ⊎ (¬ χ₁ ≤ χ₂)
+  dec = Sum.map id (λ σ≰τ → σ≰τ ∘ Ax.sound) $
+        empty ⊢ χ₁ , inj₁ ST.refl ≤? χ₂ , inj₂ ST.refl
 
 infix 4 []⊢_≤?_ _≤?_
 
@@ -236,14 +236,14 @@ infix 4 []⊢_≤?_ _≤?_
 []⊢_≤?_ : ∀ {n} (σ τ : Ty n) → Dec ([] ⊢ σ ≤ τ)
 []⊢ σ ≤? τ with Decidable.dec σ τ
 ... | inj₁ σ≤τ = yes σ≤τ
-... | inj₂ σ≰τ = no (σ≰τ ∘ Ax.sound ∘ sound [])
+... | inj₂ σ≰τ = no (σ≰τ ∘ sound [])
 
 -- The other subtyping relations can also be decided.
 
 _≤?_ : ∀ {n} (σ τ : Ty n) → Dec (σ ≤ τ)
 σ ≤? τ with Decidable.dec σ τ
 ... | inj₁ σ≤τ = yes (sound [] σ≤τ)
-... | inj₂ σ≰τ = no (σ≰τ ∘ Ax.sound)
+... | inj₂ σ≰τ = no σ≰τ
 
 ------------------------------------------------------------------------
 -- Completeness
@@ -266,8 +266,7 @@ weaken (τ₁≤σ₁ ⟶ σ₂≤τ₂)       = weaken τ₁≤σ₁ ⟶ weaken
 
 complete : ∀ {n A} {σ τ : Ty n} →
            σ ≤ τ → A ⊢ σ ≤ τ
-complete {σ = σ} {τ} σ≤τ =
-  [ weaken , ⊥-elim ∘′ flip _$_ σ≤τ ]′ (dec σ τ)
-  where
-  dec : ∀ {n} (σ τ : Ty n) → [] ⊢ σ ≤ τ ⊎ (¬ σ ≤ τ)
-  dec σ τ = Sum.map id (λ σ≰τ → σ≰τ ∘ Ax.sound) $ Decidable.dec σ τ
+complete {σ = σ} {τ} σ≤τ with Decidable.dec σ τ
+... | inj₁ []⊢σ≤τ = weaken []⊢σ≤τ
+... | inj₂ σ≰τ    with σ≰τ σ≤τ
+...   | ()
