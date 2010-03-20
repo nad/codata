@@ -11,8 +11,11 @@
 module AdmissibleButNotPostulable where
 
 open import Coinduction using (∞; ♯_; ♭)
+open import Data.Nat
+open import Data.Product as Prod
+open import Function
 open import Relation.Binary.PropositionalEquality as P
-  using (_with-≡_)
+  using (_≡_; _with-≡_)
 open import Relation.Nullary using (¬_)
 
 ------------------------------------------------------------------------
@@ -211,3 +214,122 @@ module Capretta'sEquality where
     completeP (WeakEquality.later x≈y)  = later (♯ completeP (♭ x≈y))
     completeP (WeakEquality.laterʳ x≈y) = laterʳ (completeP x≈y)
     completeP (WeakEquality.laterˡ x≈y) = laterˡ (completeP x≈y)
+
+------------------------------------------------------------------------
+-- The weak equality above coincides with weak bisimilarity
+
+module WeakBisimilarity {A : Set} where
+
+  -- The function drop n drops n later constructors (if possible).
+
+  drop : ℕ → A ⊥ → A ⊥
+  drop zero    x         = x
+  drop _       (now v)   = now v
+  drop (suc n) (later x) = drop n (♭ x)
+
+  -- Weak simulations and bisimulations. The removal of a later
+  -- constructor is treated as a silent transition.
+
+  record IsWeakSimulation (_R_ : A ⊥ → A ⊥ → Set) : Set where
+    field
+      match-later : ∀ {x y} → later x R y → ∃ λ n → ♭ x   R drop n y
+      match-now   : ∀ {v y} → now v   R y → ∃ λ n → now v ≡ drop n y
+
+  record IsWeakBisimulation (_R_ : A ⊥ → A ⊥ → Set) : Set where
+    field
+      left  : IsWeakSimulation _R_
+      right : IsWeakSimulation (flip _R_)
+
+  -- Weak bisimilarity.
+
+  record _≈_ (x y : A ⊥) : Set₁ where
+    field
+      _R_   : A ⊥ → A ⊥ → Set
+      xRy   : x R y
+      bisim : IsWeakBisimulation _R_
+
+  open WeakEquality renaming (_≈_ to _≋_)
+
+  -- Completeness.
+
+  complete : ∀ {x y} → x ≋ y → x ≈ y
+  complete x≋y = record
+    { _R_   = _≋_
+    ; xRy   = x≋y
+    ; bisim = record
+      { left = record
+        { match-later = λ lx≋y → (0 , laterˡ⁻¹ lx≋y)
+        ; match-now   = match-now
+        }
+      ; right = record
+        { match-later = λ x≋ly → (0 , laterʳ⁻¹ x≋ly)
+        ; match-now   = match-now ∘ sym
+        }
+      }
+    }
+    where
+    match-now : ∀ {v y} → now v ≋ y → ∃ λ n → now v ≡ drop n y
+    match-now now          = (0 , P.refl)
+    match-now (laterʳ v≋y) = Prod.map suc id (match-now v≋y)
+
+  -- Soundness.
+
+  module Sound {x y} (x≈y : x ≈ y) where
+
+    open _≈_ x≈y
+    open IsWeakBisimulation
+    open IsWeakSimulation
+
+    helper₁ : ∀ {x} y → (∃ λ n → now x ≡ drop n y) → now x ≋ y
+    helper₁ (now y)   (zero  , P.refl) = now
+    helper₁ (now y)   (suc n , P.refl) = now
+    helper₁ (later y) (zero  , ())
+    helper₁ (later y) (suc n , nx≡y-n) =
+      laterʳ (helper₁ (♭ y) (n , nx≡y-n))
+
+    mutual
+
+      helper₂ : ∀ {x} y → (∃ λ n → x R drop n y) → x ≋ y
+      helper₂ y         (zero  , xRy)   = sound _ _ xRy
+      helper₂ (now y)   (suc n , xRny)  = sound _ _ xRny
+      helper₂ (later y) (suc n , xRy-n) =
+        laterʳ (helper₂ (♭ y) (n , xRy-n))
+
+      helper₃ : ∀ x {y} → (∃ λ n → drop (suc n) x R y) → x ≋ y
+      helper₃ (now x)   (n     , nxRy)  = sound _ _ nxRy
+      helper₃ (later x) (zero  , xRy)   = laterˡ (sound _ _ xRy)
+      helper₃ (later x) (suc n , x-nRy) =
+        laterˡ (helper₃ (♭ x) (n , x-nRy))
+
+      sound : ∀ x y → x R y → x ≋ y
+      sound (now x) y nxRy = helper₁ y $ match-now (left bisim) nxRy
+      sound (later x) (now y) lxRny =
+        sym $ helper₁ (later x) $ match-now (right bisim) lxRny
+      sound (later x) (later y) lxRly
+        with match-later (left bisim) lxRly
+      ... | (suc n , xRy-n) = later (♯ helper₂ (♭ y) (n , xRy-n))
+      ... | (zero  , xRly)  with match-later (right bisim) xRly
+      ...   | (zero  , xRy)     = later (♯ sound _ _ xRy)
+      ...   | (suc n , x-1+nRy) =
+        later (♯ helper₃ (♭ x) (n , x-1+nRy))
+
+  sound : ∀ {x y} → x ≈ y → x ≋ y
+  sound x≈y = Sound.sound x≈y _ _ (_≈_.xRy x≈y)
+
+-- Note that the problem illustrated in ExtendedWeakEquality is
+-- related to the problem of weak bisimulation up to weak
+-- bisimilarity. Let R be a relation which is only inhabited for the
+-- pair (later (♯ x), later (♯ y)). R is a weak bisimulation up to
+-- weak bisimilarity (_≈_):
+--
+--   later (♯ x)         R later (♯ y)
+--       ↓                     =
+--       x ≈ later (♯ x) R later (♯ y)
+--
+--   later (♯ x) R           later (♯ y)
+--       =                       ↓
+--   later (♯ x) R later (♯ y) ≈ y
+--
+-- Weak bisimilarity is transitive, so if every relation which is a
+-- weak bisimulation up to weak bisimilarity were contained in weak
+-- bisimilarity we would have x ≈ y for all x and y.
