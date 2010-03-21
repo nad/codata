@@ -4,8 +4,11 @@
 -- Nils Anders Danielsson
 ------------------------------------------------------------------------
 
--- Partly based on "Coinductive Axiomatization of Recursive Type
--- Equality and Subtyping" by Michael Brandt and Fritz Henglein.
+-- This formalisation is explained in "Subtyping, Declaratively—An
+-- Exercise in Mixed Induction and Coinduction" (coauthored with
+-- Thorsten Altenkirch). The code is partly based on "Coinductive
+-- Axiomatization of Recursive Type Equality and Subtyping" by Michael
+-- Brandt and Fritz Henglein.
 
 module RecursiveTypes where
 
@@ -75,3 +78,10 @@ import RecursiveTypes.Syntax.UnfoldedOrFixpoint
 -- constructor to it.
 
 import RecursiveTypes.Subtyping.Axiomatic.Incorrect
+
+-- Finally some code which is not directly related to subtyping or
+-- recursive types: an example which shows that, in a coinductive
+-- setting, it is not always sound to postulate admissible rules
+-- (inductively).
+
+import AdmissibleButNotPostulable
