@@ -10,6 +10,8 @@ open import Coinduction
 open import Data.Nat
 open import Data.Stream as S using (Stream; _∷_; _≈_)
 open import Relation.Binary
+import Relation.Binary.PropositionalEquality as P
+
 private
   module SS {A} = Setoid (S.setoid A)
 
@@ -127,6 +129,9 @@ fib-correct : ⟦ fib ⟧P ≈ 0 ∷ ♯ S.zipWith _+_ ⟦ fib ⟧P (1 ∷ ♯ �
 fib-correct =
   0 ∷ ♯ SS.trans (zipWith-hom  _+_ fib     (1 ∷ ♯ fib))
                  (zipWith-cong _+_ SS.refl (1 ∷ ♯ SS.refl))
+
+-- For a proof showing that the given equation for fib has a unique
+-- solution, see MapIterate.
 
 ------------------------------------------------------------------------
 -- The definition of hamming is correct

@@ -78,7 +78,7 @@ import Lambda.VirtualMachine
 
 import SingletonChunks
 
--- A generalised variant of SingletonChunks.
+-- A generalised variant of (parts of) SingletonChunks.
 
 import ArbitraryChunks
 

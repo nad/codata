@@ -50,6 +50,12 @@ open φ using (⟦_⟧P; ⟦_⟧W; φP; φW; φ; _∷_; ⌈_⌉)
 
 module Equality where
 
+  φ-rhs : {A : Set} → (Stream A → Stream A) → Stream A → Stream A
+  φ-rhs φ (x ∷ xs) = x ∷ ♯ φ (φ (♭ xs))
+
+  SatisfiesEquation : {A : Set} → (Stream A → Stream A) → Set
+  SatisfiesEquation φ = ∀ xs → φ xs ≈ φ-rhs φ xs
+
   infixr 5 _∷_
   infix  4 _≈P_ _≈W_
   infix  3 _∎
@@ -64,6 +70,9 @@ module Equality where
     sym     : ∀ {xs ys} (xs≈ys : xs ≈P ys) → ys ≈P xs
     φP-cong : (xs ys : φ.StreamP A) (xs≈ys : ⟦ xs ⟧P ≈P ⟦ ys ⟧P) →
               ⟦ φP xs ⟧P ≈P ⟦ φP ys ⟧P
+    lemma   : (φ₁ φ₂ : Stream A → Stream A)
+              (s₁ : SatisfiesEquation φ₁) (s₂ : SatisfiesEquation φ₂) →
+              ∀ {xs ys} (xs≈ys : xs ≈P ys) → φ-rhs φ₁ xs ≈P φ-rhs φ₂ ys
 
   -- Completeness.
 
@@ -90,12 +99,26 @@ module Equality where
   φW-cong (.x ∷ xs) (.x ∷ ys) (x ∷ xs≈ys) =
     x ∷ φP-cong (φP xs) (φP ys) (φP-cong xs ys xs≈ys)
 
+  lemmaW : {A : Set} (φ₁ φ₂ : Stream A → Stream A)
+           (s₁ : SatisfiesEquation φ₁) (s₂ : SatisfiesEquation φ₂) →
+           ∀ {xs ys} → xs ≈W ys → φ-rhs φ₁ xs ≈W φ-rhs φ₂ ys
+  lemmaW φ₁ φ₂ s₁ s₂ {.x ∷ xs} {.x ∷ ys} (x ∷ xs≈ys) = x ∷ (
+    φ₁ (φ₁ (♭ xs))        ≈⟨ completeP $ s₁ (φ₁ (♭ xs)) ⟩
+    φ-rhs φ₁ (φ₁ (♭ xs))  ≈⟨ lemma φ₁ φ₂ s₁ s₂ (
+      φ₁ (♭ xs)                ≈⟨ completeP $ s₁ (♭ xs) ⟩
+      φ-rhs φ₁ (♭ xs)          ≈⟨ lemma φ₁ φ₂ s₁ s₂ xs≈ys ⟩
+      φ-rhs φ₂ (♭ ys)          ≈⟨ sym $ completeP $ s₂ (♭ ys) ⟩
+      φ₂ (♭ ys)                ∎) ⟩
+    φ-rhs φ₂ (φ₂ (♭ ys))  ≈⟨ sym $ completeP $ s₂ (φ₂ (♭ ys)) ⟩
+    φ₂ (φ₂ (♭ ys))        ∎)
+
   whnf : {A : Set} {xs ys : Stream A} → xs ≈P ys → xs ≈W ys
-  whnf (x ∷ xs≈ys)           = x ∷ ♭ xs≈ys
-  whnf (xs ≈⟨ xs≈ys ⟩ ys≈zs) = transW (whnf xs≈ys) (whnf ys≈zs)
-  whnf (xs ∎)                = reflW xs
-  whnf (sym xs≈ys)           = symW (whnf xs≈ys)
-  whnf (φP-cong xs ys xs≈ys) =
+  whnf (x ∷ xs≈ys)               = x ∷ ♭ xs≈ys
+  whnf (xs ≈⟨ xs≈ys ⟩ ys≈zs)     = transW (whnf xs≈ys) (whnf ys≈zs)
+  whnf (xs ∎)                    = reflW xs
+  whnf (sym xs≈ys)               = symW (whnf xs≈ys)
+  whnf (lemma φ₁ φ₂ s₁ s₂ xs≈ys) = lemmaW φ₁ φ₂ s₁ s₂ (whnf xs≈ys)
+  whnf (φP-cong xs ys xs≈ys)     =
     φW-cong (φ.whnf xs) (φ.whnf ys) (whnf xs≈ys)
 
   -- Soundness.
@@ -108,12 +131,27 @@ module Equality where
     soundP : {A : Set} {xs ys : Stream A} → xs ≈P ys → xs ≈ ys
     soundP xs≈ys = soundW (whnf xs≈ys)
 
-open Equality using (_≈P_; _∷_; _≈⟨_⟩_; _∎; sym; φP-cong)
+open Equality
+  using (_≈P_; _∷_; _≈⟨_⟩_; _∎; sym; φP-cong; φ-rhs; SatisfiesEquation)
 
 ------------------------------------------------------------------------
 -- Correctness
 
 module Correctness where
+
+  -- Uniqueness of solutions for φ's defining equation.
+
+  φ-unique : {A : Set} (φ₁ φ₂ : Stream A → Stream A) →
+             SatisfiesEquation φ₁ → SatisfiesEquation φ₂ →
+             ∀ xs → φ₁ xs ≈P φ₂ xs
+  φ-unique φ₁ φ₂ hyp₁ hyp₂ xs =
+    φ₁ xs        ≈⟨ Equality.completeP (hyp₁ xs) ⟩
+    φ-rhs φ₁ xs  ≈⟨ Equality.lemma φ₁ φ₂ hyp₁ hyp₂ (xs ∎) ⟩
+    φ-rhs φ₂ xs  ≈⟨ sym (Equality.completeP (hyp₂ xs)) ⟩
+    φ₂ xs        ∎
+
+  -- The remainder of this module establishes the existence of a
+  -- solution.
 
   ⟦⌈_⌉⟧P : {A : Set} (xs : Stream A) → ⟦ ⌈ xs ⌉ ⟧P ≈P xs
   ⟦⌈ x ∷ xs ⌉⟧P = x ∷ ♯ ⟦⌈ ♭ xs ⌉⟧P
@@ -131,7 +169,8 @@ module Correctness where
       ys           ≈⟨ sym ⟦⌈ ys ⌉⟧P ⟩
       ⟦ ⌈ ys ⌉ ⟧P  ∎
 
-  -- A workaround for Agda's strange definitional equality.
+  -- ♯′ provides a workaround for Agda's strange definitional
+  -- equality.
 
   infix 10 ♯′_
 
@@ -153,11 +192,11 @@ module Correctness where
           ⟦ φP xs ⟧P ≈P head ⟦ xs ⟧P ∷ ♯′ φ (φ (tail ⟦ xs ⟧P))
   φ-hom xs = φW-hom (φ.whnf xs)
 
-  φ-correct : {A : Set} (x : A) (xs : Stream A) →
-              φ (x ∷ ♯ xs) ≈P x ∷ ♯ φ (φ xs)
-  φ-correct x xs =
-    φ (x ∷ ♯ xs)              ≈⟨ φ (x ∷ ♯ xs) ∎ ⟩
-    ⟦ φP ⌈ x ∷ ♯ xs ⌉ ⟧P      ≈⟨ φ-hom ⌈ x ∷ ♯ xs ⌉ ⟩
-    x ∷ ♯′ φ (φ ⟦ ⌈ xs ⌉ ⟧P)  ≈⟨ x ∷ ♯ φ-cong (φ ⟦ ⌈ xs ⌉ ⟧P) (φ xs)
-                                              (φ-cong (⟦ ⌈ xs ⌉ ⟧P) xs ⟦⌈ xs ⌉⟧P) ⟩
-    x ∷ _                     ∎
+  φ-correct : {A : Set} (xs : Stream A) →
+              φ xs ≈P φ-rhs φ xs
+  φ-correct (x ∷ xs) =
+    φ (x ∷ xs)                  ≈⟨ φ (x ∷ xs) ∎ ⟩
+    ⟦ φP ⌈ x ∷ xs ⌉ ⟧P          ≈⟨ φ-hom ⌈ x ∷ xs ⌉ ⟩
+    x ∷ ♯′ φ (φ ⟦ ⌈ ♭ xs ⌉ ⟧P)  ≈⟨ x ∷ ♯ φ-cong (φ ⟦ ⌈ ♭ xs ⌉ ⟧P) (φ (♭ xs))
+                                                (φ-cong (⟦ ⌈ ♭ xs ⌉ ⟧P) (♭ xs) ⟦⌈ ♭ xs ⌉⟧P) ⟩
+    φ-rhs φ (x ∷ xs)            ∎
