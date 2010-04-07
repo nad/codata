@@ -16,68 +16,49 @@ open import Tree using (Tree; leaf; node)
 ------------------------------------------------------------------------
 -- Universe
 
-data Kind : Set where
-  μ : Kind -- Codata.
-  ν : Kind -- Data.
+data U : Set₁ where
+  tree   : (a : U) → U
+  stream : (a : U) → U
+  _⊗_    : (a b : U) → U
+  ⌈_⌉    : (A : Set) → U
 
-data U : Kind → Set₁ where
-  tree   : ∀ {k} (a : U k) → U ν
-  stream : ∀ {k} (a : U k) → U ν
-  _⊗_    : ∀ {k₁ k₂} (a : U k₁) (b : U k₂) → U μ
-  ⌈_⌉    : (A : Set) → U μ
-
-El : ∀ {k} → U k → Set
-El (tree a)   = Tree.Tree (El a)
+El : U → Set
+El (tree a)   = Tree (El a)
 El (stream a) = Stream (El a)
 El (a ⊗ b)    = El a × El b
 El ⌈ A ⌉      = A
-
--- Conditional coinduction.
-
-∞? : Kind → Set₁ → Set₁
-∞? μ = λ A → A
-∞? ν = ∞
-
-♭? : ∀ k {A} → ∞? k A → A
-♭? μ x = x
-♭? ν x = ♭ x
 
 ------------------------------------------------------------------------
 -- Programs
 
 infixr 5 _∷_
 infixr 4 _,_
-infix  3 ↓_
 
 mutual
+
+  data ElP : U → Set₁ where
+    ↓   : ∀ {a} (w : ElW a) → ElP a
+    fst : ∀ {a b} (p : ElP (a ⊗ b)) → ElP a
+    snd : ∀ {a b} (p : ElP (a ⊗ b)) → ElP b
+    lab : ∀ {A B} (t : Tree A) (bss : ElP (stream ⌈ Stream B ⌉)) →
+          ElP (tree ⌈ B ⌉ ⊗ stream ⌈ Stream B ⌉)
 
   -- The term WHNF is a bit of a misnomer here; only recursive
   -- /coinductive/ arguments are suspended (in the form of programs).
 
-  data ElW : ∀ {k} → U k → Set₁ where
-    leaf : ∀ {k} {a : U k} → ElW (tree a)
-    node : ∀ {k} {a : U k}
-           (l : ElP (tree a)) (x : ElW a) (r : ElP (tree a)) →
+  data ElW : U → Set₁ where
+    leaf : ∀ {a} → ElW (tree a)
+    node : ∀ {a}
+           (l : ∞ (ElP (tree a))) (x : ElW a) (r : ∞ (ElP (tree a))) →
            ElW (tree a)
-    _∷_  : ∀ {k} {a : U k}
-           (x : ElW a) (xs : ElP (stream a)) → ElW (stream a)
-    _,_  : ∀ {k₁ k₂} {a : U k₁} {b : U k₂}
-           (x : ElW a) (y : ElW b) → ElW (a ⊗ b)
+    _∷_  : ∀ {a} (x : ElW a) (xs : ∞ (ElP (stream a))) → ElW (stream a)
+    _,_  : ∀ {a b} (x : ElW a) (y : ElW b) → ElW (a ⊗ b)
     ⌈_⌉  : ∀ {A} (x : A) → ElW ⌈ A ⌉
 
-  data ElP : ∀ {k} → U k → Set₁ where
-    ↓_  : ∀ {k} {a : U k} (w : ∞? k (ElW a)) → ElP a
-    fst : ∀ {k₁ k₂} {a : U k₁} {b : U k₂}
-          (p : ElP (a ⊗ b)) → ElP a
-    snd : ∀ {k₁ k₂} {a : U k₁} {b : U k₂}
-          (p : ElP (a ⊗ b)) → ElP b
-    lab : ∀ {A B} (t : Tree A) (lss : ElP (stream ⌈ Stream B ⌉)) →
-          ElP (tree ⌈ B ⌉ ⊗ stream ⌈ Stream B ⌉)
-
-fstW : ∀ {k₁ k₂} {a : U k₁} {b : U k₂} → ElW (a ⊗ b) → ElW a
+fstW : ∀ {a b} → ElW (a ⊗ b) → ElW a
 fstW (x , y) = x
 
-sndW : ∀ {k₁ k₂} {a : U k₁} {b : U k₂} → ElW (a ⊗ b) → ElW b
+sndW : ∀ {a b} → ElW (a ⊗ b) → ElW b
 sndW (x , y) = y
 
 -- Uses the n-th stream to label the n-th level in the tree. Returns
@@ -85,37 +66,37 @@ sndW (x , y) = y
 
 labW : ∀ {A B} → Tree A → ElW (stream ⌈ Stream B ⌉) →
        ElW (tree ⌈ B ⌉ ⊗ stream ⌈ Stream B ⌉)
-labW leaf         lss                = (leaf , lss)
-labW (node l _ r) (⌈ x ∷ ls ⌉ ∷ lss) =
-  (node (fst l′,lss′) ⌈ x ⌉ (fst r′,lss″) , ⌈ ♭ ls ⌉ ∷ snd r′,lss″)
+labW leaf         bss                = (leaf , bss)
+labW (node l _ r) (⌈ b ∷ bs ⌉ ∷ bss) =
+  (node (♯ fst x) ⌈ b ⌉ (♯ fst y) , ⌈ ♭ bs ⌉ ∷ ♯ snd y)
   where
-  l′,lss′ = lab (♭ l) lss
-  r′,lss″ = lab (♭ r) (snd l′,lss′)
+  x = lab (♭ l) (♭ bss)
+  y = lab (♭ r) (snd x)
 
-whnf : ∀ {k} {a : U k} → ElP a → ElW a
-whnf (↓_ {k} w)  = ♭? k w
+whnf : ∀ {a} → ElP a → ElW a
+whnf (↓ w)       = w
 whnf (fst p)     = fstW (whnf p)
 whnf (snd p)     = sndW (whnf p)
-whnf (lab t lss) = labW t (whnf lss)
+whnf (lab t bss) = labW t (whnf bss)
 
 mutual
 
-  ⟦_⟧W : ∀ {k} {a : U k} → ElW a → El a
+  ⟦_⟧W : ∀ {a} → ElW a → El a
   ⟦ leaf       ⟧W = leaf
-  ⟦ node l x r ⟧W = node (♯ ⟦ l ⟧) ⟦ x ⟧W (♯ ⟦ r ⟧)
-  ⟦ x ∷ xs     ⟧W = ⟦ x ⟧W ∷ ♯ ⟦ xs ⟧
+  ⟦ node l x r ⟧W = node (♯ ⟦ ♭ l ⟧P) ⟦ x ⟧W (♯ ⟦ ♭ r ⟧P)
+  ⟦ x ∷ xs     ⟧W = ⟦ x ⟧W ∷ ♯ ⟦ ♭ xs ⟧P
   ⟦ (x , y)    ⟧W = (⟦ x ⟧W , ⟦ y ⟧W)
   ⟦ ⌈ x ⌉      ⟧W = x
 
-  ⟦_⟧ : ∀ {k} {a : U k} → ElP a → El a
-  ⟦ p ⟧ = ⟦ whnf p ⟧W
+  ⟦_⟧P : ∀ {a} → ElP a → El a
+  ⟦ p ⟧P = ⟦ whnf p ⟧W
 
 ------------------------------------------------------------------------
 -- Breadth-first labelling
 
 label′ : ∀ {A B} → Tree A → Stream B →
          ElP (tree ⌈ B ⌉ ⊗ stream ⌈ Stream B ⌉)
-label′ t ls = lab t (↓ ♯ (⌈ ls ⌉ ∷ snd (label′ t ls)))
+label′ t bs = lab t (↓ (⌈ bs ⌉ ∷ ♯ snd (label′ t bs)))
 
 label : ∀ {A B} → Tree A → Stream B → Tree B
-label t ls = ⟦ fst (label′ t ls) ⟧
+label t bs = ⟦ fst (label′ t bs) ⟧P
