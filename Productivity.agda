@@ -38,6 +38,11 @@ import BreadthFirst.Universe
 import BreadthFirst.Programs
 import BreadthFirst
 
+-- A simplified variant of the code above, without any correctness
+-- statement or proof.
+
+import BreadthFirstWithoutProof
+
 ------------------------------------------------------------------------
 -- Making Proofs Guarded
 

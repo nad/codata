@@ -71,6 +71,11 @@ import BreadthFirst.Universe
 import BreadthFirst.Programs
 import BreadthFirst
 
+-- A simplified variant of the code above, without any correctness
+-- statement or proof.
+
+import BreadthFirstWithoutProof
+
 -- A solution to a problem posed by Venanzio Capretta: The equation
 --
 --   φ s = s ⋎ φ (evens (φ s))
