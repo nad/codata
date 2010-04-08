@@ -2,12 +2,6 @@
 -- Some examples
 ------------------------------------------------------------------------
 
--- The conclusion I draw from the examples below is that, unless you
--- really need to use this framework, it is probably wise to stay away
--- from it. Unless, perhaps, if someone codes up lots of automation
--- for it (note that I did not even finish the definition of the
--- Hamming numbers).
-
 module Contractive.Examples where
 
 open import Coinduction
@@ -61,6 +55,9 @@ fibF = record
 
 fib : Stream ℕ
 fib = ContractiveFun.fixpoint fibF
+
+-- Note that I could not be bothered to finish the following
+-- definition.
 
 hammingF : ContractiveFun (S.cofe 0)
 hammingF = record
