@@ -85,6 +85,10 @@ import BreadthFirstWithoutProof
 
 import VenanziosProblem
 
+-- A sound, inductive approximation of stream equality.
+
+import InductiveStreamEquality
+
 ------------------------------------------------------------------------
 -- Section 4: Subtyping for recursive types
 

@@ -137,3 +137,10 @@ import Contractive
 import Contractive.Function
 import Contractive.Stream
 import Contractive.Examples
+
+------------------------------------------------------------------------
+-- Appendix
+
+-- A sound, inductive approximation of stream equality.
+
+import InductiveStreamEquality
