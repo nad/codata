@@ -6,7 +6,7 @@
 
 module Stream.Pointwise where
 
-open import Coinduction hiding (∞)
+open import Coinduction hiding (∞; unfold)
 open import Stream
 open import Stream.Equality
 import Stream.Programs as Prog

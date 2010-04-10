@@ -157,7 +157,7 @@ module Solution {A : Set} where
 
   whnf (xs₁≈xs₂ ⋎-cong ys₁≈ys₂) with whnf xs₁≈xs₂ | whnf ys₁≈ys₂
   ... | x ∷ reset xs₁≈xs₂′ | y ∷ reset ys₁≈ys₂′ =
-    x ∷ y ∷ reset (♯ shift (♭ xs₁≈xs₂′) ⋎-cong ♭ ys₁≈ys₂′)
+    x ∷ y ∷ reset (♯ (shift (♭ xs₁≈xs₂′) ⋎-cong ♭ ys₁≈ys₂′))
 
   whnf (evens-cong xs₁≈xs₂) = evens-congW (whnf xs₁≈xs₂)
 

@@ -4,7 +4,7 @@
 
 module RecursiveTypes.Subtyping.Axiomatic.Inductive where
 
-open import Coinduction
+open import Coinduction hiding (unfold)
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.List using (List; []; _∷_; _++_)
 open import Data.List.Any as Any using (Any)

@@ -11,7 +11,7 @@
 
 module DataAndCodata where
 
-open import Coinduction
+open import Coinduction hiding (Rec)
 open import Function
 open import Relation.Binary.PropositionalEquality
 

@@ -4,7 +4,7 @@
 
 module RecursiveTypes.Subtyping.Semantic.Coinductive where
 
-open import Coinduction
+open import Coinduction hiding (fold; unfold)
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.Fin using (Fin)
 open import Function
