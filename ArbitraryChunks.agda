@@ -10,6 +10,8 @@ open import Data.Bool
 open import Data.Nat
 open import Data.Stream as S using (Stream; _≈_; _∷_)
 open import Data.Vec as V using (Vec; []; _∷_)
+open import Relation.Binary.PropositionalEquality as P
+  using (_≡_; refl; inspect; _with-≡_)
 
 ------------------------------------------------------------------------
 -- Stream programs
@@ -84,20 +86,6 @@ someSequence =
   0 ∷ 1 ∷ [ ♯ (1 ∷ 2 ∷ zipWith _+_ (tail (tail someSequence))
                                    (forget (forget someSequence))) ]
 
--- The stream of natural numbers defined with chunks of size 1 and 2,
--- respectively.
-
-nats : StreamP 1 1 ℕ
-nats = 0 ∷ [ ♯ map suc nats ]
-
-nats₂ : StreamP 2 2 ℕ
-nats₂ = 0 ∷ 1 ∷ [ ♯ map suc nats₂ ]
-
--- Note that the following definition is not accepted.
-
--- nats : StreamP 2 1 ℕ
--- nats = 0 ∷ [ ♯ map suc nats ]
-
 ------------------------------------------------------------------------
 -- The definition of fib is correct
 
@@ -161,3 +149,44 @@ fib-correct =
     (zipWith-cong _+_ (SS.trans (soundP (forget-lemma 0 fib′))
                                 (0 ∷ ♯ SS.refl)) SS.refl))
   where fib′ = 1 ∷ zipWith _+_ (forget fib) (tail fib)
+
+------------------------------------------------------------------------
+-- map₂
+
+-- A variant of S.map which processes streams in chunks of size 2.
+
+map₂ : ∀ {A B} → (A → B) → Stream A → Stream B
+map₂ f (x ∷ xs) with ♭ xs
+map₂ f (x ∷ xs) | y ∷ ys = f x ∷ ♯ (f y ∷ ♯ map₂ f (♭ ys))
+
+-- This function is extensionally equal to S.map.
+
+map≈map₂ : ∀ {A B} →
+           (f : A → B) → (xs : Stream A) → S.map f xs ≈ map₂ f xs
+map≈map₂ f (x ∷ xs) with inspect (♭ xs)
+map≈map₂ f (x ∷ xs) | (y ∷ ys) with-≡ eq rewrite eq =
+  f x ∷ ♯ helper eq
+  where
+  map-f-y∷ys = _
+
+  helper : ∀ {xs} → xs ≡ y ∷ ys → S.map f xs ≈ map-f-y∷ys
+  helper refl = f y ∷ ♯ map≈map₂ f (♭ ys)
+
+-- However, as explained in "Beating the Productivity Checker Using
+-- Embedded Languages", the two functions are not interchangeable
+-- (assuming that pattern matching is evaluated strictly). Let us see
+-- what happens when we use the language above. We can define the
+-- stream of natural numbers using chunks of size 1 and 2.
+
+nats : StreamP 1 1 ℕ
+nats = 0 ∷ [ ♯ map suc nats ]
+
+nats₂ : StreamP 2 2 ℕ
+nats₂ = 0 ∷ 1 ∷ [ ♯ map suc nats₂ ]
+
+-- The first use of map corresponds to S.map, and the second to map₂.
+-- If we try to use map₂ in the first definition, then we get a type
+-- error. The following code is not accepted.
+
+-- nats : StreamP 2 1 ℕ
+-- nats = 0 ∷ [ ♯ map suc nats ]
