@@ -24,7 +24,8 @@ import MapIterate
 
 import SingletonChunks
 
--- A generalised variant of (parts of) SingletonChunks.
+-- A generalised variant of (parts of) SingletonChunks, plus some
+-- extra examples.
 
 import ArbitraryChunks
 

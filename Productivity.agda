@@ -83,16 +83,20 @@ import Lambda.VirtualMachine
 
 import SingletonChunks
 
--- A generalised variant of (parts of) SingletonChunks.
-
-import ArbitraryChunks
-
 -- Code not mentioned in the paper:
 
 -- Another variant which can handle tail. I believe that this one has
 -- limited applicability.
 
 import LargeCombinators
+
+------------------------------------------------------------------------
+-- Other Moduli of Continuity
+
+-- A generalised variant of (parts of) SingletonChunks, plus some
+-- extra examples.
+
+import ArbitraryChunks
 
 ------------------------------------------------------------------------
 -- Nested Applications

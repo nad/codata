@@ -1,5 +1,6 @@
 ------------------------------------------------------------------------
--- Another implementation of the Fibonacci sequence using tail
+-- Another implementation of the Fibonacci sequence using tail, along
+-- with some other examples
 ------------------------------------------------------------------------
 
 module ArbitraryChunks where
@@ -25,6 +26,7 @@ data StreamP (m : ℕ) : ℕ → Set → Set₁ where
   tail    : ∀ {n A} (xs : StreamP m (suc n) A) → StreamP m n A
   zipWith : ∀ {n A B C} (f : A → B → C)
             (xs : StreamP m n A) (ys : StreamP m n B) → StreamP m n C
+  map     : ∀ {n A B} (f : A → B) (xs : StreamP m n A) → StreamP m n B
 
 data StreamW (m : ℕ) : ℕ → Set → Set₁ where
   [_] : ∀ {A} (xs : StreamP m m A) → StreamW m 0 A
@@ -46,12 +48,17 @@ zipWithW : ∀ {m n A B C} → (A → B → C) →
 zipWithW f [ xs ]   [ ys ]   = [ zipWith f xs ys ]
 zipWithW f (x ∷ xs) (y ∷ ys) = f x y ∷ zipWithW f xs ys
 
+mapW : ∀ {m n A B} → (A → B) → StreamW m n A → StreamW m n B
+mapW f [ xs ]   = [ map f xs ]
+mapW f (x ∷ xs) = f x ∷ mapW f xs
+
 whnf : ∀ {m n A} → StreamP (suc m) n A → StreamW (suc m) n A
 whnf [ xs ]            = [ ♭ xs ]
 whnf (x ∷ xs)          = consW x (whnf xs)
 whnf (forget xs)       = forgetW (whnf xs)
 whnf (tail xs)         = tailW (whnf xs)
 whnf (zipWith f xs ys) = zipWithW f (whnf xs) (whnf ys)
+whnf (map f xs)        = mapW f (whnf xs)
 
 mutual
 
@@ -76,6 +83,20 @@ someSequence : StreamP 2 2 ℕ
 someSequence =
   0 ∷ 1 ∷ [ ♯ (1 ∷ 2 ∷ zipWith _+_ (tail (tail someSequence))
                                    (forget (forget someSequence))) ]
+
+-- The stream of natural numbers defined with chunks of size 1 and 2,
+-- respectively.
+
+nats : StreamP 1 1 ℕ
+nats = 0 ∷ [ ♯ map suc nats ]
+
+nats₂ : StreamP 2 2 ℕ
+nats₂ = 0 ∷ 1 ∷ [ ♯ map suc nats₂ ]
+
+-- Note that the following definition is not accepted.
+
+-- nats : StreamP 2 1 ℕ
+-- nats = 0 ∷ [ ♯ map suc nats ]
 
 ------------------------------------------------------------------------
 -- The definition of fib is correct
