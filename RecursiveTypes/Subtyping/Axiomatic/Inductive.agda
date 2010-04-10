@@ -7,7 +7,7 @@ module RecursiveTypes.Subtyping.Axiomatic.Inductive where
 open import Coinduction
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.List using (List; []; _∷_; _++_)
-import Data.List.Any as Any
+open import Data.List.Any as Any using (Any)
 open Any.Membership-≡ using (_∈_)
 open import Data.List.Any.Properties
 open import Data.List.All as All using (All; []; _∷_)
@@ -200,19 +200,32 @@ module Decidable {n} (χ₁ χ₂ : Ty n) where
     T ⊪ ⊥ , _ ≤? τ , _ = inj₁ ⊥
     T ⊪ σ , _ ≤? ⊤ , _ = inj₁ ⊤
 
-    T ⊪ var x , _ ≤? var  y , _ with var x ≡? var y
-    T ⊪ var x , _ ≤? var .x , _ | yes refl = inj₁ (var x ∎)
-    T ⊪ var x , _ ≤? var  y , _ | no  x≠y  = inj₂ (x≠y ∘ Sem.var:≤∞⟶≡)
+    T ⊪ var x , _ ≤? var y , _ = helper (var x ≡? var y)
+      where
+      helper : ∀ {A x y} → Dec ((Ty n ∶ var x) ≡ var y) →
+               ⟨ A ⟩⋆ ⊢ var x ≤ var y ⊎ ¬ var x ≤Coind var y
+      helper (yes refl) = inj₁ (var _ ∎)
+      helper (no  x≠y)  = inj₂ (x≠y ∘ Sem.var:≤∞⟶≡)
 
-    T ⊪ σ₁ ⟶ σ₂ , σ⊑ ≤? τ₁ ⟶ τ₂ , τ⊑
-      with lookupOrInsert T ((, σ⊑) ≲ (, τ⊑))
-    ... | inj₁ σ≲τ = inj₁ $ hyp $ Inverse.to map⇿ ⟨$⟩ σ≲τ
-    ... | inj₂ (_ , refl , T′)
-          with T′ ⊢ τ₁ , anti-mono ST.⟶ˡ′ τ⊑ ≤? σ₁ , anti-mono ST.⟶ˡ′ σ⊑
-             | T′ ⊢ σ₂ , anti-mono ST.⟶ʳ′ σ⊑ ≤? τ₂ , anti-mono ST.⟶ʳ′ τ⊑
-    ...   | inj₁ ≤₁ | inj₁ ≤₂ = inj₁ (≤₁ ⟶ ≤₂)
-    ...   | inj₂ ≰  | _       = inj₂ (≰ ∘  Sem.left-proj)
-    ...   | _       | inj₂ ≰  = inj₂ (≰ ∘ Sem.right-proj)
+    _⊪_,_≤?_,_ {A} T (σ₁ ⟶ σ₂) σ⊑ (τ₁ ⟶ τ₂) τ⊑ =
+      helper (lookupOrInsert T H)
+      where
+      H = (, σ⊑) ≲ (, τ⊑)
+
+      helper₂ :
+        ⟨ H ∷ A ⟩⋆ ⊢ τ₁      ≤ σ₁      ⊎ ¬ τ₁      ≤Coind σ₁      →
+        ⟨ H ∷ A ⟩⋆ ⊢      σ₂ ≤      τ₂ ⊎ ¬      σ₂ ≤Coind      τ₂ →
+        ⟨     A ⟩⋆ ⊢ σ₁ ⟶ σ₂ ≤ τ₁ ⟶ τ₂ ⊎ ¬ σ₁ ⟶ σ₂ ≤Coind τ₁ ⟶ τ₂
+      helper₂ (inj₁ ≤₁) (inj₁ ≤₂) = inj₁ (≤₁ ⟶ ≤₂)
+      helper₂ (inj₂ ≰ ) (_      ) = inj₂ (≰ ∘  Sem.left-proj)
+      helper₂ (_      ) (inj₂ ≰ ) = inj₂ (≰ ∘ Sem.right-proj)
+
+      helper : ∀ {ℓ} → Any (_≈_ H) A ⊎ (∃ λ n → ℓ ≡ suc n × H ∷ A ⊕ n) →
+               ⟨ A ⟩⋆ ⊢ σ₁ ⟶ σ₂ ≤ τ₁ ⟶ τ₂ ⊎ ¬ σ₁ ⟶ σ₂ ≤Coind τ₁ ⟶ τ₂
+      helper (inj₁ σ≲τ)             = inj₁ $ hyp $ Inverse.to map⇿ ⟨$⟩ σ≲τ
+      helper (inj₂ (_ , refl , T′)) = helper₂
+        (T′ ⊢ τ₁ , anti-mono ST.⟶ˡ′ τ⊑ ≤? σ₁ , anti-mono ST.⟶ˡ′ σ⊑)
+        (T′ ⊢ σ₂ , anti-mono ST.⟶ʳ′ σ⊑ ≤? τ₂ , anti-mono ST.⟶ʳ′ τ⊑)
 
     T ⊪ ⊤       , _ ≤? ⊥       , _ = inj₂ (λ ())
     T ⊪ ⊤       , _ ≤? var x   , _ = inj₂ (λ ())
