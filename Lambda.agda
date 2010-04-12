@@ -1,6 +1,9 @@
 ------------------------------------------------------------------------
--- A definition of a big-step semantics which handles termination and
--- non-termination at the same time, without duplication of rules
+-- An investigation of various ways to define the semantics of an
+-- untyped λ-calculus and a virtual machine, and a discussion of
+-- compiler correctness
+--
+-- Nils Anders Danielsson
 ------------------------------------------------------------------------
 
 module Lambda where

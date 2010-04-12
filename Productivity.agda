@@ -65,15 +65,13 @@ import Hinze.Simplified.Section3
 
 -- Code not mentioned in the paper:
 
--- A definition of a big-step semantics which handles termination and
--- non-termination at the same time, without duplication of rules.
--- Partly based on Leroy and Grall's "Coinductive big-step operational
--- semantics" and Cousot and Cousot's "Bi-inductive structural
--- semantics". The module Lambda.VirtualMachine uses the
+-- An investigation of various ways to define the semantics of an
+-- untyped λ-calculus and a virtual machine, and a discussion of
+-- compiler correctness. The module Lambda.Closure.Relational uses the
 -- language-based technique to establish guardedness.
 
 import Lambda
-import Lambda.VirtualMachine
+import Lambda.Closure.Relational
 
 ------------------------------------------------------------------------
 -- Destructors
