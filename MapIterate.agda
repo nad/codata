@@ -7,6 +7,8 @@ module MapIterate where
 open import Coinduction
 open import Data.Nat
 open import Data.Stream as Stream
+  using (Stream; map; zipWith; iterate; _≈_)
+open Stream.Stream; open Stream._≈_
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 

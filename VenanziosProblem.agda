@@ -6,7 +6,8 @@ module VenanziosProblem where
 
 open import Coinduction
 open import Data.Nat
-open import Data.Stream as Stream
+open import Data.Stream as Stream using (Stream; _⋎_; evens; odds; _≈_)
+open Stream.Stream; open Stream._≈_
 open import Relation.Binary
 
 private
@@ -14,16 +15,6 @@ private
 
 ------------------------------------------------------------------------
 -- Problem formulation
-
--- Functions extracting every other element from a stream.
-
-mutual
-
-  evens : {A : Set} → Stream A → Stream A
-  evens (x ∷ xs) = x ∷ ♯ odds (♭ xs)
-
-  odds : {A : Set} → Stream A → Stream A
-  odds (x ∷ xs) = evens (♭ xs)
 
 -- The problem concerns functions satisfying a certain equation:
 

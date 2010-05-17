@@ -248,7 +248,7 @@ module WeakBisimilarity {A : Set} where
       xRy   : x R y
       bisim : IsWeakBisimulation _R_
 
-  open WeakEquality renaming (_≈_ to _≋_)
+  open WeakEquality hiding (module _≈_) renaming (_≈_ to _≋_)
 
   -- Completeness.
 

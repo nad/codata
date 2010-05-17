@@ -107,14 +107,6 @@ zipWith-hom _∙_ xs ys with whnf xs | whnf ys
 zipWith-hom _∙_ xs ys | x ∷ xs′ | y ∷ ys′ =
   (x ∙ y) ∷ ♯ zipWith-hom _∙_ xs′ ys′
 
--- S.zipWith is a congruence.
-
-zipWith-cong : ∀ {A B C} (_∙_ : A → B → C) {xs xs′ ys ys′} →
-               xs ≈ xs′ → ys ≈ ys′ →
-               S.zipWith _∙_ xs ys ≈ S.zipWith _∙_ xs′ ys′
-zipWith-cong _∙_ (x ∷ xs≈) (y ∷ ys≈) =
-  (x ∙ y) ∷ ♯ zipWith-cong _∙_ (♭ xs≈) (♭ ys≈)
-
 -- Unfortunately Agda's definitional equality for coinductive
 -- constructors is currently a little strange, so the result type
 -- cannot be written out completely here:
@@ -128,7 +120,7 @@ fib-correct′ = 0 ∷ ♯ zipWith-hom _+_ fib (1 ∷ ♯ fib)
 fib-correct : ⟦ fib ⟧P ≈ 0 ∷ ♯ S.zipWith _+_ ⟦ fib ⟧P (1 ∷ ♯ ⟦ fib ⟧P)
 fib-correct =
   0 ∷ ♯ SS.trans (zipWith-hom  _+_ fib     (1 ∷ ♯ fib))
-                 (zipWith-cong _+_ SS.refl (1 ∷ ♯ SS.refl))
+                 (S.zipWith-cong _+_ SS.refl (1 ∷ ♯ SS.refl))
 
 -- For a proof showing that the given equation for fib has a unique
 -- solution, see MapIterate.

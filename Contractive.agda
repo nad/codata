@@ -11,7 +11,7 @@ module Contractive where
 open import Relation.Unary
 open import Relation.Binary
 import Relation.Binary.EqReasoning as EqR
-import Induction.WellFounded as WF
+open import Induction.WellFounded
 open import Function
 open import Level hiding (lift)
 
@@ -20,7 +20,7 @@ open import Level hiding (lift)
 record IsWellFoundedOrder {A} (_<_ : Rel A zero) : Set where
   field
     trans         : Transitive _<_
-    isWellFounded : ∀ a → WF.Acc _<_ a
+    isWellFounded : Well-founded _<_
 
 -- Ordered families of equivalences.
 
@@ -34,8 +34,7 @@ record OFE : Set1 where
     isEquivalence      : ∀ a → IsEquivalence (Eq a)
 
   open IsWellFoundedOrder isWellFoundedOrder public
-  open WF _<_ public using (WfRec)
-  open WF.All _<_ isWellFounded public
+  open All isWellFounded public
 
   setoid : Carrier → Setoid _ _
   setoid a = record { Carrier       = Domain
@@ -130,7 +129,7 @@ record ContractiveFun (cofe : COFE) : Set where
     P : Carrier → Set
     P a = IsCoherent {↓ a} (lift fam)
 
-    step : ∀ a → WfRec P a → P a
+    step : ∀ a → WfRec _<_ P a → P a
     step a rec {c} {b} c<a b<a c<b = begin
       fam c                  ≈⟨ unfold c c ⟩
       F (lim↓ c (lift fam))  ≈⟨ isContractive (λ {d} d<c → begin
@@ -147,7 +146,7 @@ record ContractiveFun (cofe : COFE) : Set where
     P : Carrier → Set
     P a = ∀ a' → a' < a → Eq a' (fam a') (fam a)
 
-    step : ∀ a → WfRec P a → P a
+    step : ∀ a → WfRec _<_ P a → P a
     step a rec a' a'<a = begin
       fam a'                  ≈⟨ unfold a' a' ⟩
       F (lim↓ a' (lift fam))  ≈⟨ isContractive (λ {b} b<a' → begin
@@ -177,7 +176,7 @@ record ContractiveFun (cofe : COFE) : Set where
     where
     P = λ a → Eq a x fixpoint
 
-    step : ∀ a → WfRec P a → P a
+    step : ∀ a → WfRec _<_ P a → P a
     step a rec = begin
       x           ≈⟨ isFix a ⟩
       F x         ≈⟨ isContractive (λ {a'} a'<a → rec a' a'<a) ⟩

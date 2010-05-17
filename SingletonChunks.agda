@@ -77,10 +77,6 @@ zipWith-hom _∙_ xs ys with whnf xs | whnf ys
 zipWith-hom _∙_ xs ys | x ∷ xs′ | y ∷ ys′ =
   (x ∙ y) ∷ ♯ zipWith-hom _∙_ xs′ ys′
 
--- S.zipWith is a congruence.
-
-open import StreamProg using (zipWith-cong)
-
 -- forget is the identity on streams.
 
 open import MapIterate as M using (_≈P_; _∷_; _≈⟨_⟩_; _∎)
@@ -105,8 +101,8 @@ fib-correct :
 fib-correct =
   0 ∷ ♯ (1 ∷ ♯ SS.trans
     (zipWith-hom _+_ (0 ∷ forget fib′) fib′)
-    (zipWith-cong _+_ (SS.trans (M.soundP (forget-lemma 0 fib′))
-                                (0 ∷ ♯ SS.refl)) SS.refl))
+    (S.zipWith-cong _+_ (SS.trans (M.soundP (forget-lemma 0 fib′))
+                                  (0 ∷ ♯ SS.refl)) SS.refl))
   where fib′ = 1 ∷ zipWith _+_ (forget fib) (tail fib)
 
 ------------------------------------------------------------------------
