@@ -29,6 +29,12 @@ import SingletonChunks
 
 import ArbitraryChunks
 
+-- Implementations of the Thue-Morse sequence, using non-uniform chunk
+-- sizes.
+
+import ThueMorse
+import ThueMorseLeq
+
 -- Another variant which can handle tail. I believe that this one has
 -- limited applicability.
 
