@@ -34,10 +34,6 @@ data StreamW (m : ℕ) : ℕ → Set → Set₁ where
   [_] : ∀ {A} (xs : StreamP m m A) → StreamW m 0 A
   _∷_ : ∀ {n A} (x : A) (xs : StreamW m n A) → StreamW m (suc n) A
 
-consW : ∀ {m n A} → A → StreamW m n A → StreamW m (suc n) A
-consW x [ xs ]   = x ∷ [ xs ]
-consW x (y ∷ xs) = x ∷ y ∷ xs
-
 forgetW : ∀ {m n A} → StreamW (suc m) (suc n) A → StreamW (suc m) n A
 forgetW {n = zero}  (x ∷ [ xs ]) = [ x ∷ forget xs ]
 forgetW {n = suc n} (x ∷ xs)     = x ∷ forgetW xs
@@ -56,7 +52,7 @@ mapW f (x ∷ xs) = f x ∷ mapW f xs
 
 whnf : ∀ {m n A} → StreamP (suc m) n A → StreamW (suc m) n A
 whnf [ xs ]            = [ ♭ xs ]
-whnf (x ∷ xs)          = consW x (whnf xs)
+whnf (x ∷ xs)          = x ∷ whnf xs
 whnf (forget xs)       = forgetW (whnf xs)
 whnf (tail xs)         = tailW (whnf xs)
 whnf (zipWith f xs ys) = zipWithW f (whnf xs) (whnf ys)
