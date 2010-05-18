@@ -20,7 +20,7 @@ infixr 5 _∷_
 
 data StreamP : Bool → Set → Set₁ where
   [_]     : ∀ {A} (xs : ∞ (StreamP true A)) → StreamP false A
-  _∷_     : ∀ {b A} (x : A) (xs : StreamP b A) → StreamP true A
+  _∷_     : ∀ {A} (x : A) (xs : StreamP false A) → StreamP true A
   forget  : ∀ {A} (xs : StreamP true A) → StreamP false A
   tail    : ∀ {A} (xs : StreamP true A) → StreamP false A
   zipWith : ∀ {b A B C} (f : A → B → C)
@@ -28,26 +28,22 @@ data StreamP : Bool → Set → Set₁ where
 
 data StreamW : Bool → Set → Set₁ where
   [_] : ∀ {A} (xs : StreamP true A) → StreamW false A
-  _∷_ : ∀ {A} (x : A) (xs : StreamP true A) → StreamW true A
-
-consW : ∀ {b A} → A → StreamW b A → StreamW true A
-consW x [ xs ]   = x ∷ xs
-consW x (y ∷ xs) = x ∷ y ∷ xs
+  _∷_ : ∀ {A} (x : A) (xs : StreamW false A) → StreamW true A
 
 forgetW : ∀ {A} → StreamW true A → StreamW false A
-forgetW (x ∷ xs) = [ x ∷ forget xs ]
+forgetW (x ∷ [ xs ]) = [ x ∷ forget xs ]
 
 tailW : ∀ {A} → StreamW true A → StreamW false A
-tailW (x ∷ xs) = [ xs ]
+tailW (x ∷ xs) = xs
 
 zipWithW : ∀ {b A B C} → (A → B → C) →
            StreamW b A → StreamW b B → StreamW b C
 zipWithW f [ xs ]   [ ys ]   = [ zipWith f xs ys ]
-zipWithW f (x ∷ xs) (y ∷ ys) = f x y ∷ zipWith f xs ys
+zipWithW f (x ∷ xs) (y ∷ ys) = f x y ∷ zipWithW f xs ys
 
 whnf : ∀ {b A} → StreamP b A → StreamW b A
 whnf [ xs ]            = [ ♭ xs ]
-whnf (x ∷ xs)          = consW x (whnf xs)
+whnf (x ∷ xs)          = x ∷ whnf xs
 whnf (forget xs)       = forgetW (whnf xs)
 whnf (tail xs)         = tailW (whnf xs)
 whnf (zipWith f xs ys) = zipWithW f (whnf xs) (whnf ys)
@@ -55,7 +51,7 @@ whnf (zipWith f xs ys) = zipWithW f (whnf xs) (whnf ys)
 mutual
 
   ⟦_⟧W : ∀ {A} → StreamW true A → Stream A
-  ⟦ x ∷ xs ⟧W = x ∷ ♯ ⟦ xs ⟧P
+  ⟦ x ∷ [ xs ] ⟧W = x ∷ ♯ ⟦ xs ⟧P
 
   ⟦_⟧P : ∀ {A} → StreamP true A → Stream A
   ⟦ xs ⟧P = ⟦ whnf xs ⟧W
@@ -74,7 +70,7 @@ fib = 0 ∷ [ ♯ (1 ∷ zipWith _+_ (forget fib) (tail fib)) ]
 zipWith-hom : ∀ {A B C} (_∙_ : A → B → C) xs ys →
               ⟦ zipWith _∙_ xs ys ⟧P ≈ S.zipWith _∙_ ⟦ xs ⟧P ⟦ ys ⟧P
 zipWith-hom _∙_ xs ys with whnf xs | whnf ys
-zipWith-hom _∙_ xs ys | x ∷ xs′ | y ∷ ys′ =
+zipWith-hom _∙_ xs ys | x ∷ [ xs′ ] | y ∷ [ ys′ ] =
   (x ∙ y) ∷ ♯ zipWith-hom _∙_ xs′ ys′
 
 -- forget is the identity on streams.
@@ -86,7 +82,7 @@ open import Relation.Binary.PropositionalEquality as P
 forget-lemma : ∀ {A} x (xs : StreamP true A) →
                ⟦ x ∷ forget xs ⟧P ≈P x ∷ ♯ ⟦ xs ⟧P
 forget-lemma x xs with P.inspect (whnf xs)
-... | (y ∷ ys) with-≡ eq rewrite eq = x ∷ ♯ helper
+... | (y ∷ [ ys ]) with-≡ eq rewrite eq = x ∷ ♯ helper
   where
   helper : ⟦ y ∷ forget ys ⟧P ≈P ⟦ xs ⟧P
   helper rewrite eq = _ ≈⟨ forget-lemma y ys ⟩ (y ∷ ♯ (_ ∎))
