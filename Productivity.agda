@@ -96,6 +96,12 @@ import LargeCombinators
 
 import ArbitraryChunks
 
+-- Implementations of the Thue-Morse sequence, using non-uniform chunk
+-- sizes.
+
+import ThueMorse
+import ThueMorseLeq
+
 ------------------------------------------------------------------------
 -- Nested Applications
 
@@ -139,12 +145,6 @@ import Contractive
 import Contractive.Function
 import Contractive.Stream
 import Contractive.Examples
-
--- Implementations of the Thue-Morse sequence, using non-uniform chunk
--- sizes.
-
-import ThueMorse
-import ThueMorseLeq
 
 ------------------------------------------------------------------------
 -- Appendix
