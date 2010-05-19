@@ -89,7 +89,7 @@ import SingletonChunks
 import LargeCombinators
 
 ------------------------------------------------------------------------
--- Other Moduli of Continuity
+-- Other Chunk Sizes
 
 -- A generalised variant of (parts of) SingletonChunks, plus some
 -- extra examples.
