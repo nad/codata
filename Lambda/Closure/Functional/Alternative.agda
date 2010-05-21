@@ -25,7 +25,9 @@ open import Function
 open import Relation.Binary using (module Preorder)
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
 
-open RelReasoning
+private
+  open module PP = Partiality.Propositional
+  open PP.Reasoning
 
 open import Lambda.Syntax
 open Closure Tm
@@ -356,7 +358,7 @@ module Correctness {k : OtherKind} where
   ._ ≈⟨ later  x≈y ⟩W later y≅z = later  (_ ≈⟨ x≈y ⟩P ♭ y≅z)
   ._ ≈⟨ laterˡ x≈y ⟩W       y≅z = laterˡ (_ ≈⟨ x≈y ⟩W   y≅z)
   _  ≈⟨ ⌈ x≈y ⌉    ⟩W       y≅z = ⌈ trans x≈y (≅⇒ y≅z) ⌉
-    where trans = Preorder.trans (Partiality.preorder _ _)
+    where trans = Preorder.trans (PP.preorder _)
 
   correctW :
     ∀ {n} t {ρ : Env n} {c s} {k : Value → Maybe VM.Value ⊥} →

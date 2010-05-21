@@ -6,7 +6,7 @@ module Lambda.VirtualMachine where
 
 open import Category.Monad
 open import Category.Monad.Partiality as P
-  hiding (Kind; module Kind; _⇓_; _⇑)
+  using (_⊥; never); open P._⊥
 open import Coinduction
 open import Data.Empty using (⊥-elim)
 open import Data.Fin
@@ -204,6 +204,19 @@ module Functional where
   ... | done v      = return (just v)
   ... | crash       = return nothing
 
+  -- Equality for partial computations returning Maybe Value.
+  --
+  -- Note that propositional equality is used for the underlying
+  -- values, which can include code components. In other words, if
+  -- v₁ ≈ v₂, then any code components in these values have to be
+  -- /syntactically/ equal.
+
+  module Equality where
+
+    open P.Propositional public
+      using (_≈_; now; later; laterˡ; later⁻¹; now≉never)
+      renaming (module Reasoning to EqReasoning)
+
 ------------------------------------------------------------------------
 -- Equivalence proof
 
@@ -211,6 +224,7 @@ module Equivalence where
 
   open Relational
   open Functional
+  open Functional.Equality
 
   ----------------------------------------------------------------------
   -- Classification of states
@@ -267,19 +281,19 @@ module Equivalence where
   -- The functional semantics crashes for crashing states.
 
   exec-crashes : ∀ {s} → Crashing s → exec s ≈ return nothing
-  exec-crashes crash₁  = now
-  exec-crashes crash₂  = now
-  exec-crashes crash₃  = now
-  exec-crashes crash₄  = now
-  exec-crashes crash₅  = now
-  exec-crashes crash₆  = now
-  exec-crashes crash₇  = now
-  exec-crashes crash₈  = now
-  exec-crashes crash₉  = now
-  exec-crashes crash₁₀ = now
-  exec-crashes crash₁₁ = now
-  exec-crashes crash₁₂ = now
-  exec-crashes crash₁₃ = now
+  exec-crashes crash₁  = now PE.refl
+  exec-crashes crash₂  = now PE.refl
+  exec-crashes crash₃  = now PE.refl
+  exec-crashes crash₄  = now PE.refl
+  exec-crashes crash₅  = now PE.refl
+  exec-crashes crash₆  = now PE.refl
+  exec-crashes crash₇  = now PE.refl
+  exec-crashes crash₈  = now PE.refl
+  exec-crashes crash₉  = now PE.refl
+  exec-crashes crash₁₀ = now PE.refl
+  exec-crashes crash₁₁ = now PE.refl
+  exec-crashes crash₁₂ = now PE.refl
+  exec-crashes crash₁₃ = now PE.refl
 
   -- The relational semantics also crashes for crashing states.
 
@@ -324,7 +338,7 @@ module Equivalence where
   -- semantics is deterministic.
 
   ⇒⇓ : ∀ {s s′ v} → s ⟶⋆ s′ → s′ ⇓ v → exec s ≈ return (just v)
-  ⇒⇓ ε            final = now
+  ⇒⇓ ε            final = now PE.refl
   ⇒⇓ (Var  ◅ s⟶⋆) ⇓     = laterˡ (⇒⇓ s⟶⋆ ⇓)
   ⇒⇓ (Con  ◅ s⟶⋆) ⇓     = laterˡ (⇒⇓ s⟶⋆ ⇓)
   ⇒⇓ (Clos ◅ s⟶⋆) ⇓     = laterˡ (⇒⇓ s⟶⋆ ⇓)
@@ -355,18 +369,18 @@ module Equivalence where
 
   ⇐⇓ : ∀ {s v} → exec s ≈ return (just v) → ∃ λ s′ → s ⟶⋆ s′ × s′ ⇓ v
   ⇐⇓ {s = s} ⇓ with kind s
-  ⇐⇓ now        | done final    = (_ , ε , final)
-  ⇐⇓ (laterˡ ⇓) | continue Var  = Prod.map id (Prod.map (_◅_ Var ) id) (⇐⇓ ⇓)
-  ⇐⇓ (laterˡ ⇓) | continue Con  = Prod.map id (Prod.map (_◅_ Con ) id) (⇐⇓ ⇓)
-  ⇐⇓ (laterˡ ⇓) | continue Clos = Prod.map id (Prod.map (_◅_ Clos) id) (⇐⇓ ⇓)
-  ⇐⇓ (laterˡ ⇓) | continue App  = Prod.map id (Prod.map (_◅_ App ) id) (⇐⇓ ⇓)
-  ⇐⇓ (laterˡ ⇓) | continue Ret  = Prod.map id (Prod.map (_◅_ Ret ) id) (⇐⇓ ⇓)
-  ⇐⇓ {s} {v} ⇓  | crash s↯      with
+  ⇐⇓ (now PE.refl) | done final    = (_ , ε , final)
+  ⇐⇓ (laterˡ ⇓)    | continue Var  = Prod.map id (Prod.map (_◅_ Var ) id) (⇐⇓ ⇓)
+  ⇐⇓ (laterˡ ⇓)    | continue Con  = Prod.map id (Prod.map (_◅_ Con ) id) (⇐⇓ ⇓)
+  ⇐⇓ (laterˡ ⇓)    | continue Clos = Prod.map id (Prod.map (_◅_ Clos) id) (⇐⇓ ⇓)
+  ⇐⇓ (laterˡ ⇓)    | continue App  = Prod.map id (Prod.map (_◅_ App ) id) (⇐⇓ ⇓)
+  ⇐⇓ (laterˡ ⇓)    | continue Ret  = Prod.map id (Prod.map (_◅_ Ret ) id) (⇐⇓ ⇓)
+  ⇐⇓ {s} {v} ⇓     | crash s↯      with
     return (just v)  ≈⟨ sym ⇓ ⟩
     exec s           ≈⟨ exec-crashes s↯ ⟩
     return nothing   ∎
-    where open RelReasoning
-  ... | ()
+    where open EqReasoning
+  ... | now ()
 
   ⇐⇑ : ∀ {s} → exec s ≈ never → s ⟶∞
   ⇐⇑ {s = s} ⇑ with kind s
@@ -380,11 +394,11 @@ module Equivalence where
     return nothing  ≈⟨ sym $ exec-crashes s↯ ⟩
     exec s          ≈⟨ ⇑ ⟩
     never           ∎))
-    where open RelReasoning
+    where open EqReasoning
 
   ⇐↯ : ∀ {s} → exec s ≈ return nothing → ∃ λ s′ → s ⟶⋆ s′ × Stuck s′
   ⇐↯ {s = s} ↯ with kind s
-  ⇐↯         () | done final
+  ⇐↯ (now ())   | done final
   ⇐↯ (laterˡ ↯) | continue Var  = Prod.map id (Prod.map (_◅_ Var ) id) $ ⇐↯ ↯
   ⇐↯ (laterˡ ↯) | continue Con  = Prod.map id (Prod.map (_◅_ Con ) id) $ ⇐↯ ↯
   ⇐↯ (laterˡ ↯) | continue Clos = Prod.map id (Prod.map (_◅_ Clos) id) $ ⇐↯ ↯

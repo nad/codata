@@ -6,8 +6,7 @@ module Lambda.Closure.Functional where
 
 open import Category.Monad
 open import Category.Monad.Partiality as Partiality
-  hiding (_>>=-cong_; associative; >>=-inversion-⇓; >>=-inversion-⇑;
-          module Workaround)
+  hiding (module Workaround)
 open import Coinduction
 open import Data.Empty using (⊥-elim)
 open import Data.List
@@ -22,7 +21,10 @@ open import Relation.Binary.PropositionalEquality as P using (_≡_)
 open import Relation.Nullary
 open import Relation.Nullary.Negation
 
-open RelReasoning
+private
+  open module PP = Partiality.Propositional
+    hiding (_>>=-cong_; associative; >>=-inversion-⇓; >>=-inversion-⇑)
+  open PP.Reasoning
 
 open import Lambda.Syntax
 open Closure Tm
@@ -48,27 +50,28 @@ module PF where
     Rel k x₁ x₂ → (∀ x → Rel k (f₁ x) (f₂ x)) →
     Rel k (x₁ >>= f₁) (x₂ >>= f₂)
   _>>=-cong_ {k} {f₁ = f₁} {f₂} x₁≈x₂ f₁≈f₂ =
-    Partiality._>>=-cong_ x₁≈x₂ helper
+    PP._>>=-cong_ x₁≈x₂ helper
     where
-    helper : ∀ x → Rel k (maybe f₁ fail x) (maybe f₂ fail x)
-    helper nothing  = fail ∎
-    helper (just x) = f₁≈f₂ x
+    helper : ∀ {x y} → x ≡ y →
+             Rel k (maybe f₁ fail x) (maybe f₂ fail y)
+    helper {x = nothing} P.refl = fail ∎
+    helper {x = just x}  P.refl = f₁≈f₂ x
 
   associative :
     {A B C : Set}
     (x : Maybe A ⊥) (f : A → Maybe B ⊥) (g : B → Maybe C ⊥) →
     (x >>= f >>= g) ≅ (x >>= λ y → f y >>= g)
   associative x f g =
-    (x >>= f >>= g)                      ≅⟨ Partiality.associative x _ _ ⟩
-    (x >>=′ λ y → maybe f fail y >>= g)  ≅⟨ Partiality._>>=-cong_ (x ∎) helper ⟩
+    (x >>= f >>= g)                      ≅⟨ PP.associative x _ _ ⟩
+    (x >>=′ λ y → maybe f fail y >>= g)  ≅⟨ PP._>>=-cong_ (x ∎) helper ⟩
     (x >>= λ y → f y >>= g)              ∎
     where
     open RawMonad Partiality.monad renaming (_>>=_ to _>>=′_)
 
-    helper : ∀ y → (maybe f fail y >>= g) ≅
-                   maybe (λ z → f z >>= g) fail y
-    helper nothing  = fail ∎
-    helper (just y) = (f y >>= g) ∎
+    helper : ∀ {y₁ y₂} → y₁ ≡ y₂ →
+             (maybe f fail y₁ >>= g) ≅ maybe (λ z → f z >>= g) fail y₂
+    helper {y₁ = nothing} P.refl = fail ∎
+    helper {y₁ = just y}  P.refl = (f y >>= g) ∎
 
   >>=-inversion-⇓ :
     ∀ {k} {A B : Set} x {f : A → Maybe B ⊥} {y} →
@@ -77,9 +80,9 @@ module PF where
                  (fz⇓ : f z ⇓[ k ] just y) →
                  steps x⇓ + steps fz⇓ ≡ steps x>>=f⇓
   >>=-inversion-⇓ x {f} x>>=f⇓
-    with Partiality.>>=-inversion-⇓ x x>>=f⇓
-  ... | (nothing , x↯ , ()  , _)
-  ... | (just z  , x⇓ , fz⇓ , eq) = (z , x⇓ , fz⇓ , eq)
+    with PP.>>=-inversion-⇓ x x>>=f⇓
+  ... | (nothing , x↯ , now ()  , _)
+  ... | (just z  , x⇓ , fz⇓     , eq) = (z , x⇓ , fz⇓ , eq)
 
   >>=-inversion-⇑ :
     ∀ {k} {A B : Set} x {f : A → Maybe B ⊥} →
@@ -87,7 +90,7 @@ module PF where
     ¬ ¬ (x ⇑[ other k ] ⊎
          ∃ λ y → x ⇓[ other k ] just y × f y ⇑[ other k ])
   >>=-inversion-⇑ {k} x {f} x>>=f⇑ =
-    helper ⟨$⟩ Partiality.>>=-inversion-⇑ x x>>=f⇑
+    helper ⟨$⟩ PP.>>=-inversion-⇑ x x>>=f⇑
     where
     open RawMonad ¬¬-Monad renaming (_<$>_ to _⟨$⟩_)
 
@@ -229,7 +232,8 @@ v₁₁≈v₂₁ ⟦·⟧-cong v₁₂≈v₂₂ =
   v₁₂≈v₂₂ >>=-cong λ v₂ →
   ⟪ v₁ ∙ v₂ ⟫P ∎
 
--- The semantics of application is compositional.
+-- The semantics of application is compositional (with respect to the
+-- syntactic equality which is used).
 
 ·-comp : ∀ {n} (t₁ t₂ : Tm n) {ρ} →
          ⟦ t₁ · t₂ ⟧ ρ ≅ ⟦ t₁ ⟧ ρ ⟦·⟧ ⟦ t₂ ⟧ ρ
@@ -273,7 +277,7 @@ module Correctness {k : OtherKind} where
   ._ ≈⟨ later  x≈y ⟩W later y≅z = later  (_ ≈⟨ x≈y ⟩P ♭ y≅z)
   ._ ≈⟨ laterˡ x≈y ⟩W       y≅z = laterˡ (_ ≈⟨ x≈y ⟩W   y≅z)
   _  ≈⟨ ⌈ x≈y ⌉    ⟩W       y≅z = ⌈ trans x≈y (≅⇒ y≅z) ⌉
-    where trans = Preorder.trans (Partiality.preorder _ _)
+    where trans = Preorder.trans (PP.preorder _)
 
   -- The relation _≈_ does not admit unrestricted use of transitivity
   -- in corecursive proofs, so I have formulated the correctness proof
@@ -339,6 +343,9 @@ module Correctness {k : OtherKind} where
 -- terms which crash. Furthermore it is not a self-contained
 -- correctness statement, but relies on a separate proof which shows
 -- that the VM is deterministic.
+
+-- Note also that the equality (well, partial order) that is used here
+-- is syntactic.
 
 correct : ∀ t →
           exec ⟨ ⟦ t ⟧t [] , [] , [] ⟩ ≳

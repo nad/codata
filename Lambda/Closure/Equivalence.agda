@@ -5,8 +5,7 @@
 
 module Lambda.Closure.Equivalence where
 
-open import Category.Monad.Partiality
-  hiding (>>=-inversion-⇓; >>=-inversion-⇑; module Workaround)
+open import Category.Monad.Partiality as Partiality
 open import Coinduction
 open import Data.Empty using (⊥-elim)
 open import Data.Maybe
@@ -20,7 +19,10 @@ open import Induction.Nat
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
 open import Relation.Nullary.Negation
 
-open RelReasoning renaming (_∎ to _□)
+private
+  open module PP = Partiality.Propositional
+    hiding (>>=-inversion-⇓; >>=-inversion-⇑)
+  open PP.Reasoning renaming (_∎ to _□)
 
 open import Lambda.Syntax
 open Closure Tm
@@ -58,26 +60,30 @@ sound⇓ t t⇓ = <-rec P sound⇓′ (steps t⇓) t t⇓ P.refl
           (t⇓ : ⟦ t ⟧ ρ ⇓ just v) → steps t⇓ ≡ s → ρ ⊢ t ⇒ val v
 
   sound⇓′ : ∀ s → <-Rec P s → P s
-  sound⇓′ s rec (con i)           now   _  = con
-  sound⇓′ s rec (var x)           now   _  = var
-  sound⇓′ s rec (ƛ t)             now   _  = ƛ
-  sound⇓′ s rec (t₁ · t₂) {ρ} {v} t₁t₂⇓ eq
+  sound⇓′ s rec (con i)           (now P.refl) _  = con
+  sound⇓′ s rec (var x)           (now P.refl) _  = var
+  sound⇓′ s rec (ƛ t)             (now P.refl) _  = ƛ
+  sound⇓′ s rec (t₁ · t₂) {ρ} {v} t₁t₂⇓        eq
     with >>=-inversion-⇓ (⟦ t₁ ⟧ ρ) (
            ⟦ t₁ ⟧ ρ ⟦·⟧ ⟦ t₂ ⟧ ρ  ≅⟨ sym $ ·-comp t₁ t₂ ⟩
            ⟦ t₁ · t₂ ⟧ ρ          ≈⟨ t₁t₂⇓ ⟩
            return v               □)
-  sound⇓′ s rec (t₁ · t₂) {ρ} t₁t₂⇓ eq | (v₁    , t₁⇓ , t₂∙⇓ , eq₁) with >>=-inversion-⇓ (⟦ t₂ ⟧ ρ) t₂∙⇓
-  sound⇓′ s rec (t₁ · t₂)     t₁t₂⇓ eq | (con i , t₁⇓ , t₂∙⇓ , eq₁) | (v₂ , t₂⇓ , ()        , _  )
-  sound⇓′ s rec (t₁ · t₂)     t₁t₂⇓ eq | (ƛ t _ , t₁⇓ , t₂∙⇓ , eq₁) | (v₂ , t₂⇓ , laterˡ ∙⇓ , eq₂) =
+  sound⇓′ s rec (t₁ · t₂) {ρ}     t₁t₂⇓ eq | (v₁    , t₁⇓ , t₂∙⇓ , eq₁) with >>=-inversion-⇓ (⟦ t₂ ⟧ ρ) t₂∙⇓
+  sound⇓′ s rec (t₁ · t₂)         t₁t₂⇓ eq | (con i , t₁⇓ , t₂∙⇓ , eq₁) | (v₂ , t₂⇓ , now ()    , _  )
+  sound⇓′ s rec (t₁ · t₂) {ρ} {v} t₁t₂⇓ eq | (ƛ t _ , t₁⇓ , t₂∙⇓ , eq₁) | (v₂ , t₂⇓ , laterˡ ∙⇓ , eq₂) =
     app (sound⇓′ _ (λ _ s′< → rec _ (s′<s _ s′<)) t₁ t₁⇓ P.refl)
         (sound⇓′ _ (λ _ s″< → rec _ (s″<s _ s″<)) t₂ t₂⇓ P.refl)
         (rec (steps ∙⇓) ∙< t ∙⇓ P.refl)
     where
     ≡s = begin
-      steps t₁⇓ + steps t₂∙⇓  ≡⟨ eq₁ ⟩
-      _                       ≡⟨ Steps.left-identity _ _ ⟩
-      steps t₁t₂⇓             ≡⟨ eq ⟩
-      s                       ∎
+      steps t₁⇓ + steps t₂∙⇓                                 ≡⟨ eq₁ ⟩
+      steps (⟦ t₁ ⟧ ρ ⟦·⟧ ⟦ t₂ ⟧ ρ  ≅⟨ sym $ ·-comp t₁ t₂ ⟩
+             ⟦ t₁ · t₂ ⟧ ρ          ≈⟨ t₁t₂⇓ ⟩
+             return v               □)                       ≡⟨ Steps.left-identity _ _ ⟩
+      steps (⟦ t₁ · t₂ ⟧ ρ          ≈⟨ t₁t₂⇓ ⟩
+             return v               □)                       ≡⟨ Steps.right-identity t₁t₂⇓ (return v □) ⟩
+      steps t₁t₂⇓                                            ≡⟨ eq ⟩
+      s                                                      ∎
       where open P.≡-Reasoning
 
     ≤s = begin
@@ -143,12 +149,12 @@ module Complete⇑ where
       laterˡ : ∀ {x y} (x≈y : ♭ x ≈W   y) → later x ≈W       y
 
     ⌈_⌉W : ∀ {x y} → x ≳ y → x ≈W y
-    ⌈ now        ⌉W = now
+    ⌈ now P.refl ⌉W = now
     ⌈ later  x≳y ⌉W = later ⌈ ♭ x≳y ⌉
     ⌈ laterˡ x≳y ⌉W = laterˡ ⌈ x≳y ⌉W
 
     program : ∀ {x y} → x ≈W y → x ≈P y
-    program now          = ⌈ now ⌉
+    program now          = ⌈ now P.refl ⌉
     program (later  x≈y) = later (♯ x≈y)
     program (laterˡ x≈y) = _ ≳⟪ laterˡ (_ □) ⟫ program x≈y
 
@@ -169,20 +175,20 @@ module Complete⇑ where
       where open F.Workaround
 
     trans≅≈W : ∀ {x y z} → x ≅ y → y ≈W z → x ≈W z
-    trans≅≈W now          now           = now
+    trans≅≈W (now P.refl) now           = now
     trans≅≈W (later  x≅y) (later  y≈z)  = later (_ ≅⟪ ♭ x≅y ⟫ y≈z)
     trans≅≈W (later  x≅y) (laterˡ y≈z)  = laterˡ (trans≅≈W (♭ x≅y) y≈z)
 
     trans≳≈W : ∀ {x y z} → x ≳ y → y ≈W z → x ≈W z
-    trans≳≈W now          now           = now
+    trans≳≈W (now P.refl) now           = now
     trans≳≈W (later  x≳y) (later  y≈z)  = later (_ ≳⟪ ♭ x≳y ⟫ y≈z)
     trans≳≈W (later  x≳y) (laterˡ y≈z)  = laterˡ (trans≳≈W (♭ x≳y) y≈z)
     trans≳≈W (laterˡ x≳y)         y≈z   = laterˡ (trans≳≈W x≳y y≈z)
 
     trans≈W≅ : ∀ {x y z} → x ≈W y → y ≅ z → x ≈W z
-    trans≈W≅ now          now         = now
-    trans≈W≅ (later  x≈y) (later y≅z) = later (_ ≈⟪ x≈y ⟫ ♭ y≅z)
-    trans≈W≅ (laterˡ x≈y)        y≅z  = laterˡ (trans≈W≅ x≈y y≅z)
+    trans≈W≅ now          (now P.refl) = now
+    trans≈W≅ (later  x≈y) (later y≅z)  = later (_ ≈⟪ x≈y ⟫ ♭ y≅z)
+    trans≈W≅ (laterˡ x≈y)        y≅z   = laterˡ (trans≈W≅ x≈y y≅z)
 
     whnf : ∀ {x y} → x ≈P y → x ≈W y
     whnf ⌈ x≳y ⌉                = ⌈ x≳y ⌉W
@@ -201,7 +207,7 @@ module Complete⇑ where
     private
 
       soundW : ∀ {x y} → x ≈W y → x ≈ y
-      soundW now          = now
+      soundW now          = now P.refl
       soundW (later  x≈y) = later (♯ soundP x≈y)
       soundW (laterˡ x≈y) = laterˡ (soundW x≈y)
 
@@ -286,7 +292,7 @@ sound↯ {t = t} {ρ} t↯ (val v , t⇓) with
   now nothing  ≈⟨ sym t↯ ⟩
   ⟦ t ⟧ ρ      ≈⟨ complete⇓ t⇓ ⟩
   return v     □
-... | ()
+... | now ()
 sound↯ {t = t} {ρ} t↯ (R.⊥ , t⇑) = now≉never (
   now nothing  ≈⟨ sym t↯ ⟩
   ⟦ t ⟧ ρ      ≈⟨ complete⇑ t⇑ ⟩
