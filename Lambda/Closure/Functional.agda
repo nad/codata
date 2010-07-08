@@ -281,9 +281,9 @@ module Correctness {k : OtherKind} where
 
   -- The relation _≈_ does not admit unrestricted use of transitivity
   -- in corecursive proofs, so I have formulated the correctness proof
-  -- using a continuation. Note that the proof would most likely be
-  -- easier if the semantics was also formulated in
-  -- continuation-passing style.
+  -- using a continuation. Note that the proof would perhaps be easier
+  -- if the semantics was also formulated in continuation-passing
+  -- style.
 
   correctW :
     ∀ {n} t {ρ : Env n} {c s} {f : Value → Maybe VM.Value ⊥} →
