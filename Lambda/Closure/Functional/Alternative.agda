@@ -365,8 +365,8 @@ module Correctness {k : OtherKind} where
     (∀ v → exec ⟨ c , val ⟦ v ⟧v ∷ s , ⟦ ρ ⟧ρ ⟩ ≈W k v) →
     exec ⟨ ⟦ t ⟧t c , s , ⟦ ρ ⟧ρ ⟩ ≈W ⟦ t ⟧ ρ k
   correctW (con i) {ρ} {c} {s} {k} hyp = laterˡ (
-    exec ⟨ c , val (con i) ∷ s , ⟦ ρ ⟧ρ ⟩  ≈⟨ hyp (con i) ⟩W
-    k (con i)                              ∎)
+    exec ⟨ c , val (Lambda.Syntax.Closure.con i) ∷ s , ⟦ ρ ⟧ρ ⟩  ≈⟨ hyp (con i) ⟩W
+    k (con i)                                                    ∎)
   correctW (var x) {ρ} {c} {s} {k} hyp = laterˡ (
     exec ⟨ c , val (lookup x ⟦ ρ ⟧ρ) ∷ s , ⟦ ρ ⟧ρ ⟩  ≡⟨ P.cong (λ v → exec ⟨ c , val v ∷ s , ⟦ ρ ⟧ρ ⟩) $
                                                           lookup-hom x ρ ⟩W

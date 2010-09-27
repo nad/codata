@@ -107,8 +107,8 @@ correct⇓′ {ρ = ρ} {c} {s} (var {x}) = begin
                                                              (lookup-hom x ρ) ⟩
   ⟨         c , val ⟦ lookup x ρ ⟧v   ∷ s , ⟦ ρ ⟧ρ ⟩ ∎
 correct⇓′ {ρ = ρ} {c} {s} (con {i}) = begin
-  ⟨ Con i ∷ c ,               s , ⟦ ρ ⟧ρ ⟩ ⟶⟨ Con ⟩
-  ⟨         c , val (con i) ∷ s , ⟦ ρ ⟧ρ ⟩ ∎
+  ⟨ Con i ∷ c ,                                     s , ⟦ ρ ⟧ρ ⟩ ⟶⟨ Con ⟩
+  ⟨         c , val (Lambda.Syntax.Closure.con i) ∷ s , ⟦ ρ ⟧ρ ⟩ ∎
 correct⇓′ {ρ = ρ} {c} {s} (ƛ {t}) = begin
   ⟨ Clos (⟦ t ⟧ [ Ret ]) ∷ c ,                  s , ⟦ ρ ⟧ρ ⟩ ⟶⟨ Clos ⟩
   ⟨                        c , val ⟦ ƛ t ρ ⟧v ∷ s , ⟦ ρ ⟧ρ ⟩ ∎

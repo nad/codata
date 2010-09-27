@@ -52,23 +52,23 @@ data Tree (n : ℕ) : Set where
 
 private
 
-  drop-var : ∀ {n x y} → (Ty n ∶ var x) ≡ var y → x ≡ y
+  drop-var : ∀ {n x y} → (var x ∶ Ty n) ≡ var y → x ≡ y
   drop-var refl = refl
 
   drop⟶ˡ : ∀ {n σ₁ σ₂ τ₁ τ₂} →
-           (Ty n ∶ σ₁ ⟶ σ₂) ≡ τ₁ ⟶ τ₂ → σ₁ ≡ τ₁
+           (σ₁ ⟶ σ₂ ∶ Ty n) ≡ τ₁ ⟶ τ₂ → σ₁ ≡ τ₁
   drop⟶ˡ refl = refl
 
   drop⟶ʳ : ∀ {n σ₁ σ₂ τ₁ τ₂} →
-           (Ty n ∶ σ₁ ⟶ σ₂) ≡ τ₁ ⟶ τ₂ → σ₂ ≡ τ₂
+           (σ₁ ⟶ σ₂ ∶ Ty n) ≡ τ₁ ⟶ τ₂ → σ₂ ≡ τ₂
   drop⟶ʳ refl = refl
 
   dropμ⟶ˡ : ∀ {n σ₁ σ₂ τ₁ τ₂} →
-            (Ty n ∶ μ σ₁ ⟶ σ₂) ≡ μ τ₁ ⟶ τ₂ → σ₁ ≡ τ₁
+            (μ σ₁ ⟶ σ₂ ∶ Ty n) ≡ μ τ₁ ⟶ τ₂ → σ₁ ≡ τ₁
   dropμ⟶ˡ refl = refl
 
   dropμ⟶ʳ : ∀ {n σ₁ σ₂ τ₁ τ₂} →
-            (Ty n ∶ μ σ₁ ⟶ σ₂) ≡ μ τ₁ ⟶ τ₂ → σ₂ ≡ τ₂
+            (μ σ₁ ⟶ σ₂ ∶ Ty n) ≡ μ τ₁ ⟶ τ₂ → σ₂ ≡ τ₂
   dropμ⟶ʳ refl = refl
 
 infix 4 _≡?_

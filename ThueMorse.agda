@@ -308,12 +308,13 @@ mutual
 
   _⋎W-hom_ : ∀ {A : Set} {m m′} (xs : StreamW m A) (ys : StreamW m′ A) →
              ⟦ xs ⋎W ys ⟧W ≈[ m ⋎M m′ ]P (⟦ xs ⟧W ⟨ S._⋎_ ⟩ ⟦ ys ⟧W)
-  (x ∷ xs) ⋎W-hom ys       = x ∷ ys ⋎W-hom xs
-  [ xs ]   ⋎W-hom [ ys ]   = [ ♯ (xs ⋎-hom ys) ]
-  [ xs ]   ⋎W-hom (y ∷ ys) =
-    [ ♯ (⟦ xs ⋎ program (y ∷ ys) ⟧P                 ≈⟨ xs ⋎-hom program (y ∷ ys) ⟩P (begin
-         (⟦ xs ⟧P ⟨ S._⋎_ ⟩ ⟦ program (y ∷ ys) ⟧P)  ≈⟨ SS.refl ⟨ S._⋎-cong_ ⟩ program-hom (y ∷ ys) ⟩′
-         (⟦ xs ⟧P ⟨ S._⋎_ ⟩ ⟦ y ∷ ys ⟧W)            ∎)) ]
+  (x ∷ xs) ⋎W-hom ys        = x ∷ ys ⋎W-hom xs
+  [ xs ]   ⋎W-hom [ ys ]    = [ ♯ (xs ⋎-hom ys) ]
+  [ xs ]   ⋎W-hom (y ∷ ys′) =
+    [ ♯ (⟦ xs ⋎ program ys ⟧P                 ≈⟨ xs ⋎-hom program ys ⟩P (begin
+         (⟦ xs ⟧P ⟨ S._⋎_ ⟩ ⟦ program ys ⟧P)  ≈⟨ SS.refl ⟨ S._⋎-cong_ ⟩ program-hom ys ⟩′
+         (⟦ xs ⟧P ⟨ S._⋎_ ⟩ ⟦ ys ⟧W)          ∎)) ]
+    where ys = y ∷ ys′
 
   _⋎-hom_ : ∀ {A : Set} {m m′} (xs : StreamP m A) (ys : StreamP m′ A) →
             ⟦ xs ⋎ ys ⟧P ≈[ m ⋎M m′ ]P (⟦ xs ⟧P ⟨ S._⋎_ ⟩ ⟦ ys ⟧P)

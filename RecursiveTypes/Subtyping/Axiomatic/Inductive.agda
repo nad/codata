@@ -202,7 +202,7 @@ module Decidable {n} (χ₁ χ₂ : Ty n) where
 
     T ⊪ var x , _ ≤? var y , _ = helper (var x ≡? var y)
       where
-      helper : ∀ {A x y} → Dec ((Ty n ∶ var x) ≡ var y) →
+      helper : ∀ {A x y} → Dec ((var x ∶ Ty n) ≡ var y) →
                ⟨ A ⟩⋆ ⊢ var x ≤ var y ⊎ ¬ var x ≤Coind var y
       helper (yes refl) = inj₁ (var _ ∎)
       helper (no  x≠y)  = inj₂ (x≠y ∘ Sem.var:≤∞⟶≡)

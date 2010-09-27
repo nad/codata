@@ -156,10 +156,13 @@ module Fin where
   -- double-negation shift lemma. See NonConstructive.⇐ below.
 
   filter : ∀ {P Q} → Inf (P ∪ Q) → Fin P → Inf Q
-  filter (now (inj₁ p) inf) (0     , fin) = ⊥-elim (fin 0 z≤n p)
-  filter (now (inj₁ p) inf) (suc i , fin) = skip (filter (♭ inf) (i , up′ fin))
-  filter (now (inj₂ q) inf) (i     , fin) = now q (♯ filter (♭ inf) (i , up fin))
-  filter (skip         inf) (i     , fin) = skip (filter inf (i , up fin))
+  filter inf (i , fin) = filter′ inf i fin
+    where
+    filter′ : ∀ {P Q} → Inf (P ∪ Q) → ∀ i → (∀ j → i ≤ j → ¬ P j) → Inf Q
+    filter′ (now (inj₁ p) inf) 0       fin = ⊥-elim (fin 0 z≤n p)
+    filter′ (now (inj₁ p) inf) (suc i) fin = skip (filter′ (♭ inf) i (up′ fin))
+    filter′ (now (inj₂ q) inf) i       fin = now q (♯ filter′ (♭ inf) i (up fin))
+    filter′ (skip         inf) i       fin = skip (filter′ inf i (up fin))
 
   commutes : ∀ {P Q} → (¬ Inf P → ¬ ¬ Fin P) →
              Inf (P ∪ Q) → ¬ ¬ (Inf P ⊎ Inf Q)
@@ -301,13 +304,17 @@ module DoubleNegated where
       skip (helper (NonConstructive.up ¬fin) (i , p))
 
   ¬¬⇐ : ∀ {P} → ¬¬Inf P → NonConstructive.Inf P
-  ¬¬⇐ {P} ¬¬inf fin = ¬¬-map (helper fin) (expand ¬¬inf) id
+  ¬¬⇐ ¬¬inf (i , fin) = ¬¬⇐′ ¬¬inf i fin
     where
-    helper : ∀ {P} → Fin P → ¬ Inf P
-    helper (i     , ¬p) (skip  inf)   = helper (i , Fin.up ¬p) inf
-    helper (zero  , ¬p) (now p inf)   = ¬p 0 z≤n p
-    helper (suc i , ¬p) (now p ¬¬inf) =
-      ¬¬⇐ (♭ ¬¬inf) (i , λ j i≤j → ¬p (suc j) (s≤s i≤j))
+    mutual
+      ¬¬⇐′ : ∀ {P} → ¬¬Inf P → ∀ i → ¬ (∀ j → i ≤ j → ¬ P j)
+      ¬¬⇐′ ¬¬inf i fin = ¬¬-map (helper i fin) (expand ¬¬inf) id
+
+      helper : ∀ {P} → ∀ i → (∀ j → i ≤ j → ¬ P j) → ¬ Inf P
+      helper i       ¬p (skip  inf)   = helper i (Fin.up ¬p) inf
+      helper zero    ¬p (now p inf)   = ¬p 0 z≤n p
+      helper (suc i) ¬p (now p ¬¬inf) =
+        ¬¬⇐′ (♭ ¬¬inf) i (λ j i≤j → ¬p (suc j) (s≤s i≤j))
 
   ⇐ : ∀ {P} → Inf P → NonConstructive.Inf P
   ⇐ = ¬¬⇐ ∘ λ inf → const inf ⟨$⟩ return tt

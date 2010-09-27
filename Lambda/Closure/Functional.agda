@@ -94,11 +94,11 @@ module PF where
     where
     open RawMonad ¬¬-Monad renaming (_<$>_ to _⟨$⟩_)
 
-    helper : (_ ⊎ ∃ λ (y : Maybe _) → _ × _) → _
-    helper (inj₁ x⇑                        ) = inj₁ x⇑
-    helper (inj₂ (just y  , x⇓ , fy⇑)      ) = inj₂ (y , x⇓ , fy⇑)
-    helper (inj₂ (nothing , x↯ , now∼never)) =
-      ⊥-elim (now≉never now∼never)
+    helper : (_ ⊎ ∃ λ (y : Maybe _) → _) → _
+    helper (inj₁ x⇑                      ) = inj₁ x⇑
+    helper (inj₂ (just y  , x⇓,fy⇑)      ) = inj₂ (y , x⇓,fy⇑)
+    helper (inj₂ (nothing , x↯,now∼never)) =
+      ⊥-elim (now≉never (proj₂ x↯,now∼never))
 
 ------------------------------------------------------------------------
 -- A workaround for the limitations of guardedness
@@ -290,8 +290,8 @@ module Correctness {k : OtherKind} where
     (∀ v → exec ⟨ c , val ⟦ v ⟧v ∷ s , ⟦ ρ ⟧ρ ⟩ ≈W f v) →
     exec ⟨ ⟦ t ⟧t c , s , ⟦ ρ ⟧ρ ⟩ ≈W (⟦ t ⟧ ρ >>= f)
   correctW (con i) {ρ} {c} {s} {f} hyp = laterˡ (
-    exec ⟨ c , val (con i) ∷ s , ⟦ ρ ⟧ρ ⟩  ≈⟨ hyp (con i) ⟩W
-    f (con i)                              ∎)
+    exec ⟨ c , val (Lambda.Syntax.Closure.con i) ∷ s , ⟦ ρ ⟧ρ ⟩  ≈⟨ hyp (con i) ⟩W
+    f (con i)                                                    ∎)
   correctW (var x) {ρ} {c} {s} {f} hyp = laterˡ (
     exec ⟨ c , val (lookup x ⟦ ρ ⟧ρ) ∷ s , ⟦ ρ ⟧ρ ⟩  ≡⟨ P.cong (λ v → exec ⟨ c , val v ∷ s , ⟦ ρ ⟧ρ ⟩) $
                                                           lookup-hom x ρ ⟩W
