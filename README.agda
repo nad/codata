@@ -115,13 +115,10 @@ import AdmissibleButNotPostulable
 ------------------------------------------------------------------------
 -- Section 5: Total parser combinators
 
--- Parser combinators which only handle recognition.
+-- The following code may not match the paper exactly. See the paper
+-- Total Parser Combinators for more information.
 
-import TotalRecognisers
-
--- Full parser combinators.
-
-import TotalParserCombinators.MixingInductionAndCoinduction
+import TotalParserCombinators
 
 ------------------------------------------------------------------------
 -- Section 6: Big-step semantics for both converging and diverging
