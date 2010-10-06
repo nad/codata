@@ -4,7 +4,8 @@
 
 -- This module is a variant of ThueMorse. The difference is that, in
 -- this module, the cast operation takes an inequality instead of an
--- equality, and this module does not contain any correctness proofs.
+-- equality, and that this module does not contain any correctness
+-- proofs.
 
 module ThueMorseLeq where
 
