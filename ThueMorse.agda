@@ -6,6 +6,13 @@
 -- (TCS 2010) uses a certain definition of the Thue-Morse sequence as
 -- a running example.
 
+-- Note that the code below makes use of the fact that Agda's
+-- termination checker allows "swapping of arguments", which was not
+-- mentioned when the termination checker was described in the paper
+-- "Beating the Productivity Checker Using Embedded Languages".
+-- However, it is easy to rewrite the code into a form which does not
+-- make use of swapping, at the cost of some code duplication.
+
 module ThueMorse where
 
 open import Coinduction
@@ -111,17 +118,12 @@ mutual
 
 infixr 5 _⋎W_
 
-mutual
+-- Note: Uses swapping of arguments.
 
-  _⋎W_ : ∀ {m m′ A} → StreamW m A → StreamW m′ A → StreamW (m ⋎M m′) A
-  [ xs ]   ⋎W [ ys ]   = [ xs ⋎ ys ]
-  [ xs ]   ⋎W (y ∷ ys) = [ xs ⋎ program (y ∷ ys) ]
-  (x ∷ xs) ⋎W ys       = x ∷ ys ⋎W′ xs
-
-  _⋎W′_ : ∀ {m m′ A} → StreamW m A → StreamW m′ A → StreamW (m ⋎M m′) A
-  [ xs ]   ⋎W′ [ ys ]   = [ xs ⋎ ys ]
-  [ xs ]   ⋎W′ (y ∷ ys) = [ xs ⋎ program (y ∷ ys) ]
-  (x ∷ xs) ⋎W′ ys       = x ∷ ys ⋎W xs
+_⋎W_ : ∀ {m m′ A} → StreamW m A → StreamW m′ A → StreamW (m ⋎M m′) A
+[ xs ]   ⋎W [ ys ]   = [ xs ⋎ ys ]
+[ xs ]   ⋎W (y ∷ ys) = [ xs ⋎ program (y ∷ ys) ]
+(x ∷ xs) ⋎W ys       = x ∷ ys ⋎W xs
 
 mapW : ∀ {m A B} → (A → B) → StreamW m A → StreamW m B
 mapW f [ xs ]   = [ map f xs ]
@@ -228,23 +230,16 @@ mutual
   odds-congW [ xs≈ys ]   = [ odds xs≈ys ]
   odds-congW (x ∷ xs≈ys) = evens-congW xs≈ys
 
-infixr 5 _⋎-congW_ _⋎-congW′_
+infixr 5 _⋎-congW_
 
-mutual
+-- Note: Uses swapping of arguments.
 
-  _⋎-congW_ : ∀ {m m′ A} {xs xs′ ys ys′ : Stream A} →
-              xs ≈[ m ]W ys → xs′ ≈[ m′ ]W ys′ →
-              (xs ⟨ S._⋎_ ⟩ xs′) ≈[ m ⋎M m′ ]W (ys ⟨ S._⋎_ ⟩ ys′)
-  [ xs≈ys ]   ⋎-congW [ xs′≈ys′ ]   = [ xs≈ys ⋎ xs′≈ys′ ]
-  [ xs≈ys ]   ⋎-congW (y ∷ xs′≈ys′) = [ xs≈ys ⋎ program≈ (y ∷ xs′≈ys′) ]
-  (x ∷ xs≈ys) ⋎-congW xs′≈ys′       = x ∷ xs′≈ys′ ⋎-congW′ xs≈ys
-
-  _⋎-congW′_ : ∀ {m m′ A} {xs xs′ ys ys′ : Stream A} →
-               xs ≈[ m ]W ys → xs′ ≈[ m′ ]W ys′ →
-               (xs ⟨ S._⋎_ ⟩ xs′) ≈[ m ⋎M m′ ]W (ys ⟨ S._⋎_ ⟩ ys′)
-  [ xs≈ys ]   ⋎-congW′ [ xs′≈ys′ ]   = [ xs≈ys ⋎ xs′≈ys′ ]
-  [ xs≈ys ]   ⋎-congW′ (y ∷ xs′≈ys′) = [ xs≈ys ⋎ program≈ (y ∷ xs′≈ys′) ]
-  (x ∷ xs≈ys) ⋎-congW′ xs′≈ys′       = x ∷ xs′≈ys′ ⋎-congW xs≈ys
+_⋎-congW_ : ∀ {m m′ A} {xs xs′ ys ys′ : Stream A} →
+            xs ≈[ m ]W ys → xs′ ≈[ m′ ]W ys′ →
+            (xs ⟨ S._⋎_ ⟩ xs′) ≈[ m ⋎M m′ ]W (ys ⟨ S._⋎_ ⟩ ys′)
+[ xs≈ys ]   ⋎-congW [ xs′≈ys′ ]   = [ xs≈ys ⋎ xs′≈ys′ ]
+[ xs≈ys ]   ⋎-congW (y ∷ xs′≈ys′) = [ xs≈ys ⋎ program≈ (y ∷ xs′≈ys′) ]
+(x ∷ xs≈ys) ⋎-congW xs′≈ys′       = x ∷ xs′≈ys′ ⋎-congW xs≈ys
 
 map-congW : ∀ {m A B} (f : A → B) {xs ys : Stream A} →
             xs ≈[ m ]W ys → S.map f xs ≈[ m ]W S.map f ys
@@ -309,23 +304,15 @@ mutual
 
 mutual
 
-  infixr 5 _⋎W-hom_ _⋎W′-hom_ _⋎-hom_
+  infixr 5 _⋎W-hom_ _⋎-hom_
+
+  -- Note: Uses swapping of arguments.
 
   _⋎W-hom_ : ∀ {A : Set} {m m′} (xs : StreamW m A) (ys : StreamW m′ A) →
              ⟦ xs ⋎W ys ⟧W ≈[ m ⋎M m′ ]P (⟦ xs ⟧W ⟨ S._⋎_ ⟩ ⟦ ys ⟧W)
-  (x ∷ xs) ⋎W-hom ys        = x ∷ ys ⋎W′-hom xs
+  (x ∷ xs) ⋎W-hom ys        = x ∷ ys ⋎W-hom xs
   [ xs ]   ⋎W-hom [ ys ]    = [ ♯ (xs ⋎-hom ys) ]
   [ xs ]   ⋎W-hom (y ∷ ys′) =
-    [ ♯ (⟦ xs ⋎ program ys ⟧P                 ≈⟨ xs ⋎-hom program ys ⟩P (begin
-         (⟦ xs ⟧P ⟨ S._⋎_ ⟩ ⟦ program ys ⟧P)  ≈⟨ SS.refl ⟨ S._⋎-cong_ ⟩ program-hom ys ⟩′
-         (⟦ xs ⟧P ⟨ S._⋎_ ⟩ ⟦ ys ⟧W)          ∎)) ]
-    where ys = y ∷ ys′
-
-  _⋎W′-hom_ : ∀ {A : Set} {m m′} (xs : StreamW m A) (ys : StreamW m′ A) →
-              ⟦ xs ⋎W′ ys ⟧W ≈[ m ⋎M m′ ]P (⟦ xs ⟧W ⟨ S._⋎_ ⟩ ⟦ ys ⟧W)
-  (x ∷ xs) ⋎W′-hom ys        = x ∷ ys ⋎W-hom xs
-  [ xs ]   ⋎W′-hom [ ys ]    = [ ♯ (xs ⋎-hom ys) ]
-  [ xs ]   ⋎W′-hom (y ∷ ys′) =
     [ ♯ (⟦ xs ⋎ program ys ⟧P                 ≈⟨ xs ⋎-hom program ys ⟩P (begin
          (⟦ xs ⟧P ⟨ S._⋎_ ⟩ ⟦ program ys ⟧P)  ≈⟨ SS.refl ⟨ S._⋎-cong_ ⟩ program-hom ys ⟩′
          (⟦ xs ⟧P ⟨ S._⋎_ ⟩ ⟦ ys ⟧W)          ∎)) ]
