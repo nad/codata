@@ -24,34 +24,34 @@ open import Data.Vec using (Vec; _∷ʳ_); open Data.Vec.Vec
 data Modulus : Set where
   -- Start the next chunk.
   next : (m :   Modulus) → Modulus
-  -- Output an element in the current chunk.
-  put  : (m : ∞ Modulus) → Modulus
+  -- Cons an element to the current chunk.
+  cons : (m : ∞ Modulus) → Modulus
 
 -- Inequality of moduli.
 
 infix 4 _≥M_
 
 data _≥M_ : Modulus → Modulus → Set where
-  next : ∀ {m m′} (m≥m′ :      m ≥M   m′ ) → next m ≥M next m′
-  put  : ∀ {m m′} (m≥m′ : ∞ (♭ m ≥M ♭ m′)) → put  m ≥M put  m′
-  putˡ : ∀ {m m′} (m≥m′ :    ♭ m ≥M   m′ ) → put  m ≥M      m′
+  next  : ∀ {m m′} (m≥m′ :      m ≥M   m′ ) → next m ≥M next m′
+  cons  : ∀ {m m′} (m≥m′ : ∞ (♭ m ≥M ♭ m′)) → cons m ≥M cons m′
+  consˡ : ∀ {m m′} (m≥m′ :    ♭ m ≥M   m′ ) → cons m ≥M      m′
 
 ------------------------------------------------------------------------
 -- Modulus transformers
 
 tailM : Modulus → Modulus
 tailM (next m) = next (tailM m)
-tailM (put  m) = ♭ m
+tailM (cons m) = ♭ m
 
 mutual
 
   evensM : Modulus → Modulus
   evensM (next m) = next (evensM m)
-  evensM (put  m) = put (♯ oddsM (♭ m))
+  evensM (cons m) = cons (♯ oddsM (♭ m))
 
   oddsM : Modulus → Modulus
   oddsM (next m) = next (oddsM m)
-  oddsM (put  m) = evensM (♭ m)
+  oddsM (cons m) = evensM (♭ m)
 
 infixr 5 _⋎M_
 
@@ -59,9 +59,9 @@ infixr 5 _⋎M_
 -- possible (see also _⋎W_).
 
 _⋎M_ : Modulus → Modulus → Modulus
-next m ⋎M next m′ = next (m ⋎M     m′)   -- Two chunks in, one out.
-next m ⋎M put  m′ = next (m ⋎M put m′)
-put  m ⋎M      m′ = put (♯ (m′ ⋎M ♭ m))
+next m ⋎M next m′ = next (m ⋎M      m′)   -- Two chunks in, one out.
+next m ⋎M cons m′ = next (m ⋎M cons m′)
+cons m ⋎M      m′ = cons (♯ (m′ ⋎M ♭ m))
 
 ------------------------------------------------------------------------
 -- Stream programs
@@ -73,7 +73,7 @@ infixr 5 _∷_ _⋎_
 
 data StreamP : Modulus → Set → Set₁ where
   [_]     : ∀ {m A} (xs : ∞ (StreamP m A)) → StreamP (next m) A
-  _∷_     : ∀ {m A} (x : A) (xs : StreamP (♭ m) A) → StreamP (put m) A
+  _∷_     : ∀ {m A} (x : A) (xs : StreamP (♭ m) A) → StreamP (cons m) A
   tail    : ∀ {m A} (xs : StreamP m A) → StreamP (tailM m) A
   evens   : ∀ {m A} (xs : StreamP m A) → StreamP (evensM m) A
   odds    : ∀ {m A} (xs : StreamP m A) → StreamP (oddsM m) A
@@ -84,7 +84,7 @@ data StreamP : Modulus → Set → Set₁ where
 
 data StreamW : Modulus → Set → Set₁ where
   [_] : ∀ {m A} (xs : StreamP m A) → StreamW (next m) A
-  _∷_ : ∀ {m A} (x : A) (xs : StreamW (♭ m) A) → StreamW (put m) A
+  _∷_ : ∀ {m A} (x : A) (xs : StreamW (♭ m) A) → StreamW (cons m) A
 
 program : ∀ {m A} → StreamW m A → StreamP m A
 program [ xs ]   = [ ♯ xs ]
@@ -124,7 +124,7 @@ module Cast where
 
   _+_ : ℕ → Modulus → Modulus
   zero  + m = m
-  suc n + m = put (♯ (n + m))
+  suc n + m = cons (♯ (n + m))
 
   _++_ : ∀ {A n m} → Vec A n → StreamP m A → StreamP (n + m) A
   []       ++ ys = ys
@@ -132,13 +132,13 @@ module Cast where
 
   +ˡ : ∀ {m m′} n → m ≥M m′ → n + m ≥M m′
   +ˡ zero    m≥m′ = m≥m′
-  +ˡ (suc n) m≥m′ = putˡ (+ˡ n m≥m′)
+  +ˡ (suc n) m≥m′ = consˡ (+ˡ n m≥m′)
 
   castW : ∀ {n m m′ A} → m ≥M m′ → Vec A n → StreamW m A → StreamW m′ A
-  castW {n} (next m≥m′) xs       [ ys ]   = [ cast (+ˡ n m≥m′) (xs ++ ys) ]
-  castW     (put  m≥m′) []       (y ∷ ys) = y ∷ castW (♭ m≥m′) []        ys
-  castW     (put  m≥m′) (x ∷ xs) (y ∷ ys) = x ∷ castW (♭ m≥m′) (xs ∷ʳ y) ys
-  castW     (putˡ m≥m′) xs       (y ∷ ys) = castW m≥m′ (xs ∷ʳ y) ys
+  castW {n} (next  m≥m′) xs       [ ys ]   = [ cast (+ˡ n m≥m′) (xs ++ ys) ]
+  castW     (cons  m≥m′) []       (y ∷ ys) = y ∷ castW (♭ m≥m′) []        ys
+  castW     (cons  m≥m′) (x ∷ xs) (y ∷ ys) = x ∷ castW (♭ m≥m′) (xs ∷ʳ y) ys
+  castW     (consˡ m≥m′) xs       (y ∷ ys) = castW m≥m′ (xs ∷ʳ y) ys
 
 whnf : ∀ {m A} → StreamP m A → StreamW m A
 whnf [ xs ]         = [ ♭ xs ]
@@ -163,19 +163,19 @@ mutual
 -- The Thue-Morse sequence
 
 thueMorseM₂ : Modulus
-thueMorseM₂ = put (♯ put (♯ next thueMorseM₂))
+thueMorseM₂ = cons (♯ cons (♯ next thueMorseM₂))
 
 thueMorseM₁ : Modulus
-thueMorseM₁ = put (♯ next (put (♯ next thueMorseM₂)))
+thueMorseM₁ = cons (♯ next (cons (♯ next thueMorseM₂)))
 
 thueMorseM : Modulus
-thueMorseM = put (♯ next thueMorseM₁)
+thueMorseM = cons (♯ next thueMorseM₁)
 
 lemma₁ : oddsM thueMorseM₂ ⋎M thueMorseM₂ ≥M thueMorseM₂
-lemma₁ = put (♯ put (♯ next (put (♯ put (♯ next lemma₁)))))
+lemma₁ = cons (♯ cons (♯ next (cons (♯ cons (♯ next lemma₁)))))
 
 lemma : evensM thueMorseM ⋎M tailM thueMorseM ≥M thueMorseM₁
-lemma = put (♯ next (put (♯ next (put (♯ put (♯ next lemma₁))))))
+lemma = cons (♯ next (cons (♯ next (cons (♯ cons (♯ next lemma₁))))))
 
 thueMorse : StreamP thueMorseM Bool
 thueMorse =

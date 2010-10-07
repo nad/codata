@@ -37,8 +37,8 @@ private
 data Modulus : Set where
   -- Start the next chunk.
   next : (m :   Modulus) → Modulus
-  -- Output an element in the current chunk.
-  put  : (m : ∞ Modulus) → Modulus
+  -- Cons an element to the current chunk.
+  cons : (m : ∞ Modulus) → Modulus
 
 -- Equality of moduli.
 
@@ -46,24 +46,24 @@ infix 4 _≈M_
 
 data _≈M_ : Modulus → Modulus → Set where
   next : ∀ {m m′} (m≈m′ :      m ≈M   m′ ) → next m ≈M next m′
-  put  : ∀ {m m′} (m≈m′ : ∞ (♭ m ≈M ♭ m′)) → put  m ≈M put  m′
+  cons : ∀ {m m′} (m≈m′ : ∞ (♭ m ≈M ♭ m′)) → cons m ≈M cons m′
 
 ------------------------------------------------------------------------
 -- Modulus transformers
 
 tailM : Modulus → Modulus
 tailM (next m) = next (tailM m)
-tailM (put  m) = ♭ m
+tailM (cons m) = ♭ m
 
 mutual
 
   evensM : Modulus → Modulus
   evensM (next m) = next (evensM m)
-  evensM (put  m) = put (♯ oddsM (♭ m))
+  evensM (cons m) = cons (♯ oddsM (♭ m))
 
   oddsM : Modulus → Modulus
   oddsM (next m) = next (oddsM m)
-  oddsM (put  m) = evensM (♭ m)
+  oddsM (cons m) = evensM (♭ m)
 
 infixr 5 _⋎M_
 
@@ -71,9 +71,9 @@ infixr 5 _⋎M_
 -- possible (see also _⋎W_).
 
 _⋎M_ : Modulus → Modulus → Modulus
-next m ⋎M next m′ = next (m ⋎M     m′)   -- Two chunks in, one out.
-next m ⋎M put  m′ = next (m ⋎M put m′)
-put  m ⋎M      m′ = put (♯ (m′ ⋎M ♭ m))
+next m ⋎M next m′ = next (m ⋎M      m′)   -- Two chunks in, one out.
+next m ⋎M cons m′ = next (m ⋎M cons m′)
+cons m ⋎M      m′ = cons (♯ (m′ ⋎M ♭ m))
 
 ------------------------------------------------------------------------
 -- Stream programs
@@ -85,7 +85,7 @@ infixr 5 _∷_ _⋎_
 
 data StreamP : Modulus → Set → Set₁ where
   [_]     : ∀ {m A} (xs : ∞ (StreamP m A)) → StreamP (next m) A
-  _∷_     : ∀ {m A} (x : A) (xs : StreamP (♭ m) A) → StreamP (put m) A
+  _∷_     : ∀ {m A} (x : A) (xs : StreamP (♭ m) A) → StreamP (cons m) A
   tail    : ∀ {m A} (xs : StreamP m A) → StreamP (tailM m) A
   evens   : ∀ {m A} (xs : StreamP m A) → StreamP (evensM m) A
   odds    : ∀ {m A} (xs : StreamP m A) → StreamP (oddsM m) A
@@ -96,7 +96,7 @@ data StreamP : Modulus → Set → Set₁ where
 
 data StreamW : Modulus → Set → Set₁ where
   [_] : ∀ {m A} (xs : StreamP m A) → StreamW (next m) A
-  _∷_ : ∀ {m A} (x : A) (xs : StreamW (♭ m) A) → StreamW (put m) A
+  _∷_ : ∀ {m A} (x : A) (xs : StreamW (♭ m) A) → StreamW (cons m) A
 
 program : ∀ {m A} → StreamW m A → StreamP m A
 program [ xs ]   = [ ♯ xs ]
@@ -131,7 +131,7 @@ mapW f (x ∷ xs) = f x ∷ mapW f xs
 
 castW : ∀ {m m′ A} → m ≈M m′ → StreamW m A → StreamW m′ A
 castW (next m≈m′) [ xs ]   = [ cast m≈m′ xs ]
-castW (put  m≈m′) (x ∷ xs) = x ∷ castW (♭ m≈m′) xs
+castW (cons m≈m′) (x ∷ xs) = x ∷ castW (♭ m≈m′) xs
 
 whnf : ∀ {m A} → StreamP m A → StreamW m A
 whnf [ xs ]         = [ ♭ xs ]
@@ -156,19 +156,19 @@ mutual
 -- The Thue-Morse sequence
 
 thueMorseM₂ : Modulus
-thueMorseM₂ = put (♯ put (♯ next thueMorseM₂))
+thueMorseM₂ = cons (♯ cons (♯ next thueMorseM₂))
 
 thueMorseM₁ : Modulus
-thueMorseM₁ = put (♯ next (put (♯ next thueMorseM₂)))
+thueMorseM₁ = cons (♯ next (cons (♯ next thueMorseM₂)))
 
 thueMorseM : Modulus
-thueMorseM = put (♯ next thueMorseM₁)
+thueMorseM = cons (♯ next thueMorseM₁)
 
 lemma₁ : oddsM thueMorseM₂ ⋎M thueMorseM₂ ≈M thueMorseM₂
-lemma₁ = put (♯ put (♯ next (put (♯ put (♯ next lemma₁)))))
+lemma₁ = cons (♯ cons (♯ next (cons (♯ cons (♯ next lemma₁)))))
 
 lemma : evensM thueMorseM ⋎M tailM thueMorseM ≈M thueMorseM₁
-lemma = put (♯ next (put (♯ next (put (♯ put (♯ next lemma₁))))))
+lemma = cons (♯ next (cons (♯ next (cons (♯ cons (♯ next lemma₁))))))
 
 thueMorse : StreamP thueMorseM Bool
 thueMorse =
@@ -184,7 +184,7 @@ data _≈[_]P_ : {A : Set} → Stream A → Modulus → Stream A → Set₁ wher
   [_]     : ∀ {m A} {xs ys : Stream A}
             (xs≈ys : ∞ (xs ≈[ m ]P ys)) → xs ≈[ next m ]P ys
   _∷_     : ∀ {m A} (x : A) {xs ys}
-            (xs≈ys : ♭ xs ≈[ ♭ m ]P ♭ ys) → x ∷ xs ≈[ put m ]P x ∷ ys
+            (xs≈ys : ♭ xs ≈[ ♭ m ]P ♭ ys) → x ∷ xs ≈[ cons m ]P x ∷ ys
   tail    : ∀ {m A} {xs ys : Stream A} (xs≈ys : xs ≈[ m ]P ys) →
             S.tail xs ≈[ tailM m ]P S.tail ys
   evens   : ∀ {m A} {xs ys : Stream A} (xs≈ys : xs ≈[ m ]P ys) →
@@ -207,7 +207,7 @@ data _≈[_]W_ : {A : Set} → Stream A → Modulus → Stream A → Set₁ wher
   [_]     : ∀ {m A} {xs ys : Stream A}
             (xs≈ys : xs ≈[ m ]P ys) → xs ≈[ next m ]W ys
   _∷_     : ∀ {m A} (x : A) {xs ys}
-            (xs≈ys : ♭ xs ≈[ ♭ m ]W ♭ ys) → x ∷ xs ≈[ put m ]W x ∷ ys
+            (xs≈ys : ♭ xs ≈[ ♭ m ]W ♭ ys) → x ∷ xs ≈[ cons m ]W x ∷ ys
 
 program≈ : ∀ {m A} {xs ys : Stream A} → xs ≈[ m ]W ys → xs ≈[ m ]P ys
 program≈ [ xs≈ys ]   = [ ♯ xs≈ys ]
@@ -249,7 +249,7 @@ map-congW f (x ∷ xs≈ys) = f x ∷ map-congW f xs≈ys
 cast-congW : ∀ {m m′ A} (ok : m ≈M m′) {xs ys : Stream A} →
              xs ≈[ m ]W ys → xs ≈[ m′ ]W ys
 cast-congW (next m≈m′) [ xs≈ys ]   = [ cast m≈m′ xs≈ys ]
-cast-congW (put  m≈m′) (x ∷ xs≈ys) = x ∷ cast-congW (♭ m≈m′) xs≈ys
+cast-congW (cons m≈m′) (x ∷ xs≈ys) = x ∷ cast-congW (♭ m≈m′) xs≈ys
 
 transPW : ∀ {m A} {xs ys zs : Stream A} →
           xs ≈[ m ]W ys → ys ≈ zs → xs ≈[ m ]W zs
@@ -358,7 +358,7 @@ mutual
   castW-hom : ∀ {m m′ A} (m≈m′ : m ≈M m′) (xs : StreamW m A) →
               ⟦ castW m≈m′ xs ⟧W ≈ ⟦ xs ⟧W
   castW-hom (next m≈m′) [ xs ]   = cast-hom m≈m′ xs
-  castW-hom (put  m≈m′) (x ∷ xs) = x ∷ ♯ castW-hom (♭ m≈m′) xs
+  castW-hom (cons m≈m′) (x ∷ xs) = x ∷ ♯ castW-hom (♭ m≈m′) xs
 
   cast-hom : ∀ {m m′ A} (m≈m′ : m ≈M m′) (xs : StreamP m A) →
              ⟦ cast m≈m′ xs ⟧P ≈ ⟦ xs ⟧P
