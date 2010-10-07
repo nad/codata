@@ -34,39 +34,38 @@ El ⌈ A ⌉      = A
 infixr 5 _∷_
 infixr 4 _,_
 
--- Program or WHNF?
---
--- The term WHNF is a bit of a misnomer here; only recursive
--- /coinductive/ arguments are suspended (in the form of programs).
+mutual
 
-data Kind : Set where
-  p w : Kind
+  data ElP : U → Set₁ where
+    ↓   : ∀ {a} (w : ElW a) → ElP a
+    fst : ∀ {a b} (p : ElP (a ⊗ b)) → ElP a
+    snd : ∀ {a b} (p : ElP (a ⊗ b)) → ElP b
+    lab : ∀ {A B} (t : Tree A) (bss : ElP (stream ⌈ Stream B ⌉)) →
+          ElP (tree ⌈ B ⌉ ⊗ stream ⌈ Stream B ⌉)
 
-data ElP : Kind → U → Set₁ where
-  leaf : ∀ {k a} → ElP k (tree a)
-  node : ∀ {k a}
-         (l : ∞ (ElP p (tree a))) (x : ElP k a)
-         (r : ∞ (ElP p (tree a))) → ElP k (tree a)
-  _∷_  : ∀ {k a}
-         (x : ElP k a) (xs : ∞ (ElP p (stream a))) → ElP k (stream a)
-  _,_  : ∀ {k a b} (x : ElP k a) (y : ElP k b) → ElP k (a ⊗ b)
-  ⌈_⌉  : ∀ {k A} (x : A) → ElP k ⌈ A ⌉
-  fst  : ∀ {a b} (t : ElP p (a ⊗ b)) → ElP p a
-  snd  : ∀ {a b} (t : ElP p (a ⊗ b)) → ElP p b
-  lab  : ∀ {A B} (t : Tree A) (bss : ElP p (stream ⌈ Stream B ⌉)) →
-         ElP p (tree ⌈ B ⌉ ⊗ stream ⌈ Stream B ⌉)
+  -- The term WHNF is a bit of a misnomer here; only recursive
+  -- /coinductive/ arguments are suspended (in the form of programs).
 
-fstW : ∀ {a b} → ElP w (a ⊗ b) → ElP w a
+  data ElW : U → Set₁ where
+    leaf : ∀ {a} → ElW (tree a)
+    node : ∀ {a}
+           (l : ∞ (ElP (tree a))) (x : ElW a) (r : ∞ (ElP (tree a))) →
+           ElW (tree a)
+    _∷_  : ∀ {a} (x : ElW a) (xs : ∞ (ElP (stream a))) → ElW (stream a)
+    _,_  : ∀ {a b} (x : ElW a) (y : ElW b) → ElW (a ⊗ b)
+    ⌈_⌉  : ∀ {A} (x : A) → ElW ⌈ A ⌉
+
+fstW : ∀ {a b} → ElW (a ⊗ b) → ElW a
 fstW (x , y) = x
 
-sndW : ∀ {a b} → ElP w (a ⊗ b) → ElP w b
+sndW : ∀ {a b} → ElW (a ⊗ b) → ElW b
 sndW (x , y) = y
 
 -- Uses the n-th stream to label the n-th level in the tree. Returns
 -- the remaining stream elements (for every level).
 
-labW : ∀ {A B} → Tree A → ElP w (stream ⌈ Stream B ⌉) →
-       ElP w (tree ⌈ B ⌉ ⊗ stream ⌈ Stream B ⌉)
+labW : ∀ {A B} → Tree A → ElW (stream ⌈ Stream B ⌉) →
+       ElW (tree ⌈ B ⌉ ⊗ stream ⌈ Stream B ⌉)
 labW leaf         bss                = (leaf , bss)
 labW (node l _ r) (⌈ b ∷ bs ⌉ ∷ bss) =
   (node (♯ fst x) ⌈ b ⌉ (♯ fst y) , ⌈ ♭ bs ⌉ ∷ ♯ snd y)
@@ -74,34 +73,30 @@ labW (node l _ r) (⌈ b ∷ bs ⌉ ∷ bss) =
   x = lab (♭ l) (♭ bss)
   y = lab (♭ r) (snd x)
 
-whnf : ∀ {a} → ElP p a → ElP w a
-whnf leaf         = leaf
-whnf (node l x r) = node l (whnf x) r
-whnf (x ∷ xs)     = whnf x ∷ xs
-whnf (x , y)      = (whnf x , whnf y)
-whnf ⌈ x ⌉        = ⌈ x ⌉
-whnf (fst t)      = fstW (whnf t)
-whnf (snd t)      = sndW (whnf t)
-whnf (lab t bss)  = labW t (whnf bss)
+whnf : ∀ {a} → ElP a → ElW a
+whnf (↓ w)       = w
+whnf (fst p)     = fstW (whnf p)
+whnf (snd p)     = sndW (whnf p)
+whnf (lab t bss) = labW t (whnf bss)
 
 mutual
 
-  ⟦_⟧W : ∀ {a} → ElP w a → El a
+  ⟦_⟧W : ∀ {a} → ElW a → El a
   ⟦ leaf       ⟧W = leaf
   ⟦ node l x r ⟧W = node (♯ ⟦ ♭ l ⟧P) ⟦ x ⟧W (♯ ⟦ ♭ r ⟧P)
   ⟦ x ∷ xs     ⟧W = ⟦ x ⟧W ∷ ♯ ⟦ ♭ xs ⟧P
   ⟦ (x , y)    ⟧W = (⟦ x ⟧W , ⟦ y ⟧W)
   ⟦ ⌈ x ⌉      ⟧W = x
 
-  ⟦_⟧P : ∀ {a} → ElP p a → El a
-  ⟦ t ⟧P = ⟦ whnf t ⟧W
+  ⟦_⟧P : ∀ {a} → ElP a → El a
+  ⟦ p ⟧P = ⟦ whnf p ⟧W
 
 ------------------------------------------------------------------------
 -- Breadth-first labelling
 
 label′ : ∀ {A B} → Tree A → Stream B →
-         ElP p (tree ⌈ B ⌉ ⊗ stream ⌈ Stream B ⌉)
-label′ t bs = lab t (⌈ bs ⌉ ∷ ♯ snd (label′ t bs))
+         ElP (tree ⌈ B ⌉ ⊗ stream ⌈ Stream B ⌉)
+label′ t bs = lab t (↓ (⌈ bs ⌉ ∷ ♯ snd (label′ t bs)))
 
 label : ∀ {A B} → Tree A → Stream B → Tree B
 label t bs = ⟦ fst (label′ t bs) ⟧P
