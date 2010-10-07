@@ -155,22 +155,48 @@ mutual
 ------------------------------------------------------------------------
 -- The Thue-Morse sequence
 
-thueMorseM₂ : Modulus
-thueMorseM₂ = cons (♯ cons (♯ next thueMorseM₂))
+[ccn]ω : Modulus
+[ccn]ω = cons (♯ cons (♯ next [ccn]ω))
 
-thueMorseM₁ : Modulus
-thueMorseM₁ = cons (♯ next (cons (♯ next thueMorseM₂)))
+[cn]²[ccn]ω : Modulus
+[cn]²[ccn]ω = cons (♯ next (cons (♯ next [ccn]ω)))
 
-thueMorseM : Modulus
-thueMorseM = cons (♯ next thueMorseM₁)
+[cn]³[ccn]ω : Modulus
+[cn]³[ccn]ω = cons (♯ next [cn]²[ccn]ω)
 
-lemma₁ : oddsM thueMorseM₂ ⋎M thueMorseM₂ ≈M thueMorseM₂
+-- Explanation of the proof of lemma₁:
+--
+-- odds [ccn]ω ≈ [cn]ω
+--
+-- [cn]ω ⋎ [ccn]ω ≈
+-- c ([ccn]ω ⋎ n[cn]ω) ≈
+-- c c (n[cn]ω ⋎ cn[ccn]ω) ≈
+-- c c n ([cn]ω ⋎ cn[ccn]ω) ≈
+-- c c n c (cn[ccn]ω ⋎ n[cn]ω) ≈
+-- c c n c c (n[cn]ω ⋎ n[ccn]ω) ≈
+-- c c n c c n ([cn]ω ⋎ [ccn]ω)
+
+lemma₁ : oddsM [ccn]ω ⋎M [ccn]ω ≈M [ccn]ω
 lemma₁ = cons (♯ cons (♯ next (cons (♯ cons (♯ next lemma₁)))))
 
-lemma : evensM thueMorseM ⋎M tailM thueMorseM ≈M thueMorseM₁
+-- Explanation of the proof of lemma:
+--
+-- evens [cn]³[ccn]ω ≈ cnn[cn]ω
+-- tail  [cn]³[ccn]ω ≈ n[cn]²[ccn]ω
+--
+-- cnn[cn]ω ⋎ n[cn]²[ccn]ω ≈
+-- c (n[cn]²[ccn]ω ⋎ nn[cn]ω) ≈
+-- c n ([cn]²[ccn]ω ⋎ n[cn]ω) ≈
+-- c n c (n[cn]ω ⋎ ncn[ccn]ω) ≈
+-- c n c n ([cn]ω ⋎ cn[ccn]ω) ≈
+-- c n c n c (cn[ccn]ω ⋎ n[cn]ω) ≈
+-- c n c n c c (n[cn]ω ⋎ n[ccn]ω) ≈
+-- c n c n c c n ([cn]ω ⋎ [ccn]ω)
+
+lemma : evensM [cn]³[ccn]ω ⋎M tailM [cn]³[ccn]ω ≈M [cn]²[ccn]ω
 lemma = cons (♯ next (cons (♯ next (cons (♯ cons (♯ next lemma₁))))))
 
-thueMorse : StreamP thueMorseM Bool
+thueMorse : StreamP [cn]³[ccn]ω Bool
 thueMorse =
   false ∷ [ ♯ cast lemma (map not (evens thueMorse) ⋎ tail thueMorse) ]
 
@@ -371,7 +397,7 @@ rhs bs = false ∷ ♯ (S.map not (S.evens bs) ⟨ S._⋎_ ⟩ S.tail bs)
 
 -- The definition above satisfies the intended defining equation.
 
-correct : ⟦ thueMorse ⟧P ≈[ thueMorseM ]P rhs ⟦ thueMorse ⟧P
+correct : ⟦ thueMorse ⟧P ≈[ [cn]³[ccn]ω ]P rhs ⟦ thueMorse ⟧P
 correct = false ∷ [ ♯ cast lemma (
   ⟦ cast lemma (map not (evens thueMorse) ⋎ tail thueMorse) ⟧P          ≈⟨ cast-hom lemma (map not (evens thueMorse) ⋎ tail thueMorse) ⟩
   ⟦ map not (evens thueMorse) ⋎ tail thueMorse ⟧P                       ≈⟨ map not (evens thueMorse) ⋎-hom tail thueMorse ⟩P (begin
@@ -383,7 +409,7 @@ correct = false ∷ [ ♯ cast lemma (
 
 -- The defining equation has at most one solution.
 
-unique : ∀ bs bs′ → bs ≈ rhs bs → bs′ ≈ rhs bs′ → bs ≈[ thueMorseM ]P bs′
+unique : ∀ bs bs′ → bs ≈ rhs bs → bs′ ≈ rhs bs′ → bs ≈[ [cn]³[ccn]ω ]P bs′
 unique bs bs′ bs≈ bs′≈ =
   bs      ≈⟨ bs≈ ⟩
   rhs bs  ≈⟨ false ∷ [ ♯ cast lemma
