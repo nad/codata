@@ -148,7 +148,7 @@ whnf (evens xs)     = evensW (whnf xs)
 whnf (odds xs)      = oddsW (whnf xs)
 whnf (xs ⋎ ys)      = whnf xs ⋎W whnf ys
 whnf (map f xs)     = mapW f (whnf xs)
-whnf (cast m≈m′ xs) = Cast.castW m≈m′ [] (whnf xs)
+whnf (cast m≥m′ xs) = Cast.castW m≥m′ [] (whnf xs)
 
 mutual
 
@@ -162,21 +162,21 @@ mutual
 ------------------------------------------------------------------------
 -- The Thue-Morse sequence
 
-thueMorseC₂ : Chunks
-thueMorseC₂ = cons (♯ cons (♯ next thueMorseC₂))
+[ccn]ω : Chunks
+[ccn]ω = cons (♯ cons (♯ next [ccn]ω))
 
-thueMorseC₁ : Chunks
-thueMorseC₁ = cons (♯ next (cons (♯ next thueMorseC₂)))
+[cn]²[ccn]ω : Chunks
+[cn]²[ccn]ω = cons (♯ next (cons (♯ next [ccn]ω)))
 
-thueMorseC : Chunks
-thueMorseC = cons (♯ next thueMorseC₁)
+[cn]³[ccn]ω : Chunks
+[cn]³[ccn]ω = cons (♯ next [cn]²[ccn]ω)
 
-lemma₁ : oddsC thueMorseC₂ ⋎C thueMorseC₂ ≥C thueMorseC₂
+lemma₁ : oddsC [ccn]ω ⋎C [ccn]ω ≥C [ccn]ω
 lemma₁ = cons (♯ cons (♯ next (cons (♯ cons (♯ next lemma₁)))))
 
-lemma : evensC thueMorseC ⋎C tailC thueMorseC ≥C thueMorseC₁
+lemma : evensC [cn]³[ccn]ω ⋎C tailC [cn]³[ccn]ω ≥C [cn]²[ccn]ω
 lemma = cons (♯ next (cons (♯ next (cons (♯ cons (♯ next lemma₁))))))
 
-thueMorse : StreamP thueMorseC Bool
+thueMorse : StreamP [cn]³[ccn]ω Bool
 thueMorse =
   false ∷ [ ♯ cast lemma (map not (evens thueMorse) ⋎ tail thueMorse) ]
