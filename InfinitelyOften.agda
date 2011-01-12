@@ -30,7 +30,7 @@ private
 
 module Mixed where
 
-  -- Inf P means that P is true for infinitely many natural numbers.
+  -- Inf P means that P is true for infinitely many natural numbers.
 
   data Inf (P : ℕ → Set) : Set where
     now  : (p : P 0) (inf : ∞ (Inf (P ∘ suc))) → Inf P
