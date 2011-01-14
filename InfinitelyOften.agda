@@ -271,6 +271,44 @@ module NonConstructive where
   ₂⇒₁ shift =
     shift (λ i≥j → Prod.map id (Prod.map (NatOrder.trans i≥j) id))
 
+  -- Finally this lemma is equivalent to the general double-negation
+  -- shift property. This was observed by Thierry Coquand.
+
+  DoubleNegationShiftLemma : Set₁
+  DoubleNegationShiftLemma =
+    {P : ℕ → Set} →
+    (∀ i → ¬ ¬ P i) → ¬ ¬ (∀ i → P i)
+
+  ⇒₂ : DoubleNegationShiftLemma → DoubleNegationShiftLemma₂
+  ⇒₂ shift _ = shift
+
+  ₂⇒ : DoubleNegationShiftLemma₂ → DoubleNegationShiftLemma
+  ₂⇒ shift {P} ∀¬¬P = ∀Q→∀P <$> ¬¬∀Q
+    where
+    Q : ℕ → Set
+    Q i = ∀ {j} → j ≤′ i → P j
+
+    ∀Q→∀P : (∀ i → Q i) → (∀ i → P i)
+    ∀Q→∀P ∀Q = λ i → ∀Q i ≤′-refl
+
+    Q-downwards-closed : ∀ {i j} → i ≥ j → Q i → Q j
+    Q-downwards-closed i≥j Qi = λ j′≤j →
+      Qi (NatProp.≤⇒≤′ (NatOrder.trans (NatProp.≤′⇒≤ j′≤j) i≥j))
+
+    q-zero : P 0 → Q 0
+    q-zero P0 ≤′-refl = P0
+
+    q-suc : ∀ {i} → P (suc i) → Q i → Q (suc i)
+    q-suc P1+i Qi ≤′-refl       = P1+i
+    q-suc P1+i Qi (≤′-step j≤i) = Qi j≤i
+
+    ∀¬¬Q : ∀ i → ¬ ¬ Q i
+    ∀¬¬Q zero    = q-zero <$> ∀¬¬P zero
+    ∀¬¬Q (suc i) = q-suc  <$> ∀¬¬P (suc i) ⊛ ∀¬¬Q i
+
+    ¬¬∀Q : ¬ ¬ (∀ i → Q i)
+    ¬¬∀Q = shift Q-downwards-closed ∀¬¬Q
+
 ------------------------------------------------------------------------
 -- Definition of "true infinitely often" which uses double-negation
 
