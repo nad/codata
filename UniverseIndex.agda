@@ -3,7 +3,7 @@
 -- several types at the same time
 ------------------------------------------------------------------------
 
-module Universe where
+module UniverseIndex where
 
 open import Coinduction
 open import Data.Product

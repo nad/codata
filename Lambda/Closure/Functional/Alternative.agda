@@ -17,17 +17,22 @@ module Lambda.Closure.Functional.Alternative where
 
 open import Category.Monad
 open import Category.Monad.Partiality as Partiality
+  using (_⊥; never; Kind; OtherKind)
 open import Coinduction
 open import Data.List
 open import Data.Maybe as Maybe
 open import Data.Vec using (Vec; []; _∷_; lookup)
 open import Function
+open import Level
 open import Relation.Binary using (module Preorder)
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
 
+open Partiality._⊥
+open Partiality.Kind
 private
-  open module PP = Partiality.Propositional
-  open PP.Reasoning
+  open module E {A : Set} = Partiality.Equality (_≡_ {A = A})
+  open module R {A : Set} =
+    Partiality.Reasoning (P.isEquivalence {A = A})
 
 open import Lambda.Syntax
 open Closure Tm
@@ -39,7 +44,7 @@ private
 ------------------------------------------------------------------------
 -- A monad with partiality and failure
 
-PF : RawMonad (_⊥ ∘ Maybe)
+PF : RawMonad {f = zero} (_⊥ ∘ Maybe)
 PF = Maybe.monadT Partiality.monad
 
 module PF where
@@ -357,8 +362,8 @@ module Correctness {k : OtherKind} where
   _≈⟨_⟩W_ : ∀ x {y z} → x ≈W y → y ≅ z → x ≈W z
   ._ ≈⟨ later  x≈y ⟩W later y≅z = later  (_ ≈⟨ x≈y ⟩P ♭ y≅z)
   ._ ≈⟨ laterˡ x≈y ⟩W       y≅z = laterˡ (_ ≈⟨ x≈y ⟩W   y≅z)
-  _  ≈⟨ ⌈ x≈y ⌉    ⟩W       y≅z = ⌈ trans x≈y (≅⇒ y≅z) ⌉
-    where trans = Preorder.trans (PP.preorder _)
+  _  ≈⟨ ⌈ x≈y ⌉    ⟩W       y≅z = ⌈ trans x≈y (Partiality.≅⇒ y≅z) ⌉
+    where trans = Preorder.trans (Partiality.preorder P.isPreorder _)
 
   correctW :
     ∀ {n} t {ρ : Env n} {c s} {k : Value → Maybe VM.Value ⊥} →

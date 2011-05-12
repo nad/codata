@@ -6,6 +6,7 @@
 module Lambda.Closure.Equivalence where
 
 open import Category.Monad.Partiality as Partiality
+  using (_⊥; never; steps; module Steps)
 open import Coinduction
 open import Data.Empty using (⊥-elim)
 open import Data.Maybe
@@ -19,10 +20,12 @@ open import Induction.Nat
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
 open import Relation.Nullary.Negation
 
+open Partiality._⊥
 private
-  open module PP = Partiality.Propositional
-    hiding (>>=-inversion-⇓; >>=-inversion-⇑)
-  open PP.Reasoning renaming (_∎ to _□)
+  open module PE {A : Set} = Partiality.Equality (_≡_ {A = A})
+  open module PR {A : Set} =
+    Partiality.Reasoning (P.isEquivalence {A = A})
+    renaming (_∎ to _□)
 
 open import Lambda.Syntax
 open Closure Tm
@@ -79,7 +82,7 @@ sound⇓ t t⇓ = <-rec P sound⇓′ (steps t⇓) t t⇓ P.refl
       steps t₁⇓ + steps t₂∙⇓                                 ≡⟨ eq₁ ⟩
       steps (⟦ t₁ ⟧ ρ ⟦·⟧ ⟦ t₂ ⟧ ρ  ≅⟨ sym $ ·-comp t₁ t₂ ⟩
              ⟦ t₁ · t₂ ⟧ ρ          ≈⟨ t₁t₂⇓ ⟩
-             return v               □)                       ≡⟨ Steps.left-identity _ _ ⟩
+             return v               □)                       ≡⟨ Steps.left-identity (sym $ ·-comp t₁ t₂) _ ⟩
       steps (⟦ t₁ · t₂ ⟧ ρ          ≈⟨ t₁t₂⇓ ⟩
              return v               □)                       ≡⟨ Steps.right-identity t₁t₂⇓ (return v □) ⟩
       steps t₁t₂⇓                                            ≡⟨ eq ⟩
@@ -229,20 +232,20 @@ module Complete⇑ where
               ρ ⊢ t ⇒ R.⊥ → ⟦ t ⟧ ρ ≈P never
   complete⇑ {ρ = ρ} (app {t₁} {t₂} {t = t} {ρ′} {v} t₁⇓ t₂⇓ t₁t₂⇑) =
     ⟦ t₁ · t₂ ⟧ ρ                 ≅⟪ ·-comp t₁ t₂ ⟫
-    ⟦ t₁ ⟧ ρ ⟦·⟧ ⟦ t₂ ⟧ ρ         ≳⟪ now⇒now (complete⇓ t₁⇓) ⟦·⟧-cong
-                                     now⇒now (complete⇓ t₂⇓) ⟫
+    ⟦ t₁ ⟧ ρ ⟦·⟧ ⟦ t₂ ⟧ ρ         ≳⟪ Partiality.now⇒now (complete⇓ t₁⇓) ⟦·⟧-cong
+                                     Partiality.now⇒now (complete⇓ t₂⇓) ⟫
     return (ƛ t ρ′) ⟦·⟧ return v  ≅⟪ later (♯ (_ □)) ⟫
     later (♯ ⟦ t ⟧ (v ∷ ρ′))      ≈⟪ later (♯ complete⇑ (♭ t₁t₂⇑)) ⟫
     never                         □
   complete⇑ {ρ = ρ} (·ˡ {t₁} {t₂} t₁⇑) =
     ⟦ t₁ · t₂ ⟧ ρ          ≅⟪ ·-comp t₁ t₂ ⟫
     ⟦ t₁ ⟧ ρ ⟦·⟧ ⟦ t₂ ⟧ ρ  ≈⟪ complete⇑ (♭ t₁⇑) ⟦·⟧P ⌈ ⟦ t₂ ⟧ ρ □ ⌉ ⟫
-    never ⟦·⟧ ⟦ t₂ ⟧ ρ     ≅⟨ left-zero _ ⟩
+    never ⟦·⟧ ⟦ t₂ ⟧ ρ     ≅⟨ Partiality.left-zero _ ⟩
     never                  □
   complete⇑ {ρ = ρ} (·ʳ {t₁} {t₂} {v} t₁⇓ t₂⇑) =
     ⟦ t₁ · t₂ ⟧ ρ          ≅⟪ ·-comp t₁ t₂ ⟫
-    ⟦ t₁ ⟧ ρ ⟦·⟧ ⟦ t₂ ⟧ ρ  ≈⟪ ⌈ now⇒now (complete⇓ t₁⇓) ⌉ ⟦·⟧P complete⇑ (♭ t₂⇑) ⟫
-    return v ⟦·⟧ never     ≅⟨ left-zero _ ⟩
+    ⟦ t₁ ⟧ ρ ⟦·⟧ ⟦ t₂ ⟧ ρ  ≈⟪ ⌈ Partiality.now⇒now (complete⇓ t₁⇓) ⌉ ⟦·⟧P complete⇑ (♭ t₂⇑) ⟫
+    return v ⟦·⟧ never     ≅⟨ Partiality.left-zero _ ⟩
     never                  □
 
 complete⇑ : ∀ {n} {t : Tm n} {ρ : Env n} →
@@ -255,9 +258,9 @@ complete⇑ = Complete⇑.soundP ∘ Complete⇑.complete⇑
 
 sound⇑ : Excluded-Middle _ → ∀ {n} (t : Tm n) {ρ : Env n} →
          ⟦ t ⟧ ρ ⇑ → ρ ⊢ t ⇒ R.⊥
-sound⇑ em (con i)       i⇑    = ⊥-elim (now≉never i⇑)
-sound⇑ em (var x)       x⇑    = ⊥-elim (now≉never x⇑)
-sound⇑ em (ƛ t)         ƛ⇑    = ⊥-elim (now≉never ƛ⇑)
+sound⇑ em (con i)       i⇑    = ⊥-elim (Partiality.now≉never i⇑)
+sound⇑ em (var x)       x⇑    = ⊥-elim (Partiality.now≉never x⇑)
+sound⇑ em (ƛ t)         ƛ⇑    = ⊥-elim (Partiality.now≉never ƛ⇑)
 sound⇑ em (t₁ · t₂) {ρ} t₁t₂⇑
   with decidable-stable em $ >>=-inversion-⇑ (⟦ t₁ ⟧ ρ) (
          ⟦ t₁ ⟧ ρ ⟦·⟧ ⟦ t₂ ⟧ ρ  ≅⟨ sym $ ·-comp t₁ t₂ ⟩
@@ -267,9 +270,9 @@ sound⇑ em (t₁ · t₂)     ⇑ | inj₁ t₁⇑               = ·ˡ (♯ so
 sound⇑ em (t₁ · t₂) {ρ} ⇑ | inj₂ (v₁ , t₁⇓ , t₂∙⇑)
   with decidable-stable em $ >>=-inversion-⇑ (⟦ t₂ ⟧ ρ) t₂∙⇑
 sound⇑ em (t₁ · t₂) ⇑ | inj₂ (v₁    , t₁⇓ , t₂∙⇑) | inj₁ t₂⇑             = ·ʳ (sound⇓ t₁ t₁⇓) (♯ sound⇑ em t₂ t₂⇑)
-sound⇑ em (t₁ · t₂) ⇑ | inj₂ (con i , t₁⇓ , t₂∙⇑) | inj₂ (v₂ , t₂⇓ , ∙⇑) = ⊥-elim (now≉never ∙⇑)
+sound⇑ em (t₁ · t₂) ⇑ | inj₂ (con i , t₁⇓ , t₂∙⇑) | inj₂ (v₂ , t₂⇓ , ∙⇑) = ⊥-elim (Partiality.now≉never ∙⇑)
 sound⇑ em (t₁ · t₂) ⇑ | inj₂ (ƛ t _ , t₁⇓ , t₂∙⇑) | inj₂ (v₂ , t₂⇓ , ∙⇑) =
-  app (sound⇓ t₁ t₁⇓) (sound⇓ t₂ t₂⇓) (♯ sound⇑ em t (later⁻¹ ∙⇑))
+  app (sound⇓ t₁ t₁⇓) (sound⇓ t₂ t₂⇓) (♯ sound⇑ em t (Partiality.later⁻¹ ∙⇑))
 
 ------------------------------------------------------------------------
 -- Crashing computations
@@ -279,7 +282,9 @@ sound⇑ em (t₁ · t₂) ⇑ | inj₂ (ƛ t _ , t₁⇓ , t₂∙⇑) | inj₂
 complete↯ : Excluded-Middle _ → ∀ {n} (t : Tm n) (ρ : Env n) →
             ∄ (λ s → ρ ⊢ t ⇒ s) → ⟦ t ⟧ ρ ⇓ nothing
 complete↯ em t ρ ¬⇒
-  with decidable-stable em $ now-or-never {k = weak} (⟦ t ⟧ ρ)
+  with decidable-stable em $
+         Partiality.now-or-never {_∼_ = _≡_} P.refl
+                                 {k = Partiality.weak} (⟦ t ⟧ ρ)
 ... | inj₂ t⇑             = ⊥-elim (¬⇒ (, sound⇑ em t t⇑))
 ... | inj₁ (nothing , t↯) = t↯
 ... | inj₁ (just v  , t⇓) = ⊥-elim (¬⇒ (, sound⇓ t t⇓))
@@ -293,7 +298,7 @@ sound↯ {t = t} {ρ} t↯ (val v , t⇓) with
   ⟦ t ⟧ ρ      ≈⟨ complete⇓ t⇓ ⟩
   return v     □
 ... | now ()
-sound↯ {t = t} {ρ} t↯ (R.⊥ , t⇑) = now≉never (
+sound↯ {t = t} {ρ} t↯ (R.⊥ , t⇑) = Partiality.now≉never (
   now nothing  ≈⟨ sym t↯ ⟩
   ⟦ t ⟧ ρ      ≈⟨ complete⇑ t⇑ ⟩
   never        □)

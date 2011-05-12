@@ -21,14 +21,14 @@ open import Stream using (Stream; _≺_) renaming (_++_ to _++∞_)
 ------------------------------------------------------------------------
 -- Some operations
 
-zipWith : ∀ {A B} (f : A → B → B) → Colist A → Stream B → Stream B
+zipWith : {A B : Set} (f : A → B → B) → Colist A → Stream B → Stream B
 zipWith f []       ys       = ys
 zipWith f (x ∷ xs) (y ≺ ys) = f x y ≺ ♯ zipWith f (♭ xs) (♭ ys)
 
-_⁺++∞_ : ∀ {A} → List⁺ A → Stream A → Stream A
+_⁺++∞_ : {A : Set} → List⁺ A → Stream A → Stream A
 xs ⁺++∞ ys = Colist.fromList (Vec.toList $ List⁺.toVec xs) ++∞ ys
 
-_⁺++_ : ∀ {A} → List⁺ A → Colist A → Colist A
+_⁺++_ : {A : Set} → List⁺ A → Colist A → Colist A
 xs ⁺++ ys = Colist.fromList (Vec.toList $ List⁺.toVec xs) ++ ys
 
 ------------------------------------------------------------------------

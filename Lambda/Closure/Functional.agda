@@ -6,7 +6,7 @@ module Lambda.Closure.Functional where
 
 open import Category.Monad
 open import Category.Monad.Partiality as Partiality
-  hiding (module Workaround)
+  using (_⊥; never; OtherKind; other; steps)
 open import Coinduction
 open import Data.Empty using (⊥-elim)
 open import Data.List
@@ -16,15 +16,17 @@ open import Data.Product
 open import Data.Sum
 open import Data.Vec using (Vec; []; _∷_; lookup)
 open import Function
+open import Level
 open import Relation.Binary using (module Preorder)
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
 open import Relation.Nullary
 open import Relation.Nullary.Negation
 
+open Partiality._⊥
 private
-  open module PP = Partiality.Propositional
-    hiding (_>>=-cong_; associative; >>=-inversion-⇓; >>=-inversion-⇑)
-  open PP.Reasoning
+  open module E {A : Set} = Partiality.Equality (_≡_ {A = A})
+  open module R {A : Set} =
+    Partiality.Reasoning (P.isEquivalence {A = A})
 
 open import Lambda.Syntax
 open Closure Tm
@@ -36,7 +38,7 @@ private
 ------------------------------------------------------------------------
 -- A monad with partiality and failure
 
-PF : RawMonad (_⊥ ∘ Maybe)
+PF : RawMonad {f = zero} (_⊥ ∘ Maybe)
 PF = Maybe.monadT Partiality.monad
 
 module PF where
@@ -50,7 +52,7 @@ module PF where
     Rel k x₁ x₂ → (∀ x → Rel k (f₁ x) (f₂ x)) →
     Rel k (x₁ >>= f₁) (x₂ >>= f₂)
   _>>=-cong_ {k} {f₁ = f₁} {f₂} x₁≈x₂ f₁≈f₂ =
-    PP._>>=-cong_ x₁≈x₂ helper
+    Partiality._>>=-cong_ x₁≈x₂ helper
     where
     helper : ∀ {x y} → x ≡ y →
              Rel k (maybe f₁ fail x) (maybe f₂ fail y)
@@ -62,8 +64,8 @@ module PF where
     (x : Maybe A ⊥) (f : A → Maybe B ⊥) (g : B → Maybe C ⊥) →
     (x >>= f >>= g) ≅ (x >>= λ y → f y >>= g)
   associative x f g =
-    (x >>= f >>= g)                      ≅⟨ PP.associative x _ _ ⟩
-    (x >>=′ λ y → maybe f fail y >>= g)  ≅⟨ PP._>>=-cong_ (x ∎) helper ⟩
+    (x >>= f >>= g)                      ≅⟨ Partiality.associative P.refl x _ _ ⟩
+    (x >>=′ λ y → maybe f fail y >>= g)  ≅⟨ Partiality._>>=-cong_ (x ∎) helper ⟩
     (x >>= λ y → f y >>= g)              ∎
     where
     open RawMonad Partiality.monad renaming (_>>=_ to _>>=′_)
@@ -80,7 +82,7 @@ module PF where
                  (fz⇓ : f z ⇓[ k ] just y) →
                  steps x⇓ + steps fz⇓ ≡ steps x>>=f⇓
   >>=-inversion-⇓ x {f} x>>=f⇓
-    with PP.>>=-inversion-⇓ x x>>=f⇓
+    with Partiality.>>=-inversion-⇓ {_∼A_ = _≡_} P.refl x x>>=f⇓
   ... | (nothing , x↯ , now ()  , _)
   ... | (just z  , x⇓ , fz⇓     , eq) = (z , x⇓ , fz⇓ , eq)
 
@@ -90,7 +92,7 @@ module PF where
     ¬ ¬ (x ⇑[ other k ] ⊎
          ∃ λ y → x ⇓[ other k ] just y × f y ⇑[ other k ])
   >>=-inversion-⇑ {k} x {f} x>>=f⇑ =
-    helper ⟨$⟩ PP.>>=-inversion-⇑ x x>>=f⇑
+    helper ⟨$⟩ Partiality.>>=-inversion-⇑ P.isEquivalence x x>>=f⇑
     where
     open RawMonad ¬¬-Monad renaming (_<$>_ to _⟨$⟩_)
 
@@ -98,7 +100,7 @@ module PF where
     helper (inj₁ x⇑                      ) = inj₁ x⇑
     helper (inj₂ (just y  , x⇓,fy⇑)      ) = inj₂ (y , x⇓,fy⇑)
     helper (inj₂ (nothing , x↯,now∼never)) =
-      ⊥-elim (now≉never (proj₂ x↯,now∼never))
+      ⊥-elim (Partiality.now≉never (proj₂ x↯,now∼never))
 
 ------------------------------------------------------------------------
 -- A workaround for the limitations of guardedness
@@ -276,8 +278,8 @@ module Correctness {k : OtherKind} where
   _≈⟨_⟩W_ : ∀ x {y z} → x ≈W y → y ≅ z → x ≈W z
   ._ ≈⟨ later  x≈y ⟩W later y≅z = later  (_ ≈⟨ x≈y ⟩P ♭ y≅z)
   ._ ≈⟨ laterˡ x≈y ⟩W       y≅z = laterˡ (_ ≈⟨ x≈y ⟩W   y≅z)
-  _  ≈⟨ ⌈ x≈y ⌉    ⟩W       y≅z = ⌈ trans x≈y (≅⇒ y≅z) ⌉
-    where trans = Preorder.trans (PP.preorder _)
+  _  ≈⟨ ⌈ x≈y ⌉    ⟩W       y≅z = ⌈ trans x≈y (Partiality.≅⇒ y≅z) ⌉
+    where trans = Preorder.trans (Partiality.preorder P.isPreorder _)
 
   -- The relation _≈_ does not admit unrestricted use of transitivity
   -- in corecursive proofs, so I have formulated the correctness proof

@@ -46,6 +46,7 @@ carry = 0 ≺ ♯ (carry ⟨ _+_ ⟩ 1 ∞ ⋎ 0 ∞)
 carry-folded : carry ≊ 0 ∞ ⋎ carry ⟨ _+_ ⟩ 1 ∞
 carry-folded = carry ∎
 
+2^carry : Prog ℕ
 2^carry = 2 ∞ ⟨ _^_ ⟩ carry
 
 turn-length : ℕ → ℕ

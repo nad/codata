@@ -33,7 +33,10 @@ open import Data.Product
 nat : Prog ℕ
 nat = 0 ≺ ♯ (nat ⟨ _+_ ⟩ 1 ∞)
 
-2*nat   = 2 ∞ ⟨ _*_ ⟩ nat
+2*nat : Prog ℕ
+2*nat = 2 ∞ ⟨ _*_ ⟩ nat
+
+2*nat+1 : Prog ℕ
 2*nat+1 = 2*nat ⟨ _+_ ⟩ 1 ∞
 
 fac : Prog ℕ

@@ -180,9 +180,9 @@ pointwise
     Eq n _≡_ (curryⁿ ⟪ app n f ⟫) (curryⁿ ⟪ app n g ⟫) →
     Eq n _≊_ (curryⁿ ⟦ app n f ⟧) (curryⁿ ⟦ app n g ⟧)
 pointwise n f g hyp =
-  curryⁿ-cong ⟦ app n f ⟧ ⟦ app n g ⟧
+  curryⁿ-cong _≊_ ⟦ app n f ⟧ ⟦ app n g ⟧
     (pointwise' (app n f) (app n g)
-      (curryⁿ-cong⁻¹ ⟪ app n f ⟫ ⟪ app n g ⟫ hyp))
+      (curryⁿ-cong⁻¹ _≡_ ⟪ app n f ⟫ ⟪ app n g ⟫ hyp))
 
 ------------------------------------------------------------------------
 -- Some examples

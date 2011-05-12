@@ -17,10 +17,11 @@ open import Data.Product as Prod
 open import Data.Star hiding (return)
 open import Data.Vec using (Vec; []; _∷_; lookup)
 open import Function
+open import Level
 open import Relation.Binary.PropositionalEquality as PE using (_≡_)
 open import Relation.Nullary
 
-open RawMonad P.monad
+open RawMonad (P.monad {f = zero})
 
 open import Lambda.Syntax
 private module C = Closure Tm
@@ -213,9 +214,13 @@ module Functional where
 
   module Equality where
 
-    open P.Propositional public
-      using (_≈_; now; later; laterˡ; later⁻¹; now≉never)
-      renaming (module Reasoning to EqReasoning)
+    private
+      open module PEq {A : Set} = P.Equality {A = A} _≡_ public
+        using (_≈_; now; later; laterˡ)
+
+    open P public using (later⁻¹; now≉never)
+
+    module EqReasoning {A : Set} = P.Reasoning {A = A} PE.isEquivalence
 
 ------------------------------------------------------------------------
 -- Equivalence proof

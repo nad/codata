@@ -126,7 +126,7 @@ fold : ∀ {n} {τ₁ τ₂ : Ty (suc n)} →
 fold = ♯ refl∞ _ ⟶ ♯ refl∞ _
 
 var:≤∞⟶≡ : ∀ {n} {x y : Fin n} →
-           var x ≤∞ var y → var x ≡ var y
+           var x ≤∞ var y → Ty.var x ≡ Ty.var y
 var:≤∞⟶≡ var = refl
 
 left-proj : ∀ {n} {σ₁ σ₂ τ₁ τ₂ : ∞ (Tree n)} →

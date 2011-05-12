@@ -21,7 +21,7 @@ import StreamProg
 -- By indexing the program and WHNF types on a universe one can handle
 -- several types at the same time.
 
-import Universe
+import UniverseIndex
 
 -- Breadth-first labelling of trees, /almost/ implementing the classic
 -- tie-the-recursive-knot algorithm due to Jeremy Gibbons and Geraint

@@ -10,17 +10,18 @@ open import Algebra
 open import Category.Monad
 open import Coinduction
 open import Data.Empty
-open import Function
 open import Data.Nat as Nat
 import Data.Nat.Properties as NatProp
 open import Data.Product as Prod
 open import Data.Sum
 open import Data.Unit using (tt)
+open import Function
+open import Level using (zero)
 open import Relation.Binary
 open import Relation.Nullary
 open import Relation.Nullary.Negation
 open import Relation.Unary
-open RawMonad ¬¬-Monad
+open RawMonad {f = zero} ¬¬-Monad
 private
   module NatOrder   = DecTotalOrder       Nat.decTotalOrder
   module NatLattice = DistributiveLattice NatProp.distributiveLattice
