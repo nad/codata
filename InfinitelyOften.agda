@@ -12,30 +12,112 @@ open import Coinduction
 open import Data.Empty
 open import Data.Nat as Nat
 import Data.Nat.Properties as NatProp
-open import Data.Product as Prod
-open import Data.Sum
+open import Data.Product as Prod hiding (map)
+open import Data.Sum hiding (map)
 open import Data.Unit using (tt)
 open import Function
-open import Level using (zero)
-open import Relation.Binary
+open import Function.Equality using (_⟨$⟩_)
+open import Function.Equivalence
+  using (_⇔_; equivalence; module Equivalence)
+import Function.Related as Related
+open import Level using (Lift); open Level.Lift
+open import Relation.Binary hiding (_⇒_)
 open import Relation.Nullary
 open import Relation.Nullary.Negation
+import Relation.Nullary.Universe as Univ
 open import Relation.Unary
-open RawMonad {f = zero} ¬¬-Monad
 private
+  open module M {f} = RawMonad {f = f} ¬¬-Monad
   module NatOrder   = DecTotalOrder       Nat.decTotalOrder
   module NatLattice = DistributiveLattice NatProp.distributiveLattice
+
+------------------------------------------------------------------------
+-- Above
+
+module Above where
+
+  -- P Above i holds if P holds somewhere above i (perhaps at i
+  -- itself).
+
+  _Above_ : (ℕ → Set) → (ℕ → Set)
+  P Above i = ∃ λ j → i ≤ j × P j
+
+  -- Conversion lemma.
+
+  move-suc : ∀ {P i} → P Above suc i ⇔ (P ∘ suc) Above i
+  move-suc {P} {i} = equivalence ⇒ ⇐
+    where
+    ⇒ : P Above suc i → (P ∘ suc) Above i
+    ⇒ (.(1 + j) , s≤s {n = j} i≤j , P[1+j]) = (j , i≤j , P[1+j])
+
+    ⇐ : (P ∘ suc) Above i → P Above suc i
+    ⇐ (j , i≤j , P[1+j]) = (1 + j , s≤s i≤j , P[1+j])
+
+  -- A closure lemma.
+
+  stable-up :
+    ∀ {P} →
+    (∀ i → Stable (P Above i)) → (∀ i → Stable ((P ∘ suc) Above i))
+  stable-up stable i ¬¬P∘suc⇑i =
+    Equivalence.to move-suc ⟨$⟩
+      stable (1 + i) (_⟨$⟩_ (Equivalence.from move-suc) <$> ¬¬P∘suc⇑i)
+
+------------------------------------------------------------------------
+-- Has upper bound
+
+module Has-upper-bound where
+
+  open Above using (_Above_)
+
+  -- P Has-upper-bound i means that P does not hold for any j ≥ i.
+
+  _Has-upper-bound_ : (ℕ → Set) → (ℕ → Set)
+  P Has-upper-bound i = ∀ j → i ≤ j → ¬ P j
+
+  -- A closure lemma.
+
+  up : ∀ {P i} → P Has-upper-bound i → (P ∘ suc) Has-upper-bound i
+  up ¬p = λ j i≤j → ¬p (suc j) (NatProp.≤-step i≤j)
+
+  -- A conversion lemma.
+
+  move-suc : ∀ {P i} →
+             P Has-upper-bound suc i ⇔ (P ∘ suc) Has-upper-bound i
+  move-suc {P} {i} = equivalence ⇒ ⇐
+    where
+    ⇒ : P Has-upper-bound suc i → (P ∘ suc) Has-upper-bound i
+    ⇒ P↯[1+i] j i≤j P[1+j] = P↯[1+i] (1 + j) (s≤s i≤j) P[1+j]
+
+    ⇐ : (P ∘ suc) Has-upper-bound i → P Has-upper-bound suc i
+    ⇐ P∘suc↯i .(1 + j) (s≤s {n = j} i≤j) Pj = P∘suc↯i j i≤j Pj
+
+  -- _Has-upper-bound_ and _Above_ are mutually inconsistent.
+
+  mutually-inconsistent :
+    ∀ {P i} → P Has-upper-bound i ⇔ ¬ (P Above i)
+  mutually-inconsistent {P} {i} = equivalence ⇒ ⇐
+    where
+    ⇒ : P Has-upper-bound i → ¬ (P Above i)
+    ⇒ P↯i (j , i≤j , Pj) = P↯i j i≤j Pj
+
+    ⇐ : ¬ (P Above i) → P Has-upper-bound i
+    ⇐ ¬P⇑i j i≤j Pj = ¬P⇑i (j , i≤j , Pj)
 
 ------------------------------------------------------------------------
 -- Mixed inductive/coinductive definition of "true infinitely often"
 
 module Mixed where
 
+  open Above using (_Above_)
+
   -- Inf P means that P is true for infinitely many natural numbers.
 
   data Inf (P : ℕ → Set) : Set where
     now  : (p : P 0) (inf : ∞ (Inf (P ∘ suc))) → Inf P
     skip :           (inf :    Inf (P ∘ suc) ) → Inf P
+
+  -- Inf commutes with binary sums in the double-negation monad if one
+  -- of the predicates satisfies a certain stability condition.
 
   up : ∀ {P} → Inf P → Inf (P ∘ suc)
   up (now p inf) = ♭ inf
@@ -46,18 +128,26 @@ module Mixed where
   filter₁ (now (inj₂ q) inf) ¬q = ⊥-elim (¬q (0 , q))
   filter₁ (skip         inf) ¬q = skip (filter₁ inf (¬q ∘ Prod.map suc id))
 
-  filter₂ : ∀ {P Q} → (∀ n → Stable (∃ (Q ∘ _+_ n))) →
+  filter₂ : ∀ {P Q} → (∀ i → Stable (Q Above i)) →
             Inf (P ∪ Q) → ¬ Inf P → Inf Q
-  filter₂ stable p∪q ¬p =
-    helper (stable 0 (¬p ∘ filter₁ p∪q)) stable p∪q ¬p
+  filter₂ {P} {Q} stable p∪q ¬p = helper witness stable p∪q ¬p
     where
-    helper : ∀ {P Q} →
-             ∃ Q → (∀ n → Stable (∃ (Q ∘ _+_ n))) →
-             Inf (P ∪ Q) → ¬ Inf P → Inf Q
-    helper (zero  , q) stable p∪q ¬p = now q (♯ filter₂     (stable ∘ suc) (up p∪q) (¬p ∘ skip))
-    helper (suc i , q) stable p∪q ¬p = skip (helper (i , q) (stable ∘ suc) (up p∪q) (¬p ∘ skip))
+    open Related.EquationalReasoning
 
-  commutes : ∀ {P Q} → (∀ n → Stable (∃ (Q ∘ _+_ n))) →
+    witness : ∃ Q
+    witness = Prod.map id proj₂ $ stable 0 (
+      ¬ (Q Above 0)  ≈⟨ contraposition (Prod.map id (_,_ z≤n)) ⟩
+      ¬ ∃ Q          ≈⟨ filter₁ p∪q ⟩
+      Inf P          ≈⟨ ¬p ⟩
+      ⊥              ∎)
+
+    helper : ∀ {P Q} →
+             ∃ Q → (∀ i → Stable (Q Above i)) →
+             Inf (P ∪ Q) → ¬ Inf P → Inf Q
+    helper (zero  , q) stable p∪q ¬p = now q (♯ filter₂     (Above.stable-up stable) (up p∪q) (¬p ∘ skip))
+    helper (suc i , q) stable p∪q ¬p = skip (helper (i , q) (Above.stable-up stable) (up p∪q) (¬p ∘ skip))
+
+  commutes : ∀ {P Q} → (∀ i → Stable (Q Above i)) →
              Inf (P ∪ Q) → ¬ ¬ (Inf P ⊎ Inf Q)
   commutes stable p∪q =
     call/cc λ ¬[p⊎q] →
@@ -71,12 +161,18 @@ module Alternative where
 
   open Mixed using (now; skip)
 
+  -- Always P means that P holds for every natural number.
+
   data Always (P : ℕ → Set) : Set where
     now : (p : P 0) (next : ∞ (Always (P ∘ suc))) → Always P
+
+  -- Eventually P means that P holds for some natural number.
 
   data Eventually (P : ℕ → Set) : Set where
     now   : (p : P 0) → Eventually P
     later : (p : Eventually (P ∘ suc)) → Eventually P
+
+  -- Inf P means that P is true for infinitely many natural numbers.
 
   Inf : (ℕ → Set) → Set
   Inf P = Always (λ n → Eventually (P ∘ _+_ n))
@@ -86,16 +182,54 @@ module Alternative where
   up : ∀ P → Inf P → Inf (P ∘ suc)
   up _ (now _ inf) = ♭ inf
 
-  ⇐ : ∀ {P} → Inf P → Mixed.Inf P
-  ⇐     (now (now   p) inf) = now p (♯ ⇐ (♭ inf))
-  ⇐ {P} (now (later p) inf) = skip (⇐ (now p (♯ up (P ∘ suc) (♭ inf))))
-
-  ⇒ : ∀ {P} → Mixed.Inf P → Inf P
-  ⇒ inf = now (eventually inf) (♯ ⇒ (Mixed.up inf))
+  equivalent : ∀ {P} → Inf P ⇔ Mixed.Inf P
+  equivalent = equivalence ⇒ ⇐
     where
-    eventually : ∀ {P} → Mixed.Inf P → Eventually P
-    eventually (now p _)  = now p
-    eventually (skip inf) = later (eventually inf)
+    ⇒ : ∀ {P} → Inf P → Mixed.Inf P
+    ⇒     (now (now   p) inf) = now p (♯ ⇒ (♭ inf))
+    ⇒ {P} (now (later p) inf) = skip (⇒ (now p (♯ up (P ∘ suc) (♭ inf))))
+
+    ⇐ : ∀ {P} → Mixed.Inf P → Inf P
+    ⇐ inf = now (eventually inf) (♯ ⇐ (Mixed.up inf))
+      where
+      eventually : ∀ {P} → Mixed.Inf P → Eventually P
+      eventually (now p _)  = now p
+      eventually (skip inf) = later (eventually inf)
+
+------------------------------------------------------------------------
+-- Below
+
+module Below where
+
+  open Above using (_Above_)
+
+  -- P Below i holds if P holds everywhere below i (including at i).
+
+  _Below_ : (ℕ → Set) → (ℕ → Set)
+  P Below i = ∀ j → j ≤ i → P j
+
+  -- _Below_ P has a comonadic structure (at least if morphism
+  -- equality is trivial).
+
+  map : ∀ {P Q} → P ⊆ Q → _Below_ P ⊆ _Below_ Q
+  map P⊆Q P⇓i j j≤i = P⊆Q (P⇓i j j≤i)
+
+  counit : ∀ {P} → _Below_ P ⊆ P
+  counit P⇓i = P⇓i _ NatOrder.refl
+
+  cojoin : ∀ {P} → _Below_ P ⊆ _Below_ (_Below_ P)
+  cojoin P⇓i = λ j j≤i k k≤j → P⇓i _ (NatOrder.trans k≤j j≤i)
+
+  -- _Above_ (_Below_ P) is pointwise equivalent to _Below_ P.
+
+  ⇑⇓⇔⇓ : ∀ {P} i → (_Below_ P) Above i ⇔ P Below i
+  ⇑⇓⇔⇓ {P} i = equivalence ⇒ ⇐
+    where
+    ⇒ : (_Below_ P) Above i → P Below i
+    ⇒ (j , i≤j , P⇓j) k k≤i = P⇓j k (NatOrder.trans k≤i i≤j)
+
+    ⇐ : P Below i → (_Below_ P) Above i
+    ⇐ P⇓i = (i , NatOrder.refl , P⇓i)
 
 ------------------------------------------------------------------------
 -- Functional/inductive definition of "true infinitely often"
@@ -103,67 +237,80 @@ module Alternative where
 module Functional where
 
   open Mixed using (now; skip)
+  open Above using (_Above_)
+
+  -- Inf P means that P is true for infinitely many natural numbers.
 
   Inf : (ℕ → Set) → Set
-  Inf P = ∀ i → ∃ λ j → i ≤ j × P j
+  Inf P = ∀ i → P Above i
 
   -- This definition is equivalent to the ones above.
 
   up : ∀ {P} → Inf P → Inf (P ∘ suc)
-  up inf i with inf (suc i)
-  ... | (._ , s≤s i≤j , p) = (_ , i≤j , p)
+  up ∀iP⇑i i = Equivalence.to Above.move-suc ⟨$⟩ ∀iP⇑i (suc i)
 
-  ⇐ : ∀ {P} → Inf P → Mixed.Inf P
-  ⇐ {P} inf with inf 0
-  ... | (j , _ , p) = helper inf j p
+  equivalent : ∀ {P} → Inf P ⇔ Mixed.Inf P
+  equivalent = equivalence ⇒ ⇐
     where
-    helper : ∀ {P} → Inf P → ∀ j → P j → Mixed.Inf P
-    helper inf zero    p = now p (♯ ⇐ (up inf))
-    helper inf (suc n) p = skip (helper (up inf) n p)
+    ⇒ : ∀ {P} → Inf P → Mixed.Inf P
+    ⇒ {P} inf with inf 0
+    ... | (j , _ , p) = helper inf j p
+      where
+      helper : ∀ {P} → Inf P → ∀ j → P j → Mixed.Inf P
+      helper inf zero    p = now p (♯ ⇒ (up inf))
+      helper inf (suc n) p = skip (helper (up inf) n p)
 
-  ⇒ : ∀ {P} → Mixed.Inf P → Inf P
-  ⇒ (now p inf) zero    = (0 , z≤n , p)
-  ⇒ (skip  inf) zero    = Prod.map suc (Prod.map (const z≤n) id) $ ⇒ inf zero
-  ⇒ inf         (suc i) = Prod.map suc (Prod.map s≤s         id) $
-                            ⇒ (Mixed.up inf) i
+    ⇐ : ∀ {P} → Mixed.Inf P → Inf P
+    ⇐ (now p inf) zero    = (0 , z≤n , p)
+    ⇐ (skip  inf) zero    = Prod.map suc (Prod.map (const z≤n) id) $ ⇐ inf zero
+    ⇐ inf         (suc i) = Prod.map suc (Prod.map s≤s         id) $
+                              ⇐ (Mixed.up inf) i
+
+  -- Inf is a functor (at least if morphism equality is trivial).
+
+  map : ∀ {P₁ P₂} → P₁ ⊆ P₂ → Inf P₁ → Inf P₂
+  map P₁⊆P₂ inf = λ i → Prod.map id (Prod.map id P₁⊆P₂) (inf i)
 
 ------------------------------------------------------------------------
 -- Definition of "only true finitely often"
 
 module Fin where
 
-  open Mixed using (Inf; now; skip)
+  open Mixed using (now; skip)
+  open Has-upper-bound using (_Has-upper-bound_)
+
+  -- Fin P means that P is only true for finitely many natural
+  -- numbers.
 
   Fin : (ℕ → Set) → Set
-  Fin P = ∃ λ i → ∀ j → i ≤ j → ¬ P j
+  Fin P = ∃ λ i → P Has-upper-bound i
 
-  up : ∀ {P : ℕ → Set} {i} →
-       (∀ j → i ≤ j → ¬ P j) → (∀ j → i ≤ j → ¬ P (suc j))
-  up ¬p = λ j i≤j → ¬p (suc j) (NatProp.≤-step i≤j)
+  -- Fin implies the negation of Mixed.Inf.
 
-  up′ : ∀ {P : ℕ → Set} {i} →
-        (∀ j → suc i ≤ j → ¬ P j) → (∀ j → i ≤ j → ¬ P (suc j))
-  up′ ¬p = λ j i≤j → ¬p (suc j) (s≤s i≤j)
-
-  ⇐ : ∀ {P} → Fin P → ¬ Inf P
+  ⇐ : ∀ {P} → Fin P → ¬ Mixed.Inf P
   ⇐ (zero  , fin) (now p inf) = fin 0 z≤n p
   ⇐ (zero  , fin) (skip  inf) = ⇐ (zero , λ j i≤j → fin (suc j) z≤n) inf
-  ⇐ (suc i , fin) inf         = ⇐ (i , up′ fin) (Mixed.up inf)
+  ⇐ (suc i , fin) inf         =
+    ⇐ (i , Equivalence.to Has-upper-bound.move-suc ⟨$⟩ fin)
+      (Mixed.up inf)
 
-  -- The other direction, ¬ Inf P → ¬ ¬ Fin P, is equivalent to a
-  -- double-negation shift lemma. See NonConstructive.⇐ below.
+  -- The other direction (with a double-negated conclusion) implies
+  -- that Mixed.Inf commutes with binary sums (in the double-negation
+  -- monad).
 
-  filter : ∀ {P Q} → Inf (P ∪ Q) → Fin P → Inf Q
+  filter : ∀ {P Q} → Mixed.Inf (P ∪ Q) → Fin P → Mixed.Inf Q
   filter inf (i , fin) = filter′ inf i fin
     where
-    filter′ : ∀ {P Q} → Inf (P ∪ Q) → ∀ i → (∀ j → i ≤ j → ¬ P j) → Inf Q
+    filter′ : ∀ {P Q} →
+              Mixed.Inf (P ∪ Q) →
+              ∀ i → P Has-upper-bound i → Mixed.Inf Q
     filter′ (now (inj₁ p) inf) 0       fin = ⊥-elim (fin 0 z≤n p)
-    filter′ (now (inj₁ p) inf) (suc i) fin = skip (filter′ (♭ inf) i (up′ fin))
-    filter′ (now (inj₂ q) inf) i       fin = now q (♯ filter′ (♭ inf) i (up fin))
-    filter′ (skip         inf) i       fin = skip (filter′ inf i (up fin))
+    filter′ (now (inj₁ p) inf) (suc i) fin = skip (filter′ (♭ inf) i (Equivalence.to Has-upper-bound.move-suc ⟨$⟩ fin))
+    filter′ (now (inj₂ q) inf) i       fin = now q (♯ filter′ (♭ inf) i (Has-upper-bound.up fin))
+    filter′ (skip         inf) i       fin = skip (filter′ inf i (Has-upper-bound.up fin))
 
-  commutes : ∀ {P Q} → (¬ Inf P → ¬ ¬ Fin P) →
-             Inf (P ∪ Q) → ¬ ¬ (Inf P ⊎ Inf Q)
+  commutes : ∀ {P Q} → (¬ Mixed.Inf P → ¬ ¬ Fin P) →
+             Mixed.Inf (P ∪ Q) → ¬ ¬ (Mixed.Inf P ⊎ Mixed.Inf Q)
   commutes ⇒ p∪q =
     call/cc               λ ¬[p⊎q] →
     ⇒ (¬[p⊎q] ∘ inj₁) >>= λ fin →
@@ -188,110 +335,60 @@ module Fin where
       k      ∎) q
 
 ------------------------------------------------------------------------
--- "Non-constructive" definition of "true infinitely often"
+-- Double-negation shift lemmas
 
-module NonConstructive where
+module Double-negation-shift where
 
-  open Fin using (Fin)
+  open Below using (_Below_)
 
-  Inf : (ℕ → Set) → Set
-  Inf P = ¬ Fin P
+  -- General double-negation shift property.
 
-  commutes : ∀ {P Q} → Inf (P ∪ Q) → ¬ ¬ (Inf P ⊎ Inf Q)
-  commutes p∪q =
-    call/cc λ ¬[p⊎q] →
-    (λ ¬p ¬q → ⊥-elim (p∪q $ Fin.∪-preserves ¬p ¬q))
-      <$> ¬[p⊎q] ∘ inj₁ ⊛ ¬[p⊎q] ∘ inj₂
+  DNS : (ℕ → Set) → Set
+  DNS P = (∀ i → ¬ ¬ P i) → ¬ ¬ (∀ i → P i)
 
-  up : ∀ {P} → Inf P → Inf (P ∘ suc)
-  up {P} ¬fin (i , fin) = ¬fin (suc i , helper)
-    where
-    helper : ∀ j → 1 + i ≤ j → ¬ P j
-    helper ._ (s≤s i≤j) = fin _ i≤j
+  -- DNS holds for stable predicates.
 
-  witness : ∀ {P} → Inf P → ¬ ¬ ∃ P
-  witness ¬fin ¬p = ¬fin (0 , λ i _ Pi → ¬p (i , Pi))
+  Stable⇒DNS : ∀ {P} → (∀ i → Stable (P i)) → DNS P
+  Stable⇒DNS stable ∀¬¬P = λ ¬∀P → ¬∀P (λ i → stable i (∀¬¬P i))
 
-  -- If we have a constructive proof of "true infinitely often", then
-  -- we get a "non-constructive" proof as well.
+  -- DNS respects predicate equivalence.
 
-  ⇒ : ∀ {P} → Functional.Inf P → Inf P
-  ⇒ inf (i , fin) with inf i
-  ... | (j , i≤j , p) = fin j i≤j p
+  respects : ∀ {P₁ P₂} → (∀ i → P₁ i ⇔ P₂ i) → DNS P₁ → DNS P₂
+  respects P₁⇔P₂ dns ∀i¬¬P₂i ¬∀iP₂i =
+    dns (λ i ¬P₁i → ∀i¬¬P₂i i (λ P₂i →
+                      ¬P₁i (Equivalence.from (P₁⇔P₂ i) ⟨$⟩ P₂i)))
+        (λ ∀iP₁i → ¬∀iP₂i (λ i → Equivalence.to (P₁⇔P₂ i) ⟨$⟩ ∀iP₁i i))
 
-  -- The other direction can be proved if we have a double-negation
-  -- shift lemma.
+  -- Double-negation shift property restricted to predicates which are
+  -- downwards closed.
 
-  DoubleNegationShiftLemma₁ : Set₁
-  DoubleNegationShiftLemma₁ =
-    {P : ℕ → Set} →
-    let Q = λ (i : ℕ) → ∃ λ j → i ≤ j × P j in
-    (∀ i → ¬ ¬ Q i) → ¬ ¬ (∀ i → Q i)
-
-  ⇐ : DoubleNegationShiftLemma₁ →
-      ∀ {P} → Inf P → ¬ ¬ Functional.Inf P
-  ⇐ shift ¬fin =
-    shift (λ i ¬p → ¬fin (i , λ j i≤j p → ¬p (j , i≤j , p)))
-
-  -- In fact, it is equivalent to this lemma.
-
-  shift : (∀ {P} → Inf P → ¬ ¬ Functional.Inf P) →
-          DoubleNegationShiftLemma₁
-  shift hyp {P} p = hyp (uncurry (λ i fin → p i (helper fin)))
-    where
-    helper : ∀ {i} → ((j : ℕ) → i ≤ j → ¬ P j) → ¬ ∃ λ j → i ≤ j × P j
-    helper fin (j , i≤j , p) = fin j i≤j p
-
-  -- This lemma is in turn equivalent to the general double-negation
-  -- shift property restricted to predicates which are downwards
-  -- closed.
-
-  DoubleNegationShiftLemma₂ : Set₁
-  DoubleNegationShiftLemma₂ =
-    {P : ℕ → Set} →
+  DNS⇓ : (ℕ → Set) → Set
+  DNS⇓ P =
     (∀ {i j} → i ≥ j → P i → P j) →
     (∀ i → ¬ ¬ P i) → ¬ ¬ (∀ i → P i)
 
-  ₁⇒₂ : DoubleNegationShiftLemma₁ → DoubleNegationShiftLemma₂
-  ₁⇒₂ shift {P} downwards-closed ¬¬p =
-    (λ hyp i → ⇦ i (hyp i)) <$> shift (λ i → ⇨ i <$> ¬¬p i)
+  -- Certain instances of DNS imply other instances of DNS⇓, and vice
+  -- versa.
+
+  DNS⇒DNS⇓ : ∀ {P} → DNS (_Below_ P) → DNS⇓ P
+  DNS⇒DNS⇓ {P} shift downwards-closed ∀i¬¬Pi =
+    _∘_ Below.counit <$> shift (λ i → unit <$> ∀i¬¬Pi i)
     where
-    Q : ℕ → Set
-    Q i = ∀ j → j ≤ i → P j
+    unit : P ⊆ _Below_ P
+    unit Pi j j≤i = downwards-closed j≤i Pi
 
-    ⇦ : ∀ i → (∃ λ j → i ≤ j × Q j) → P i
-    ⇦ i (j , i≤j , q) = q i i≤j
+  -- The following lemma is due to Thierry Coquand (but the proof,
+  -- including any inelegance, is due to me).
 
-    ⇨ : ∀ i → P i → (∃ λ j → i ≤ j × Q j)
-    ⇨ i p = (i , NatOrder.refl , λ j j≤i → downwards-closed j≤i p)
-
-  ₂⇒₁ : DoubleNegationShiftLemma₂ → DoubleNegationShiftLemma₁
-  ₂⇒₁ shift =
-    shift (λ i≥j → Prod.map id (Prod.map (NatOrder.trans i≥j) id))
-
-  -- Finally this lemma is equivalent to the general double-negation
-  -- shift property. This was observed by Thierry Coquand.
-
-  DoubleNegationShiftLemma : Set₁
-  DoubleNegationShiftLemma =
-    {P : ℕ → Set} →
-    (∀ i → ¬ ¬ P i) → ¬ ¬ (∀ i → P i)
-
-  ⇒₂ : DoubleNegationShiftLemma → DoubleNegationShiftLemma₂
-  ⇒₂ shift _ = shift
-
-  ₂⇒ : DoubleNegationShiftLemma₂ → DoubleNegationShiftLemma
-  ₂⇒ shift {P} ∀¬¬P = ∀Q→∀P <$> ¬¬∀Q
+  DNS⇓⇒DNS : ∀ {P} → DNS⇓ (_Below_ P) → DNS P
+  DNS⇓⇒DNS {P} shift ∀¬¬P = _∘_ Below.counit <$> ¬¬∀P⇓
     where
+    P⇓-downwards-closed : ∀ {i j} → i ≥ j → P Below i → P Below j
+    P⇓-downwards-closed i≥j P⇓i = λ j′ j′≤j →
+      P⇓i j′ (NatOrder.trans j′≤j i≥j)
+
     Q : ℕ → Set
     Q i = ∀ {j} → j ≤′ i → P j
-
-    ∀Q→∀P : (∀ i → Q i) → (∀ i → P i)
-    ∀Q→∀P ∀Q = λ i → ∀Q i ≤′-refl
-
-    Q-downwards-closed : ∀ {i j} → i ≥ j → Q i → Q j
-    Q-downwards-closed i≥j Qi = λ j′≤j →
-      Qi (NatProp.≤⇒≤′ (NatOrder.trans (NatProp.≤′⇒≤ j′≤j) i≥j))
 
     q-zero : P 0 → Q 0
     q-zero P0 ≤′-refl = P0
@@ -304,8 +401,109 @@ module NonConstructive where
     ∀¬¬Q zero    = q-zero <$> ∀¬¬P zero
     ∀¬¬Q (suc i) = q-suc  <$> ∀¬¬P (suc i) ⊛ ∀¬¬Q i
 
-    ¬¬∀Q : ¬ ¬ (∀ i → Q i)
-    ¬¬∀Q = shift Q-downwards-closed ∀¬¬Q
+    ∀¬¬P⇓ : ∀ i → ¬ ¬ (P Below i)
+    ∀¬¬P⇓ i = (λ Qi j j≤i → Qi (NatProp.≤⇒≤′ j≤i)) <$> ∀¬¬Q i
+
+    ¬¬∀P⇓ : ¬ ¬ (∀ i → P Below i)
+    ¬¬∀P⇓ = shift P⇓-downwards-closed ∀¬¬P⇓
+
+------------------------------------------------------------------------
+-- "Non-constructive" definition of "true infinitely often"
+
+module NonConstructive where
+
+  open Fin using (Fin)
+  open Above using (_Above_)
+  open Below using (_Below_)
+  open Has-upper-bound using (_Has-upper-bound_)
+  open Double-negation-shift using (DNS; DNS⇓)
+
+  -- Inf P means that P is true for infinitely many natural numbers.
+
+  Inf : (ℕ → Set) → Set
+  Inf P = ¬ Fin P
+
+  -- Inf commutes with binary sums (in the double-negation monad).
+
+  commutes : ∀ {P Q} → Inf (P ∪ Q) → ¬ ¬ (Inf P ⊎ Inf Q)
+  commutes p∪q =
+    call/cc λ ¬[p⊎q] →
+    (λ ¬p ¬q → ⊥-elim (p∪q $ Fin.∪-preserves ¬p ¬q))
+      <$> ¬[p⊎q] ∘ inj₁ ⊛ ¬[p⊎q] ∘ inj₂
+
+  -- Inf is a functor (at least if morphism equality is trivial).
+
+  map : ∀ {P₁ P₂} → P₁ ⊆ P₂ → Inf P₁ → Inf P₂
+  map P₁⊆P₂ ¬fin = λ fin →
+    ¬fin (Prod.map id (λ never j i≤j P₁j → never j i≤j (P₁⊆P₂ P₁j)) fin)
+
+  -- If we have a constructive proof of "true infinitely often", then
+  -- we get a "non-constructive" proof as well.
+
+  ⇒ : ∀ {P} → Functional.Inf P → Inf P
+  ⇒ inf (i , fin) with inf i
+  ... | (j , i≤j , p) = fin j i≤j p
+
+  -- The other direction can be proved iff we have a double-negation
+  -- shift lemma.
+
+  Other-direction : (ℕ → Set) → Set
+  Other-direction P = Inf P → ¬ ¬ Functional.Inf P
+
+  equivalent₁ : ∀ {P} → Other-direction P ⇔ DNS (_Above_ P)
+  equivalent₁ = equivalence ⇒shift shift⇒
+    where
+    shift⇒ : ∀ {P} → DNS (_Above_ P) → Other-direction P
+    shift⇒ shift ¬fin =
+      shift (λ i ¬p →
+        ¬fin (i , Equivalence.from
+                    Has-upper-bound.mutually-inconsistent ⟨$⟩ ¬p))
+
+    ⇒shift : ∀ {P} → Other-direction P → DNS (_Above_ P)
+    ⇒shift hyp p =
+      hyp (uncurry (λ i fin →
+        p i (Equivalence.to
+               Has-upper-bound.mutually-inconsistent ⟨$⟩ fin)))
+
+  equivalent₂ : ∀ {P} → Other-direction (_Below_ P) ⇔ DNS P
+  equivalent₂ {P} = equivalence ⇒shift shift⇒
+    where
+    shift⇒ : DNS P → Other-direction (_Below_ P)
+    shift⇒ shift inf ¬inf =
+      shift (λ i ¬Pi →
+               inf (i , λ j i≤j ∀k≤j[Pk] → ¬Pi (∀k≤j[Pk] i i≤j)))
+            (λ ∀iPi → ¬inf (λ i → i , NatOrder.refl , λ j j≤i → ∀iPi j))
+
+    ⇒shift : ∀ {P} → Other-direction (_Below_ P) → DNS P
+    ⇒shift {P} =
+      Other-direction (_Below_ P)                 ≈⟨ (λ other₁ →
+        Inf (_Below_ (_Below_ P))                       ≈⟨ map Below.counit ⟩
+        Inf (_Below_ P)                                 ≈⟨ other₁ ⟩
+        ¬ ¬ Functional.Inf (_Below_ P)                  ≈⟨ _<$>_ (Functional.map Below.cojoin) ⟩
+        ¬ ¬ Functional.Inf (_Below_ (_Below_ P))        ∎) ⟩
+      Other-direction (_Below_ (_Below_ P))       ≈⟨ _⟨$⟩_ (Equivalence.to equivalent₁) ⟩
+      DNS (_Above_ (_Below_ (_Below_ P)))         ≈⟨ Double-negation-shift.respects Below.⇑⇓⇔⇓ ⟩
+      DNS (_Below_ (_Below_ P))                   ≈⟨ Double-negation-shift.DNS⇒DNS⇓ ⟩
+      DNS⇓ (_Below_ P)                            ≈⟨ Double-negation-shift.DNS⇓⇒DNS ⟩
+      DNS P                                       ∎
+      where open Related.EquationalReasoning
+
+  equivalent : (∀ P → Other-direction P) ⇔ (∀ P → DNS P)
+  equivalent =
+    equivalence (λ other P → _⟨$⟩_ (Equivalence.to   equivalent₂)
+                                   (other (_Below_ P)))
+                (λ shift P → _⟨$⟩_ (Equivalence.from equivalent₁)
+                                   (shift (_Above_ P)))
+
+  -- Some lemmas used below.
+
+  up : ∀ {P} → Inf P → Inf (P ∘ suc)
+  up =
+    contraposition
+      (Prod.map suc (_⟨$⟩_ (Equivalence.from Has-upper-bound.move-suc)))
+
+  witness : ∀ {P} → Inf P → ¬ ¬ ∃ P
+  witness ¬fin ¬p = ¬fin (0 , λ i _ Pi → ¬p (i , Pi))
 
 ------------------------------------------------------------------------
 -- Definition of "true infinitely often" which uses double-negation
@@ -313,50 +511,74 @@ module NonConstructive where
 module DoubleNegated where
 
   open Fin using (Fin)
+  open Has-upper-bound using (_Has-upper-bound_)
 
-  infixl 4 _⟨$⟩_
+  infixl 4 _⟪$⟫_
 
   mutual
+
+    -- Inf P means that P is true for infinitely many natural numbers.
 
     data Inf (P : ℕ → Set) : Set₁ where
       now  : (p : P 0) (inf : ∞ (¬¬Inf (P ∘ suc))) → Inf P
       skip :           (inf :      Inf (P ∘ suc) ) → Inf P
 
     data ¬¬Inf (P : ℕ → Set) : Set₁ where
-      _⟨$⟩_ : {A : Set} (f : A → Inf P) (m : ¬ ¬ A) → ¬¬Inf P
+      _⟪$⟫_ : {A : Set} (f : A → Inf P) (m : ¬ ¬ A) → ¬¬Inf P
 
   -- ¬¬Inf is equivalent to the non-constructive definition given
   -- above.
 
   expand : ∀ {P} → ¬¬Inf P → ¬ ¬ Inf P
-  expand (f ⟨$⟩ m) = λ ¬inf → m (¬inf ∘ f)
+  expand (f ⟪$⟫ m) = λ ¬inf → m (¬inf ∘ f)
 
-  ⇒¬¬ : ∀ {P} → NonConstructive.Inf P → ¬¬Inf P
-  ⇒¬¬ {P} ¬fin = helper ¬fin ⟨$⟩ NonConstructive.witness ¬fin
+  ¬¬equivalent : ∀ {P} → NonConstructive.Inf P ⇔ ¬¬Inf P
+  ¬¬equivalent = equivalence ⇒ ⇐
     where
-    helper : ∀ {P} → NonConstructive.Inf P → ∃ P → Inf P
-    helper ¬fin (zero  , p) = now p (♯ ⇒¬¬ (NonConstructive.up ¬fin))
-    helper ¬fin (suc i , p) =
-      skip (helper (NonConstructive.up ¬fin) (i , p))
+    ⇒ : ∀ {P} → NonConstructive.Inf P → ¬¬Inf P
+    ⇒ ¬fin = helper ¬fin ⟪$⟫ NonConstructive.witness ¬fin
+      where
+      helper : ∀ {P} → NonConstructive.Inf P → ∃ P → Inf P
+      helper ¬fin (zero  , p) = now p (♯ ⇒ (NonConstructive.up ¬fin))
+      helper ¬fin (suc i , p) =
+        skip (helper (NonConstructive.up ¬fin) (i , p))
 
-  ¬¬⇐ : ∀ {P} → ¬¬Inf P → NonConstructive.Inf P
-  ¬¬⇐ ¬¬inf (i , fin) = ¬¬⇐′ ¬¬inf i fin
-    where
-    mutual
-      ¬¬⇐′ : ∀ {P} → ¬¬Inf P → ∀ i → ¬ (∀ j → i ≤ j → ¬ P j)
-      ¬¬⇐′ ¬¬inf i fin = ¬¬-map (helper i fin) (expand ¬¬inf) id
+    ⇐ : ∀ {P} → ¬¬Inf P → NonConstructive.Inf P
+    ⇐ ¬¬inf (i , fin) = ⇐′ ¬¬inf i fin
+      where
+      mutual
+        ⇐′ : ∀ {P} → ¬¬Inf P → ∀ i → ¬ P Has-upper-bound i
+        ⇐′ ¬¬inf i fin = ¬¬-map (helper i fin) (expand ¬¬inf) id
 
-      helper : ∀ {P} → ∀ i → (∀ j → i ≤ j → ¬ P j) → ¬ Inf P
-      helper i       ¬p (skip  inf)   = helper i (Fin.up ¬p) inf
-      helper zero    ¬p (now p inf)   = ¬p 0 z≤n p
-      helper (suc i) ¬p (now p ¬¬inf) =
-        ¬¬⇐′ (♭ ¬¬inf) i (λ j i≤j → ¬p (suc j) (s≤s i≤j))
+        helper : ∀ {P} → ∀ i → P Has-upper-bound i → ¬ Inf P
+        helper i       ¬p (skip  inf)   = helper i (Has-upper-bound.up ¬p) inf
+        helper zero    ¬p (now p inf)   = ¬p 0 z≤n p
+        helper (suc i) ¬p (now p ¬¬inf) =
+          ⇐′ (♭ ¬¬inf) i (λ j i≤j → ¬p (suc j) (s≤s i≤j))
+
+  -- Inf is equivalent to the non-constructive definition given above
+  -- (in the double-negation monad).
 
   ⇐ : ∀ {P} → Inf P → NonConstructive.Inf P
-  ⇐ = ¬¬⇐ ∘ λ inf → const inf ⟨$⟩ return tt
+  ⇐ {P} =
+    Inf P                  ≈⟨ (λ inf → const inf ⟪$⟫ return tt) ⟩
+    ¬¬Inf P                ≈⟨ _⟨$⟩_ (Equivalence.from ¬¬equivalent) ⟩
+    NonConstructive.Inf P  ∎
+    where open Related.EquationalReasoning
 
   ⇒ : ∀ {P} → NonConstructive.Inf P → ¬ ¬ Inf P
-  ⇒ = expand ∘ ⇒¬¬
+  ⇒ {P} =
+    NonConstructive.Inf P  ≈⟨ _⟨$⟩_ (Equivalence.to ¬¬equivalent) ⟩
+    ¬¬Inf P                ≈⟨ expand ⟩
+    ¬ ¬ Inf P              ∎
+    where open Related.EquationalReasoning
+
+  equivalent : ∀ {P} → ¬ ¬ (NonConstructive.Inf P ⇔ Inf P)
+  equivalent {P} =
+    (λ ⇒′ → equivalence (⇒′ ∘ lift) ⇐) <$>
+      Univ.¬¬-pull (Univ._⇒_ _ Univ.Id) (λ inf → ⇒ (lower inf))
+
+  -- Inf commutes with binary sums (in the double-negation monad).
 
   commutes : ∀ {P Q} → Inf (P ∪ Q) → ¬ ¬ (Inf P ⊎ Inf Q)
   commutes {P} {Q} p∪q =
@@ -369,48 +591,28 @@ module DoubleNegated where
 
 -- You may wonder why double-negation is introduced in a roundabout
 -- way in ¬¬Inf above. The reason is that the more direct definition,
--- used in Inf below, is not strictly positive. Furthermore several
--- definitions in DoubleNegated₂ are not accepted by the termination
--- checker (filter₁, filter₂ and ⇒).
+-- used in DoubleNegated₂ below, is not strictly positive. Furthermore
+-- DoubleNegated₂.equivalent is not accepted by the termination
+-- checker.
 
 {-
 module DoubleNegated₂ where
 
-  open DoubleNegated using (now; skip; _⟨$⟩_)
+  open DoubleNegated using (now; skip; _⟪$⟫_)
 
   data Inf (P : ℕ → Set) : Set where
     now  : (p : P 0) (inf : ∞ (¬ ¬ Inf (P ∘ suc))) → Inf P
     skip :           (inf :        Inf (P ∘ suc) ) → Inf P
 
-  up : ∀ {P} → Inf P → ¬ ¬ Inf (P ∘ suc)
-  up (now p inf) = ♭ inf
-  up (skip  inf) = return inf
-
-  filter₁ : ∀ {P Q} → Inf (P ∪ Q) → ¬ ∃ Q → Inf P
-  filter₁ (now (inj₁ p) inf) ¬q = now p (♯ (♭ inf >>= λ inf →
-                                            return (filter₁ inf (¬q ∘ Prod.map suc id))))
-  filter₁ (now (inj₂ q) inf) ¬q = ⊥-elim (¬q (0 , q))
-  filter₁ (skip         inf) ¬q = skip (filter₁ inf (¬q ∘ Prod.map suc id))
-
-  filter₂ : ∀ {P Q} → ¬ ¬ Inf (P ∪ Q) → ¬ Inf P → ¬ ¬ Inf Q
-  filter₂ ¬¬p∪q ¬p =
-    stable >>= λ s   →
-    ¬¬p∪q  >>= λ p∪q →
-    return (helper (s (¬p ∘ filter₁ p∪q)) ¬¬p∪q ¬p)
+  equivalent : ∀ {P} → DoubleNegated.Inf P ⇔ Inf P
+  equivalent = equivalence ⇒ ⇐
     where
-    helper : ∀ {P Q} → ∃ Q → ¬ ¬ Inf (P ∪ Q) → ¬ Inf P → Inf Q
-    helper (zero  , q) p∪q ¬p = now q (♯ filter₂     (up =<< p∪q) (¬p ∘ skip))
-    helper (suc i , q) p∪q ¬p = skip (helper (i , q) (up =<< p∪q) (¬p ∘ skip))
+    ⇐ : ∀ {P} → Inf P → DoubleNegated.Inf P
+    ⇐ (now p inf) = now p (♯ (⇐ ⟪$⟫ ♭ inf))
+    ⇐ (skip  inf) = skip (⇐ inf)
 
-  ⇐ : ∀ {P} → Inf P → DoubleNegated.Inf P
-  ⇐ (now p inf) = now p (♯ (⇐ ⟨$⟩ ♭ inf))
-  ⇐ (skip  inf) = skip (⇐ inf)
-
-  ⇒ : ∀ {P} → DoubleNegated.Inf P → Inf P
-  ⇒ (now p inf) with ♭ inf
-  ... | f ⟨$⟩ m = now p (♯ λ ¬inf → m (λ x → ¬inf (⇒ (f x))))
-  ⇒ (skip  inf) = skip (⇒ inf)
-
-  ¬¬⇒ : ∀ {P} → DoubleNegated.¬¬Inf P → ¬ ¬ Inf P
-  ¬¬⇒ inf = λ ¬inf → DoubleNegated.expand inf (¬inf ∘ ⇒)
+    ⇒ : ∀ {P} → DoubleNegated.Inf P → Inf P
+    ⇒ (now p inf) with ♭ inf
+    ... | f ⟪$⟫ m = now p (♯ λ ¬inf → m (λ x → ¬inf (⇒ (f x))))
+    ⇒ (skip  inf) = skip (⇒ inf)
 -}
