@@ -57,9 +57,6 @@ module Mixed where
     helper (zero  , q) stable p∪q ¬p = now q (♯ filter₂     (stable ∘ suc) (up p∪q) (¬p ∘ skip))
     helper (suc i , q) stable p∪q ¬p = skip (helper (i , q) (stable ∘ suc) (up p∪q) (¬p ∘ skip))
 
-  -- Note that the assumption of stability here follows from Markov's
-  -- principle, if Q is decidable.
-
   commutes : ∀ {P Q} → (∀ n → Stable (∃ (Q ∘ _+_ n))) →
              Inf (P ∪ Q) → ¬ ¬ (Inf P ⊎ Inf Q)
   commutes stable p∪q =
