@@ -136,9 +136,9 @@ module Mixed where
 
     witness : ∃ Q
     witness = Prod.map id proj₂ $ stable 0 (
-      ¬ (Q Above 0)  ≈⟨ contraposition (Prod.map id (_,_ z≤n)) ⟩
-      ¬ ∃ Q          ≈⟨ filter₁ p∪q ⟩
-      Inf P          ≈⟨ ¬p ⟩
+      ¬ (Q Above 0)  ∼⟨ contraposition (Prod.map id (_,_ z≤n)) ⟩
+      ¬ ∃ Q          ∼⟨ filter₁ p∪q ⟩
+      Inf P          ∼⟨ ¬p ⟩
       ⊥              ∎)
 
     helper : ∀ {P Q} →
@@ -476,15 +476,15 @@ module NonConstructive where
 
     ⇒shift : ∀ {P} → Other-direction (_Below_ P) → DNS P
     ⇒shift {P} =
-      Other-direction (_Below_ P)                 ≈⟨ (λ other₁ →
-        Inf (_Below_ (_Below_ P))                       ≈⟨ map Below.counit ⟩
-        Inf (_Below_ P)                                 ≈⟨ other₁ ⟩
-        ¬ ¬ Functional.Inf (_Below_ P)                  ≈⟨ _<$>_ (Functional.map Below.cojoin) ⟩
+      Other-direction (_Below_ P)                 ∼⟨ (λ other₁ →
+        Inf (_Below_ (_Below_ P))                       ∼⟨ map Below.counit ⟩
+        Inf (_Below_ P)                                 ∼⟨ other₁ ⟩
+        ¬ ¬ Functional.Inf (_Below_ P)                  ∼⟨ _<$>_ (Functional.map Below.cojoin) ⟩
         ¬ ¬ Functional.Inf (_Below_ (_Below_ P))        ∎) ⟩
-      Other-direction (_Below_ (_Below_ P))       ≈⟨ _⟨$⟩_ (Equivalence.to equivalent₁) ⟩
-      DNS (_Above_ (_Below_ (_Below_ P)))         ≈⟨ Double-negation-shift.respects Below.⇑⇓⇔⇓ ⟩
-      DNS (_Below_ (_Below_ P))                   ≈⟨ Double-negation-shift.DNS⇒DNS⇓ ⟩
-      DNS⇓ (_Below_ P)                            ≈⟨ Double-negation-shift.DNS⇓⇒DNS ⟩
+      Other-direction (_Below_ (_Below_ P))       ∼⟨ _⟨$⟩_ (Equivalence.to equivalent₁) ⟩
+      DNS (_Above_ (_Below_ (_Below_ P)))         ∼⟨ Double-negation-shift.respects Below.⇑⇓⇔⇓ ⟩
+      DNS (_Below_ (_Below_ P))                   ∼⟨ Double-negation-shift.DNS⇒DNS⇓ ⟩
+      DNS⇓ (_Below_ P)                            ∼⟨ Double-negation-shift.DNS⇓⇒DNS ⟩
       DNS P                                       ∎
       where open Related.EquationalReasoning
 
@@ -561,15 +561,15 @@ module DoubleNegated where
 
   ⇐ : ∀ {P} → Inf P → NonConstructive.Inf P
   ⇐ {P} =
-    Inf P                  ≈⟨ (λ inf → const inf ⟪$⟫ return tt) ⟩
-    ¬¬Inf P                ≈⟨ _⟨$⟩_ (Equivalence.from ¬¬equivalent) ⟩
+    Inf P                  ∼⟨ (λ inf → const inf ⟪$⟫ return tt) ⟩
+    ¬¬Inf P                ∼⟨ _⟨$⟩_ (Equivalence.from ¬¬equivalent) ⟩
     NonConstructive.Inf P  ∎
     where open Related.EquationalReasoning
 
   ⇒ : ∀ {P} → NonConstructive.Inf P → ¬ ¬ Inf P
   ⇒ {P} =
-    NonConstructive.Inf P  ≈⟨ _⟨$⟩_ (Equivalence.to ¬¬equivalent) ⟩
-    ¬¬Inf P                ≈⟨ expand ⟩
+    NonConstructive.Inf P  ∼⟨ _⟨$⟩_ (Equivalence.to ¬¬equivalent) ⟩
+    ¬¬Inf P                ∼⟨ expand ⟩
     ¬ ¬ Inf P              ∎
     where open Related.EquationalReasoning
 

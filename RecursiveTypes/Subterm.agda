@@ -234,7 +234,7 @@ sub-∗-commute k (σ₁ ⟶ σ₂) τ {χ} (there •∈•) = there $
   (σ₁ / ρ) ∗ ++ (σ₂ / ρ) ∗             ⊆⟨ sub-∗-commute k σ₁ τ ++-mono
                                           sub-∗-commute k σ₂ τ ⟩
   (σ₁ ∗ // ρ ++ τ ∗ // wk⋆ k) ++
-  (σ₂ ∗ // ρ ++ τ ∗ // wk⋆ k)          ≈⟨ ++-lemma (σ₁ ∗ // ρ) (σ₂ ∗ // ρ) ⟩
+  (σ₂ ∗ // ρ ++ τ ∗ // wk⋆ k)          ∼⟨ ++-lemma (σ₁ ∗ // ρ) (σ₂ ∗ // ρ) ⟩
   (σ₁ ∗ // ρ ++ σ₂ ∗ // ρ) ++
   τ ∗ // wk⋆ k                         ≡⟨ cong₂ _++_
                                             (sym $ map-++-commute (λ σ → σ / ρ) (σ₁ ∗) (σ₂ ∗))
@@ -249,7 +249,7 @@ sub-∗-commute k (μ σ₁ ⟶ σ₂) τ {χ} (there (there •∈•)) = there
       (σ₁ / ρ ↑) ∗ ++ (σ₂ / ρ ↑) ∗                    ⊆⟨ sub-∗-commute (suc k) σ₁ τ ++-mono
                                                          sub-∗-commute (suc k) σ₂ τ ⟩
       (σ₁ ∗ // ρ ↑ ++ τ ∗ // wk⋆ (suc k)) ++
-      (σ₂ ∗ // ρ ↑ ++ τ ∗ // wk⋆ (suc k))             ≈⟨ ++-lemma (σ₁ ∗ // ρ ↑) (σ₂ ∗ // ρ ↑) ⟩
+      (σ₂ ∗ // ρ ↑ ++ τ ∗ // wk⋆ (suc k))             ∼⟨ ++-lemma (σ₁ ∗ // ρ ↑) (σ₂ ∗ // ρ ↑) ⟩
       (σ₁ ∗ // ρ ↑ ++ σ₂ ∗ // ρ ↑) ++
       τ ∗ // wk⋆ (suc k)                              ≡⟨ cong₂ _++_
                                                            (sym $ map-++-commute
@@ -289,7 +289,7 @@ complete (unfold {σ} {τ₁} {τ₂} σ⊑) =
   τ₁ ⟶ τ₂ ∗ // sub τ ++ τ ∗ // idˢ  ≡⟨ cong (_++_ (τ₁ ⟶ τ₂ ∗ // sub τ))
                                             (//.id-vanishes (τ ∗)) ⟩
   τ ∗′ ++ τ ∗                       ⊆⟨ there {x = τ} {xs = τ ∗′} ++-mono id ⟩
-  τ ∗  ++ τ ∗                       ≈⟨ ++-idempotent (τ ∗) ⟩
+  τ ∗  ++ τ ∗                       ∼⟨ ++-idempotent (τ ∗) ⟩
   τ ∗                               ∎
   where τ = μ τ₁ ⟶ τ₂
 
