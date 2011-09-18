@@ -17,11 +17,11 @@ open import Data.Product as Prod
 open import Data.Star hiding (return)
 open import Data.Vec using (Vec; []; _∷_; lookup)
 open import Function
-open import Level
+import Level
 open import Relation.Binary.PropositionalEquality as PE using (_≡_)
 open import Relation.Nullary
 
-open RawMonad (P.monad {f = zero})
+open RawMonad (P.monad {f = Level.zero})
 
 open import Lambda.Syntax
 private module C = Closure Tm

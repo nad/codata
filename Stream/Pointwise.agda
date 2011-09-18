@@ -14,7 +14,6 @@ open Prog hiding (lift; ⟦_⟧)
 open import Data.Nat
 open import Data.Fin using (Fin; zero; suc)
 open import Data.Vec as Vec using (Vec; _∷_)
-open import Level hiding (lift)
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality
 private

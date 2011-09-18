@@ -16,7 +16,7 @@ open import Data.Product
 open import Data.Sum
 open import Data.Vec using (Vec; []; _∷_; lookup)
 open import Function
-open import Level
+import Level
 open import Relation.Binary using (module Preorder)
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
 open import Relation.Nullary
@@ -38,7 +38,7 @@ private
 ------------------------------------------------------------------------
 -- A monad with partiality and failure
 
-PF : RawMonad {f = zero} (_⊥ ∘ Maybe)
+PF : RawMonad {f = Level.zero} (_⊥ ∘ Maybe)
 PF = Maybe.monadT Partiality.monad
 
 module PF where

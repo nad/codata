@@ -87,7 +87,7 @@ sound⇓ t t⇓ = <-rec P sound⇓′ (steps t⇓) t t⇓ P.refl
              return v               □)                       ≡⟨ Steps.right-identity t₁t₂⇓ (return v □) ⟩
       steps t₁t₂⇓                                            ≡⟨ eq ⟩
       s                                                      ∎
-      where open P.≡-Reasoning
+      where open P.≡-Reasoning using (begin_; _≡⟨_⟩_; _∎)
 
     ≤s = begin
       steps t₂⇓ + suc (steps ∙⇓)  ≡⟨ eq₂ ⟩
