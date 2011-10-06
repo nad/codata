@@ -11,7 +11,7 @@ open import Data.Nat
 open import Data.Stream as S using (Stream; _≈_; _∷_)
 open import Data.Vec as V using (Vec; []; _∷_)
 open import Relation.Binary.PropositionalEquality as P
-  using (_≡_; refl; inspect; _with-≡_)
+  using (_≡_; refl; [_])
 
 ------------------------------------------------------------------------
 -- Stream programs
@@ -106,8 +106,6 @@ mutual
 -- forget is the identity on streams.
 
 open import MapIterate using (_≈P_; _∷_; _≈⟨_⟩_; _∎; soundP)
-open import Relation.Binary.PropositionalEquality as P
-  using (_≡_; _with-≡_)
 
 mutual
 
@@ -118,12 +116,12 @@ mutual
 
   forget-lemma : ∀ {m n A} x (xs : StreamP (suc m) (suc n) A) →
                  ⟦ x ∷ forget xs ⟧P ≈P x ∷ ♯ ⟦ xs ⟧P
-  forget-lemma x xs with P.inspect (whnf xs)
-  ... | (y ∷ y′ ∷ ys) with-≡ eq rewrite eq = x ∷ ♯ helper
+  forget-lemma x xs with whnf xs | P.inspect whnf xs
+  ... | y ∷ y′ ∷ ys | [ eq ] = x ∷ ♯ helper
     where
     helper : ⟦ y ∷ forgetW (y′ ∷ ys) ⟧W ≈P ⟦ xs ⟧P
     helper rewrite eq = _ ≈⟨ forgetW-lemma y (y′ ∷ ys) ⟩ y ∷ ♯ (_ ∎)
-  ... | (y ∷ [ ys ])  with-≡ eq rewrite eq = x ∷ ♯ helper
+  ... | y ∷ [ ys ]  | [ eq ] = x ∷ ♯ helper
     where
     helper : ⟦ y ∷ forget ys ⟧P ≈P ⟦ xs ⟧P
     helper rewrite eq = _ ≈⟨ forget-lemma y ys ⟩ y ∷ ♯ (_ ∎)
@@ -155,9 +153,8 @@ map₂ f (x ∷ xs) | y ∷ ys = f x ∷ ♯ (f y ∷ ♯ map₂ f (♭ ys))
 
 map≈map₂ : ∀ {A B} →
            (f : A → B) → (xs : Stream A) → S.map f xs ≈ map₂ f xs
-map≈map₂ f (x ∷ xs) with inspect (♭ xs)
-map≈map₂ f (x ∷ xs) | (y ∷ ys) with-≡ eq rewrite eq =
-  f x ∷ ♯ helper eq
+map≈map₂ f (x ∷ xs) with ♭ xs | P.inspect ♭ xs
+map≈map₂ f (x ∷ xs) | y ∷ ys | [ eq ] = f x ∷ ♯ helper eq
   where
   map-f-y∷ys = _
 

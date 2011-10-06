@@ -10,7 +10,7 @@ open import Data.Product
 open import Data.Star.Properties
 open import Data.Vec using (Vec; _∷_; []; lookup)
 open import Function
-open import Relation.Binary.PropositionalEquality
+open import Relation.Binary.PropositionalEquality as P using (_≡_)
 
 open import Lambda.Syntax using (Tm; con; var; ƛ; _·_)
 open Lambda.Syntax.Closure Tm
@@ -64,12 +64,12 @@ private
   lemma₁ : ∀ {n} {ρ : Env n} {t v₁ v₂} →
            ρ ⊢ t ⇒ val v₁ → ρ ⊢ t ⇒ val v₂ →
            _≡_ {A = Sem} (val v₁) (val v₂)
-  lemma₁ var                 var                    = refl
-  lemma₁ con                 con                    = refl
-  lemma₁ ƛ                   ƛ                      = refl
+  lemma₁ var                 var                    = P.refl
+  lemma₁ con                 con                    = P.refl
+  lemma₁ ƛ                   ƛ                      = P.refl
   lemma₁ (app t₁⇓ t₂⇓ t₁t₂⇓) (app t₁⇓′ t₂⇓′ t₁t₂⇓′)
     with lemma₁ t₁⇓ t₁⇓′ | lemma₁ t₂⇓ t₂⇓′
-  ... | refl | refl = lemma₁ t₁t₂⇓ t₁t₂⇓′
+  ... | P.refl | P.refl = lemma₁ t₁t₂⇓ t₁t₂⇓′
 
   lemma₂ : ∀ {n} {ρ : Env n} {t v} →
            ρ ⊢ t ⇒ val v → ρ ⊢ t ⇒ ⊥ → val v ≡ ⊥
@@ -78,7 +78,7 @@ private
   lemma₂ ƛ   ()
   lemma₂ (app t₁⇓ t₂⇓ t₁t₂⇓) (app t₁⇓′ t₂⇓′ t₁t₂⇑)
     with lemma₁ t₁⇓ t₁⇓′ | lemma₁ t₂⇓ t₂⇓′
-  ... | refl | refl = lemma₂ t₁t₂⇓ (♭ t₁t₂⇑)
+  ... | P.refl | P.refl = lemma₂ t₁t₂⇓ (♭ t₁t₂⇑)
   lemma₂ (app t₁⇓ t₂⇓ t₁t₂⇓) (·ˡ t₁⇑)      with lemma₂ t₁⇓ (♭ t₁⇑)
   ... | ()
   lemma₂ (app t₁⇓ t₂⇓ t₁t₂⇓) (·ʳ t₁⇓′ t₂⇑) with lemma₂ t₂⇓ (♭ t₂⇑)
@@ -86,9 +86,9 @@ private
 
 deterministic : ∀ {n} {ρ : Env n} {t} v₁ v₂ →
                 ρ ⊢ t ⇒ v₁ → ρ ⊢ t ⇒ v₂ → v₁ ≡ v₂
-deterministic ⊥        ⊥        d₁ d₂ = refl
+deterministic ⊥        ⊥        d₁ d₂ = P.refl
 deterministic (val v₁) ⊥        d₁ d₂ = lemma₂ d₁ d₂
-deterministic ⊥        (val v₂) d₁ d₂ = sym $ lemma₂ d₂ d₁
+deterministic ⊥        (val v₂) d₁ d₂ = P.sym $ lemma₂ d₂ d₁
 deterministic (val v₁) (val v₂) d₁ d₂ = lemma₁ d₁ d₂
 
 ------------------------------------------------------------------------
@@ -103,8 +103,8 @@ correct⇓′ : ∀ {n ρ c s v} {t : Tm n} →
             ⟨ ⟦ t ⟧ c , s , ⟦ ρ ⟧ρ ⟩ ⟶⋆ ⟨ c , val ⟦ v ⟧v ∷ s , ⟦ ρ ⟧ρ ⟩
 correct⇓′ {ρ = ρ} {c} {s} (var {x}) = begin
   ⟨ Var x ∷ c , s                         , ⟦ ρ ⟧ρ ⟩ ⟶⟨ Var ⟩
-  ⟨         c , val (lookup x ⟦ ρ ⟧ρ) ∷ s , ⟦ ρ ⟧ρ ⟩ ≡⟨ cong (λ v → ⟨ c , val v ∷ s , ⟦ ρ ⟧ρ ⟩)
-                                                             (lookup-hom x ρ) ⟩
+  ⟨         c , val (lookup x ⟦ ρ ⟧ρ) ∷ s , ⟦ ρ ⟧ρ ⟩ ≡⟨ P.cong (λ v → ⟨ c , val v ∷ s , ⟦ ρ ⟧ρ ⟩)
+                                                               (lookup-hom x ρ) ⟩
   ⟨         c , val ⟦ lookup x ρ ⟧v   ∷ s , ⟦ ρ ⟧ρ ⟩ ∎
 correct⇓′ {ρ = ρ} {c} {s} (con {i}) = begin
   ⟨ Con i ∷ c ,                                     s , ⟦ ρ ⟧ρ ⟩ ⟶⟨ Con ⟩

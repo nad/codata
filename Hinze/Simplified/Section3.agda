@@ -16,7 +16,7 @@ open import Data.Bool
 open import Data.Vec hiding (_⋎_)
 open import Data.Nat renaming (suc to 1+)
 import Data.Nat.Properties as Nat
-open import Relation.Binary.PropositionalEquality
+import Relation.Binary.PropositionalEquality as P
 open import Algebra
 open import Algebra.Structures
 private
@@ -100,7 +100,7 @@ carry-god-nat =
            1+2* · nat
                ⋎
   2* · (2^ · carry ⟨ _*_ ⟩ god)
-                                 ≊⟨ refl ≺ coih ⟩
+                                 ≊⟨ P.refl ≺ coih ⟩
   1+2* · nat ⋎ 2* · tailP nat
                                  ≊⟨ ≅-sym (tailP-cong nat (2* · nat ⋎ 1+2* · nat) nat-lemma₂) ⟩
   tailP nat
@@ -113,15 +113,15 @@ carry-god-nat =
 
   lemma =
     2^ · carry
-                                ≡⟨ refl ⟩
+                                ≡⟨ P.refl ⟩
     2^ · (0 ∞ ⋎ 1+ · carry)
                                 ≊⟨ ≅-sym (⋎-map 2^ (0 ∞) (1+ · carry)) ⟩
     2^ · 0 ∞ ⋎ 2^ · 1+ · carry
                                 ≊⟨ ⋎-cong (2^ · 0 ∞) (1 ∞)
-                                          (pointwise 0 (2^ · 0 ∞) (1 ∞) refl)
+                                          (pointwise 0 (2^ · 0 ∞) (1 ∞) P.refl)
                                           (2^ · 1+ · carry) (2* · 2^ · carry)
                                           (pointwise 1 (λ s → 2^ · 1+ · s)
                                                        (λ s → 2* · 2^ · s)
-                                                       (λ _ → refl) carry) ⟩
+                                                       (λ _ → P.refl) carry) ⟩
     (1 ∞ ⋎ 2* · 2^ · carry)
                                 ∎

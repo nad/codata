@@ -21,7 +21,7 @@ open import Function.Equality using (_⟨$⟩_)
 open import Function.Inverse using (module Inverse)
 open import Relation.Binary
 import Relation.Binary.EqReasoning as EqR
-open import Relation.Binary.PropositionalEquality hiding (trans)
+import Relation.Binary.PropositionalEquality as P
 open import Data.Fin.Substitution
 
 private
@@ -100,9 +100,9 @@ mutual
 /-monoˡ (⟶ˡ σ⊑τ₁)                         = ⟶ˡ (/-monoˡ σ⊑τ₁)
 /-monoˡ (⟶ʳ σ⊑τ₂)                         = ⟶ʳ (/-monoˡ σ⊑τ₂)
 /-monoˡ {ρ = ρ} (unfold {σ} {τ₁} {τ₂} σ⊑) =
-  unfold $ subst (λ χ → σ / ρ ⊑ χ)
-                 (sub-commutes (τ₁ ⟶ τ₂))
-                 (/-monoˡ σ⊑)
+  unfold $ P.subst (λ χ → σ / ρ ⊑ χ)
+                   (sub-commutes (τ₁ ⟶ τ₂))
+                   (/-monoˡ σ⊑)
 
 sub-⊑-μ : ∀ {n} {σ : Ty (suc n)} {τ₁ τ₂} →
           σ ⊑ τ₁ ⟶ τ₂ → σ / sub (μ τ₁ ⟶ τ₂) ⊑ μ τ₁ ⟶ τ₂
@@ -111,15 +111,15 @@ sub-⊑-μ σ⊑τ₁⟶τ₂ = unfold (/-monoˡ σ⊑τ₁⟶τ₂)
 -- All list elements are subterms.
 
 sound : ∀ {n σ} (τ : Ty n) → σ ∈ τ ∗ → σ ⊑ τ
-sound τ         (here refl) = refl
-sound (τ₁ ⟶ τ₂) (there σ∈)  =
+sound τ         (here P.refl) = refl
+sound (τ₁ ⟶ τ₂) (there σ∈)    =
   [ ⟶ˡ ∘ sound τ₁ , ⟶ʳ ∘ sound τ₂ ]′
     (Inverse.from (++↔ {xs = τ₁ ∗}) ⟨$⟩ σ∈)
-sound (μ τ₁ ⟶ τ₂) (there (here refl)) = unfold refl
+sound (μ τ₁ ⟶ τ₂) (there (here P.refl)) = unfold refl
 sound (μ τ₁ ⟶ τ₂) (there (there σ∈))
   with Inverse.from (map-∈↔ {f = λ σ → σ / sub (μ τ₁ ⟶ τ₂)}
                             {xs = τ₁ ∗ ++ τ₂ ∗}) ⟨$⟩ σ∈
-... | (χ , χ∈ , refl) =
+... | (χ , χ∈ , P.refl) =
   sub-⊑-μ $ [ ⟶ˡ ∘ sound τ₁ , ⟶ʳ ∘ sound τ₂ ]′
               (Inverse.from (++↔ {xs = τ₁ ∗}) ⟨$⟩ χ∈)
 sound ⊥       (there ())
@@ -151,33 +151,33 @@ mutual
 
   wk-∗-commute : ∀ k {n} (σ : Ty (k + n)) →
                  σ / wk ↑⋆ k ∗ ⊆ σ ∗ // wk ↑⋆ k
-  wk-∗-commute k σ (here refl) = here refl
-  wk-∗-commute k σ (there •∈•) = there $ wk-∗′-commute k σ •∈•
+  wk-∗-commute k σ (here P.refl) = here P.refl
+  wk-∗-commute k σ (there •∈•)   = there $ wk-∗′-commute k σ •∈•
 
   wk-∗′-commute : ∀ k {n} (σ : Ty (k + n)) →
                   σ / wk ↑⋆ k ∗′ ⊆ σ ∗′ // wk ↑⋆ k
   wk-∗′-commute k (σ₁ ⟶ σ₂) = begin
-    σ₁ ⟶ σ₂ / wk ↑⋆ k ∗′                ≡⟨ refl ⟩
+    σ₁ ⟶ σ₂ / wk ↑⋆ k ∗′                ≡⟨ P.refl ⟩
     σ₁ / wk ↑⋆ k ∗ ++ σ₂ / wk ↑⋆ k ∗    ⊆⟨ wk-∗-commute k σ₁ ++-mono
                                            wk-∗-commute k σ₂ ⟩
-    σ₁ ∗ // wk ↑⋆ k ++ σ₂ ∗ // wk ↑⋆ k  ≡⟨ sym $ map-++-commute
+    σ₁ ∗ // wk ↑⋆ k ++ σ₂ ∗ // wk ↑⋆ k  ≡⟨ P.sym $ map-++-commute
                                              (λ σ → σ / wk ↑⋆ k) (σ₁ ∗) (σ₂ ∗) ⟩
-    (σ₁ ∗ ++ σ₂ ∗) // wk ↑⋆ k           ≡⟨ refl ⟩
+    (σ₁ ∗ ++ σ₂ ∗) // wk ↑⋆ k           ≡⟨ P.refl ⟩
     σ₁ ⟶ σ₂ ∗′ // wk ↑⋆ k               ∎
   wk-∗′-commute k (μ σ₁ ⟶ σ₂) = begin
-    (μ σ₁ ⟶ σ₂) / wk ↑⋆ k ∗′                          ≡⟨ refl ⟩
+    (μ σ₁ ⟶ σ₂) / wk ↑⋆ k ∗′                          ≡⟨ P.refl ⟩
     σ₁ ⟶ σ₂ / wk ↑⋆ (suc k) / sub (σ / wk ↑⋆ k) ∷
       (σ₁ / wk ↑⋆ (suc k) ∗ ++ σ₂ / wk ↑⋆ (suc k) ∗)
         // sub (σ / wk ↑⋆ k)                          ⊆⟨ lem₁ ++-mono lem₂ ⟩
     σ₁ ⟶ σ₂ / sub σ / wk ↑⋆ k ∷
-      (σ₁ ∗ ++ σ₂ ∗) // sub σ // wk ↑⋆ k              ≡⟨ refl ⟩
+      (σ₁ ∗ ++ σ₂ ∗) // sub σ // wk ↑⋆ k              ≡⟨ P.refl ⟩
     μ σ₁ ⟶ σ₂ ∗′ // wk ↑⋆ k                           ∎
     where
     σ = μ σ₁ ⟶ σ₂
 
     lem₁ : _ ⊆ _
     lem₁ = begin
-      [ σ₁ ⟶ σ₂ / wk ↑⋆ (suc k) / sub (σ / wk ↑⋆ k) ]  ≡⟨ cong [_] $ sym $
+      [ σ₁ ⟶ σ₂ / wk ↑⋆ (suc k) / sub (σ / wk ↑⋆ k) ]  ≡⟨ P.cong [_] $ P.sym $
                                                             sub-commutes (σ₁ ⟶ σ₂) ⟩
       [ σ₁ ⟶ σ₂ / sub σ / wk ↑⋆ k                   ]  ∎
 
@@ -187,14 +187,14 @@ mutual
        σ₂ / wk ↑⋆ (suc k) ∗) // sub (σ / wk ↑⋆ k)           ⊆⟨ map-mono _ $ wk-∗-commute (suc k) σ₁ ++-mono
                                                                             wk-∗-commute (suc k) σ₂ ⟩
       (σ₁ ∗ // wk ↑⋆ (suc k) ++
-       σ₂ ∗ // wk ↑⋆ (suc k)) // sub (σ / wk ↑⋆ k)          ≡⟨ cong (λ σs → σs // sub (σ / wk ↑⋆ k)) $
-                                                                 sym $ map-++-commute
+       σ₂ ∗ // wk ↑⋆ (suc k)) // sub (σ / wk ↑⋆ k)          ≡⟨ P.cong (λ σs → σs // sub (σ / wk ↑⋆ k)) $
+                                                                 P.sym $ map-++-commute
                                                                    (λ σ → σ / wk ↑⋆ suc k) (σ₁ ∗) (σ₂ ∗) ⟩
-      (σ₁ ∗ ++ σ₂ ∗) // wk ↑⋆ (suc k) // sub (σ / wk ↑⋆ k)  ≡⟨ sym $ //.sub-commutes (σ₁ ∗ ++ σ₂ ∗) ⟩
+      (σ₁ ∗ ++ σ₂ ∗) // wk ↑⋆ (suc k) // sub (σ / wk ↑⋆ k)  ≡⟨ P.sym $ //.sub-commutes (σ₁ ∗ ++ σ₂ ∗) ⟩
       (σ₁ ∗ ++ σ₂ ∗) // sub σ // wk ↑⋆ k                    ∎
   wk-∗′-commute k (var x) = begin
-    var x / wk ↑⋆ k ∗′     ≡⟨ cong _∗′ (var-/-wk-↑⋆ k x) ⟩
-    var (lift k suc x) ∗′  ≡⟨ refl ⟩
+    var x / wk ↑⋆ k ∗′     ≡⟨ P.cong _∗′ (var-/-wk-↑⋆ k x) ⟩
+    var (lift k suc x) ∗′  ≡⟨ P.refl ⟩
     []                     ⊆⟨ (λ ()) ⟩
     var x ∗′ // wk ↑⋆ k    ∎
   wk-∗′-commute k ⊥ = λ ()
@@ -206,43 +206,43 @@ sub-∗′-commute-var : ∀ k {n} x (τ : Ty n) →
                      var x / sub τ ↑⋆ k ∗′ ⊆ τ ∗ // wk⋆ k
 sub-∗′-commute-var zero zero τ = begin
   τ ∗′             ⊆⟨ there ⟩
-  τ ∗              ≡⟨ sym $ //.id-vanishes (τ ∗) ⟩
+  τ ∗              ≡⟨ P.sym $ //.id-vanishes (τ ∗) ⟩
   τ ∗ // wk⋆ zero  ∎
 sub-∗′-commute-var zero (suc x) τ = begin
-  var x / idˢ ∗′   ≡⟨ cong _∗′ (id-vanishes (var x)) ⟩
-  var x ∗′         ≡⟨ refl ⟩
+  var x / idˢ ∗′   ≡⟨ P.cong _∗′ (id-vanishes (var x)) ⟩
+  var x ∗′         ≡⟨ P.refl ⟩
   []               ⊆⟨ (λ ()) ⟩
   τ ∗ // wk⋆ zero  ∎
 sub-∗′-commute-var (suc k) zero τ = begin
   []                  ⊆⟨ (λ ()) ⟩
   τ ∗ // wk⋆ (suc k)  ∎
 sub-∗′-commute-var (suc k) (suc x) τ = begin
-  var (suc x) / sub τ ↑⋆ suc k ∗′         ≡⟨ cong _∗′ (suc-/-↑ x) ⟩
+  var (suc x) / sub τ ↑⋆ suc k ∗′         ≡⟨ P.cong _∗′ (suc-/-↑ x) ⟩
   var x / sub τ ↑⋆ k / wk ∗′              ⊆⟨ wk-∗′-commute zero (var x / sub τ ↑⋆ k) ⟩
   var x / sub τ ↑⋆ k ∗′ // wk             ⊆⟨ map-mono _ (sub-∗′-commute-var k x τ) ⟩
-  τ ∗ // wk⋆ k // wk                      ≡⟨ sym $ //./-weaken (τ ∗) ⟩
+  τ ∗ // wk⋆ k // wk                      ≡⟨ P.sym $ //./-weaken (τ ∗) ⟩
   τ ∗ // wk⋆ (suc k)                      ∎
 
 sub-∗-commute : ∀ k {n} σ (τ : Ty n) →
                 σ / sub τ ↑⋆ k ∗ ⊆ σ ∗ // sub τ ↑⋆ k ++ τ ∗ // wk⋆ k
-sub-∗-commute k σ         τ     (here refl) = here refl
-sub-∗-commute k ⊥         τ     •∈•         = Inverse.to ++↔ ⟨$⟩ inj₁ •∈•
-sub-∗-commute k ⊤         τ     •∈•         = Inverse.to ++↔ ⟨$⟩ inj₁ •∈•
-sub-∗-commute k (var x)   τ     (there •∈•) = there $ sub-∗′-commute-var k x τ •∈•
-sub-∗-commute k (σ₁ ⟶ σ₂) τ {χ} (there •∈•) = there $
+sub-∗-commute k σ         τ     (here P.refl) = here P.refl
+sub-∗-commute k ⊥         τ     •∈•           = Inverse.to ++↔ ⟨$⟩ inj₁ •∈•
+sub-∗-commute k ⊤         τ     •∈•           = Inverse.to ++↔ ⟨$⟩ inj₁ •∈•
+sub-∗-commute k (var x)   τ     (there •∈•)   = there $ sub-∗′-commute-var k x τ •∈•
+sub-∗-commute k (σ₁ ⟶ σ₂) τ {χ} (there •∈•)   = there $
   χ                                    ∈⟨ •∈• ⟩
   (σ₁ / ρ) ∗ ++ (σ₂ / ρ) ∗             ⊆⟨ sub-∗-commute k σ₁ τ ++-mono
                                           sub-∗-commute k σ₂ τ ⟩
   (σ₁ ∗ // ρ ++ τ ∗ // wk⋆ k) ++
   (σ₂ ∗ // ρ ++ τ ∗ // wk⋆ k)          ∼⟨ ++-lemma (σ₁ ∗ // ρ) (σ₂ ∗ // ρ) ⟩
   (σ₁ ∗ // ρ ++ σ₂ ∗ // ρ) ++
-  τ ∗ // wk⋆ k                         ≡⟨ cong₂ _++_
-                                            (sym $ map-++-commute (λ σ → σ / ρ) (σ₁ ∗) (σ₂ ∗))
-                                            refl ⟩
+  τ ∗ // wk⋆ k                         ≡⟨ P.cong₂ _++_
+                                            (P.sym $ map-++-commute (λ σ → σ / ρ) (σ₁ ∗) (σ₂ ∗))
+                                            P.refl ⟩
   (σ₁ ∗ ++ σ₂ ∗) // ρ ++ τ ∗ // wk⋆ k  ∎
   where ρ = sub τ ↑⋆ k
-sub-∗-commute k (μ σ₁ ⟶ σ₂) τ (there (here refl)) =
-  there $ here $ sym $ sub-commutes (σ₁ ⟶ σ₂)
+sub-∗-commute k (μ σ₁ ⟶ σ₂) τ (there (here P.refl)) =
+  there $ here $ P.sym $ sub-commutes (σ₁ ⟶ σ₂)
 sub-∗-commute k (μ σ₁ ⟶ σ₂) τ {χ} (there (there •∈•)) = there $ there $
   χ                                              ∈⟨ •∈• ⟩
   ((σ₁ / ρ ↑) ∗ ++ (σ₂ / ρ ↑) ∗) // sub (σ / ρ)  ⊆⟨ map-mono _ (begin
@@ -251,18 +251,18 @@ sub-∗-commute k (μ σ₁ ⟶ σ₂) τ {χ} (there (there •∈•)) = there
       (σ₁ ∗ // ρ ↑ ++ τ ∗ // wk⋆ (suc k)) ++
       (σ₂ ∗ // ρ ↑ ++ τ ∗ // wk⋆ (suc k))             ∼⟨ ++-lemma (σ₁ ∗ // ρ ↑) (σ₂ ∗ // ρ ↑) ⟩
       (σ₁ ∗ // ρ ↑ ++ σ₂ ∗ // ρ ↑) ++
-      τ ∗ // wk⋆ (suc k)                              ≡⟨ cong₂ _++_
-                                                           (sym $ map-++-commute
-                                                                    (λ σ → σ / ρ ↑) (σ₁ ∗) (σ₂ ∗))
-                                                           refl ⟩
+      τ ∗ // wk⋆ (suc k)                              ≡⟨ P.cong₂ _++_
+                                                           (P.sym $ map-++-commute
+                                                                      (λ σ → σ / ρ ↑) (σ₁ ∗) (σ₂ ∗))
+                                                           P.refl ⟩
       (σ₁ ∗ ++ σ₂ ∗) // ρ ↑ ++
       τ ∗ // wk⋆ (suc k)                              ∎) ⟩
   ((σ₁ ∗ ++ σ₂ ∗) // ρ ↑ ++
    τ ∗ // wk⋆ (suc k)) // sub (σ / ρ)            ≡⟨ map-++-commute (λ χ → χ / sub (σ / ρ))
                                                                    ((σ₁ ∗ ++ σ₂ ∗) // ρ ↑) _ ⟩
   (σ₁ ∗ ++ σ₂ ∗) // ρ ↑ // sub (σ / ρ) ++
-  τ ∗ // wk⋆ (suc k) // sub (σ / ρ)              ≡⟨ cong₂ _++_
-                                                      (sym $ //.sub-commutes (σ₁ ∗ ++ σ₂ ∗))
+  τ ∗ // wk⋆ (suc k) // sub (σ / ρ)              ≡⟨ P.cong₂ _++_
+                                                      (P.sym $ //.sub-commutes (σ₁ ∗ ++ σ₂ ∗))
                                                       lem ⟩
   (σ₁ ∗ ++ σ₂ ∗) // sub σ // ρ ++
   τ ∗ // wk⋆ k                                   ∎
@@ -271,23 +271,23 @@ sub-∗-commute k (μ σ₁ ⟶ σ₂) τ {χ} (there (there •∈•)) = there
   σ = μ σ₁ ⟶ σ₂
 
   lem = begin′
-    τ ∗ // wk⋆ (suc k) // sub (σ / ρ)  ≡⟨ cong₂ _//_ (//./-weaken (τ ∗)) refl ⟩′
+    τ ∗ // wk⋆ (suc k) // sub (σ / ρ)  ≡⟨ P.cong₂ _//_ (//./-weaken (τ ∗)) P.refl ⟩′
     τ ∗ // wk⋆ k // wk // sub (σ / ρ)  ≡⟨ //.wk-sub-vanishes (τ ∗ // wk⋆ k) ⟩′
     τ ∗ // wk⋆ k                       ∎′
-    where open ≡-Reasoning
+    where open P.≡-Reasoning
             renaming (begin_ to begin′_; _≡⟨_⟩_ to _≡⟨_⟩′_; _∎ to _∎′)
 
 -- The list contains all subterms.
 
 complete : ∀ {n} {σ τ : Ty n} → σ ⊑ τ → σ ∈ τ ∗
-complete refl                      = here refl
-complete (⟶ˡ σ⊑τ₁)                 = there (Inverse.to ++↔                          ⟨$⟩ inj₁ (complete σ⊑τ₁))
-complete (⟶ʳ σ⊑τ₂)                 = there (Inverse.to (++↔ {P = _≡_ _} {xs = _ ∗}) ⟨$⟩ inj₂ (complete σ⊑τ₂))
+complete refl                      = here P.refl
+complete (⟶ˡ σ⊑τ₁)                 = there (Inverse.to ++↔                            ⟨$⟩ inj₁ (complete σ⊑τ₁))
+complete (⟶ʳ σ⊑τ₂)                 = there (Inverse.to (++↔ {P = P._≡_ _} {xs = _ ∗}) ⟨$⟩ inj₂ (complete σ⊑τ₂))
 complete (unfold {σ} {τ₁} {τ₂} σ⊑) =
   σ                                 ∈⟨ complete σ⊑ ⟩
   unfold[μ τ₁ ⟶ τ₂ ] ∗              ⊆⟨ sub-∗-commute zero (τ₁ ⟶ τ₂) τ ⟩
-  τ₁ ⟶ τ₂ ∗ // sub τ ++ τ ∗ // idˢ  ≡⟨ cong (_++_ (τ₁ ⟶ τ₂ ∗ // sub τ))
-                                            (//.id-vanishes (τ ∗)) ⟩
+  τ₁ ⟶ τ₂ ∗ // sub τ ++ τ ∗ // idˢ  ≡⟨ P.cong (_++_ (τ₁ ⟶ τ₂ ∗ // sub τ))
+                                              (//.id-vanishes (τ ∗)) ⟩
   τ ∗′ ++ τ ∗                       ⊆⟨ there {x = τ} {xs = τ ∗′} ++-mono id ⟩
   τ ∗  ++ τ ∗                       ∼⟨ ++-idempotent (τ ∗) ⟩
   τ ∗                               ∎
@@ -307,4 +307,4 @@ subtermsOf-complete : ∀ {n} {σ τ : Ty n} →
                       σ ⊑ τ → ∃ λ σ⊑τ → (σ , σ⊑τ) ∈ subtermsOf τ
 subtermsOf-complete {σ = σ} {τ} σ⊑τ =
   (, Inverse.to (map-with-∈↔ {f = ,_ ∘′ sound τ}) ⟨$⟩
-       (σ , complete σ⊑τ , refl))
+       (σ , complete σ⊑τ , P.refl))

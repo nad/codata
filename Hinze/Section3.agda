@@ -17,7 +17,7 @@ open import Data.Bool
 open import Data.Vec hiding (_⋎_)
 open import Data.Nat
 import Data.Nat.Properties as Nat
-open import Relation.Binary.PropositionalEquality
+import Relation.Binary.PropositionalEquality as P
 open import Algebra
 open import Algebra.Structures
 private
@@ -76,7 +76,7 @@ god = (2 ∞ ⟨ _*_ ⟩ frac) ⟨ _+_ ⟩ 1 ∞
 god-lemma : god ≊ 2*nat+1 ⋎ god
 god-lemma =
   god
-                                          ≡⟨ refl ⟩
+                                          ≡⟨ P.refl ⟩
   (2 ∞ ⟨ _*_ ⟩ (nat ⋎ frac)) ⟨ _+_ ⟩ 1 ∞
                                           ≊⟨ ⟨ _+_ ⟩-cong (2 ∞ ⟨ _*_ ⟩ (nat ⋎ frac))
                                                           (2*nat ⋎ 2 ∞ ⟨ _*_ ⟩ frac)
@@ -90,7 +90,7 @@ god-lemma =
 carry-god-nat : 2^carry ⟨ _*_ ⟩ god ≊ tailP nat
 carry-god-nat =
   2^carry ⟨ _*_ ⟩ god
-                                                           ≡⟨ refl ⟩
+                                                           ≡⟨ P.refl ⟩
   (2 ∞ ⟨ _^_ ⟩ (0 ∞ ⋎ carry ⟨ _+_ ⟩ 1 ∞)) ⟨ _*_ ⟩ god
                                                            ≊⟨ ⟨ _*_ ⟩-cong (2 ∞ ⟨ _^_ ⟩ (0 ∞ ⋎ carry ⟨ _+_ ⟩ 1 ∞))
                                                                            (1 ∞ ⋎ 2 ∞ ⟨ _*_ ⟩ 2^carry) lemma
@@ -108,7 +108,7 @@ carry-god-nat =
                                                                                   (λ s t u → s ⟨ _*_ ⟩ (t ⟨ _*_ ⟩ u))
                                                                                   CS.*-assoc (2 ∞) 2^carry god) ⟩
   2*nat+1 ⋎ 2 ∞ ⟨ _*_ ⟩ (2^carry ⟨ _*_ ⟩ god)
-                                                           ≊⟨ refl ≺ coih ⟩
+                                                           ≊⟨ P.refl ≺ coih ⟩
   2*nat+1 ⋎ 2 ∞ ⟨ _*_ ⟩ tailP nat
                                                            ≊⟨ ≅-sym (tailP-cong nat (2*nat ⋎ 2*nat+1) nat-lemma₂) ⟩
   tailP nat
@@ -123,17 +123,17 @@ carry-god-nat =
 
   lemma =
     2^carry
-                                                       ≡⟨ refl ⟩
+                                                       ≡⟨ P.refl ⟩
     2 ∞ ⟨ _^_ ⟩ (0 ∞ ⋎ carry ⟨ _+_ ⟩ 1 ∞)
                                                        ≊⟨ zip-const-⋎ _^_ 2 (0 ∞) (carry ⟨ _+_ ⟩ 1 ∞) ⟩
     2 ∞ ⟨ _^_ ⟩ 0 ∞ ⋎ 2 ∞ ⟨ _^_ ⟩ (carry ⟨ _+_ ⟩ 1 ∞)
                                                        ≊⟨ ⋎-cong (2 ∞ ⟨ _^_ ⟩ 0 ∞) (1 ∞)
-                                                                 (pointwise 0 (2 ∞ ⟨ _^_ ⟩ 0 ∞) (1 ∞) refl)
+                                                                 (pointwise 0 (2 ∞ ⟨ _^_ ⟩ 0 ∞) (1 ∞) P.refl)
                                                                  (2 ∞ ⟨ _^_ ⟩ (carry ⟨ _+_ ⟩ 1 ∞))
                                                                  (2 ∞ ⟨ _*_ ⟩ 2^carry)
                                                                  (pointwise 1 (λ s → 2 ∞ ⟨ _^_ ⟩ (s ⟨ _+_ ⟩ 1 ∞))
                                                                               (λ s → 2 ∞ ⟨ _*_ ⟩ (2 ∞ ⟨ _^_ ⟩ s))
-                                                                              (λ x → cong (_^_ 2) (CS.+-comm x 1))
+                                                                              (λ x → P.cong (_^_ 2) (CS.+-comm x 1))
                                                                               carry) ⟩
     1 ∞ ⋎ 2 ∞ ⟨ _*_ ⟩ 2^carry
                                                        ∎
