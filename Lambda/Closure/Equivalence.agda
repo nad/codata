@@ -17,6 +17,7 @@ open import Data.Sum
 open import Data.Vec using (Vec; []; _∷_)
 open import Function
 open import Induction.Nat
+import Level
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
 open import Relation.Nullary.Negation
 
@@ -256,7 +257,8 @@ complete⇑ = Complete⇑.soundP ∘ Complete⇑.complete⇑
 -- I assume excluded middle here because double-negation elimination
 -- is used "infinitely often".
 
-sound⇑ : Excluded-Middle _ → ∀ {n} (t : Tm n) {ρ : Env n} →
+sound⇑ : Excluded-Middle Level.zero →
+         ∀ {n} (t : Tm n) {ρ : Env n} →
          ⟦ t ⟧ ρ ⇑ → ρ ⊢ t ⇒ R.⊥
 sound⇑ em (con i)       i⇑    = ⊥-elim (Partiality.now≉never i⇑)
 sound⇑ em (var x)       x⇑    = ⊥-elim (Partiality.now≉never x⇑)
@@ -279,7 +281,8 @@ sound⇑ em (t₁ · t₂) ⇑ | inj₂ (ƛ t _ , t₁⇓ , t₂∙⇑) | inj₂
 
 -- The functional semantics is complete for crashing computations.
 
-complete↯ : Excluded-Middle _ → ∀ {n} (t : Tm n) (ρ : Env n) →
+complete↯ : Excluded-Middle Level.zero →
+            ∀ {n} (t : Tm n) (ρ : Env n) →
             ∄ (λ s → ρ ⊢ t ⇒ s) → ⟦ t ⟧ ρ ⇓ nothing
 complete↯ em t ρ ¬⇒
   with decidable-stable em $
