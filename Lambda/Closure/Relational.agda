@@ -29,32 +29,34 @@ data Sem : Set where
   ⊥   : Sem
   val : (v : Value) → Sem
 
--- Conditional coinduction: coinduction only for ⊥.
+mutual
 
-∞? : Sem → Set → Set
-∞? ⊥       = ∞
-∞? (val v) = id
+  -- Big-step semantics.
 
--- Big-step semantics.
+  infix 4 _⊢_⇒_
 
-infix 4 _⊢_⇒_
+  data _⊢_⇒_ {n} (ρ : Env n) : Tm n → Sem → Set where
+    var : ∀ {x} → ρ ⊢ var x ⇒ val (lookup x ρ)
+    con : ∀ {i} → ρ ⊢ con i ⇒ val (con i)
+    ƛ   : ∀ {t} → ρ ⊢ ƛ t ⇒ val (ƛ t ρ)
+    app : ∀ {t₁ t₂ n t} {ρ′ : Env n} {v s}
+          (t₁⇓   : ρ ⊢ t₁ ⇒ val (ƛ t ρ′))
+          (t₂⇓   : ρ ⊢ t₂ ⇒ val v)
+          (t₁t₂⇒ : ∞? v ∷ ρ′ ⊢ t ⇒ s) →
+          ρ ⊢ t₁ · t₂ ⇒ s
+    ·ˡ  : ∀ {t₁ t₂}
+          (t₁⇑ : ∞ (ρ ⊢ t₁ ⇒ ⊥)) →
+          ρ ⊢ t₁ · t₂ ⇒ ⊥
+    ·ʳ  : ∀ {t₁ t₂ v}
+          (t₁⇓ : ρ ⊢ t₁ ⇒ val v)
+          (t₂⇑ : ∞ (ρ ⊢ t₂ ⇒ ⊥)) →
+          ρ ⊢ t₁ · t₂ ⇒ ⊥
 
-data _⊢_⇒_ {n} (ρ : Env n) : Tm n → Sem → Set where
-  var : ∀ {x} → ρ ⊢ var x ⇒ val (lookup x ρ)
-  con : ∀ {i} → ρ ⊢ con i ⇒ val (con i)
-  ƛ   : ∀ {t} → ρ ⊢ ƛ t ⇒ val (ƛ t ρ)
-  app : ∀ {t₁ t₂ n t} {ρ′ : Env n} {v s}
-        (t₁⇓   : ρ ⊢ t₁ ⇒ val (ƛ t ρ′))
-        (t₂⇓   : ρ ⊢ t₂ ⇒ val v)
-        (t₁t₂⇒ : ∞? s (v ∷ ρ′ ⊢ t ⇒ s)) →
-        ρ ⊢ t₁ · t₂ ⇒ s
-  ·ˡ  : ∀ {t₁ t₂}
-        (t₁⇑ : ∞ (ρ ⊢ t₁ ⇒ ⊥)) →
-        ρ ⊢ t₁ · t₂ ⇒ ⊥
-  ·ʳ  : ∀ {t₁ t₂ v}
-        (t₁⇓ : ρ ⊢ t₁ ⇒ val v)
-        (t₂⇑ : ∞ (ρ ⊢ t₂ ⇒ ⊥)) →
-        ρ ⊢ t₁ · t₂ ⇒ ⊥
+  -- Conditional coinduction: coinduction only for ⊥.
+
+  ∞?_⊢_⇒_ : ∀ {n} → Env n → Tm n → Sem → Set
+  ∞? ρ ⊢ t ⇒ ⊥     = ∞ (ρ ⊢ t ⇒ ⊥)
+  ∞? ρ ⊢ t ⇒ val v =    ρ ⊢ t ⇒ val v
 
 ------------------------------------------------------------------------
 -- The semantics is deterministic
