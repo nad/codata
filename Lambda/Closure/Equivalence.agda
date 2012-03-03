@@ -19,6 +19,7 @@ open import Function
 open import Induction.Nat
 import Level
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
+open import Relation.Nullary
 open import Relation.Nullary.Negation
 
 open Partiality._⊥
@@ -30,7 +31,7 @@ private
 
 open import Lambda.Syntax
 open Closure Tm
-open import Lambda.Closure.Relational as R hiding (⊥)
+open import Lambda.Closure.Relational as R
 open import Lambda.Closure.Functional as F hiding (module Workaround)
 open PF
 
@@ -41,27 +42,27 @@ open PF
 -- one.
 
 complete⇓ : ∀ {n} {t : Tm n} {ρ v} →
-            ρ ⊢ t ⇒ val v → ⟦ t ⟧ ρ ≈ return v
+            ρ ⊢ t ⇓ v → ⟦ t ⟧ ρ ≈ return v
 complete⇓ var = _ □
 complete⇓ con = _ □
 complete⇓ ƛ   = _ □
-complete⇓ {ρ = ρ} {v′} (app {t₁} {t₂} {t = t} {ρ′} {v} t₁⇓ t₂⇓ t₁t₂⇓) =
-  ⟦ t₁ · t₂ ⟧ ρ                 ≅⟨ ·-comp t₁ t₂ ⟩
-  ⟦ t₁ ⟧ ρ ⟦·⟧ ⟦ t₂ ⟧ ρ         ≈⟨ complete⇓ t₁⇓ ⟦·⟧-cong complete⇓ t₂⇓ ⟩
-  return (ƛ t ρ′) ⟦·⟧ return v  ≳⟨ laterˡ (_ □) ⟩
-  ⟦ t ⟧ (v ∷ ρ′)                ≈⟨ complete⇓ t₁t₂⇓ ⟩
-  return v′                     □
+complete⇓ {ρ = ρ} {v} (app {t₁} {t₂} {t = t} {ρ′} {v′ = v′} t₁⇓ t₂⇓ t₁t₂⇓) =
+  ⟦ t₁ · t₂ ⟧ ρ                  ≅⟨ ·-comp t₁ t₂ ⟩
+  ⟦ t₁ ⟧ ρ ⟦·⟧ ⟦ t₂ ⟧ ρ          ≈⟨ complete⇓ t₁⇓ ⟦·⟧-cong complete⇓ t₂⇓ ⟩
+  return (ƛ t ρ′) ⟦·⟧ return v′  ≳⟨ laterˡ (_ □) ⟩
+  ⟦ t ⟧ (v′ ∷ ρ′)                ≈⟨ complete⇓ t₁t₂⇓ ⟩
+  return v                       □
 
 -- The functional semantics is sound with respect to the relational
 -- one.
 
 sound⇓ : ∀ {n} (t : Tm n) {ρ : Env n} {v} →
-         ⟦ t ⟧ ρ ≈ return v → ρ ⊢ t ⇒ val v
+         ⟦ t ⟧ ρ ≈ return v → ρ ⊢ t ⇓ v
 sound⇓ t t⇓ = <-rec P sound⇓′ (steps t⇓) t t⇓ P.refl
   where
   P : ℕ → Set
   P s = ∀ {n} (t : Tm n) {ρ : Env n} {v}
-          (t⇓ : ⟦ t ⟧ ρ ≈ return v) → steps t⇓ ≡ s → ρ ⊢ t ⇒ val v
+          (t⇓ : ⟦ t ⟧ ρ ≈ return v) → steps t⇓ ≡ s → ρ ⊢ t ⇓ v
 
   sound⇓′ : ∀ s → <-Rec P s → P s
   sound⇓′ s rec (con i)           (now P.refl) _  = con
@@ -230,7 +231,7 @@ module Complete⇑ where
   --   "x ≳ return v", as in the first case below.
 
   complete⇑ : ∀ {n} {t : Tm n} {ρ : Env n} →
-              ρ ⊢ t ⇒ R.⊥ → ⟦ t ⟧ ρ ≈P never
+              ρ ⊢ t ⇑ → ⟦ t ⟧ ρ ≈P never
   complete⇑ {ρ = ρ} (app {t₁} {t₂} {t = t} {ρ′} {v} t₁⇓ t₂⇓ t₁t₂⇑) =
     ⟦ t₁ · t₂ ⟧ ρ                 ≅⟪ ·-comp t₁ t₂ ⟫
     ⟦ t₁ ⟧ ρ ⟦·⟧ ⟦ t₂ ⟧ ρ         ≳⟪ Partiality.now⇒now (complete⇓ t₁⇓) ⟦·⟧-cong
@@ -250,7 +251,7 @@ module Complete⇑ where
     never                  □
 
 complete⇑ : ∀ {n} {t : Tm n} {ρ : Env n} →
-            ρ ⊢ t ⇒ R.⊥ → ⟦ t ⟧ ρ ≈ never
+            ρ ⊢ t ⇑ → ⟦ t ⟧ ρ ≈ never
 complete⇑ = Complete⇑.soundP ∘ Complete⇑.complete⇑
 
 -- The functional semantics is sound for non-terminating computations.
@@ -259,7 +260,7 @@ complete⇑ = Complete⇑.soundP ∘ Complete⇑.complete⇑
 
 sound⇑ : Excluded-Middle Level.zero →
          ∀ {n} (t : Tm n) {ρ : Env n} →
-         ⟦ t ⟧ ρ ≈ never → ρ ⊢ t ⇒ R.⊥
+         ⟦ t ⟧ ρ ≈ never → ρ ⊢ t ⇑
 sound⇑ em (con i)       i⇑    = ⊥-elim (Partiality.now≉never i⇑)
 sound⇑ em (var x)       x⇑    = ⊥-elim (Partiality.now≉never x⇑)
 sound⇑ em (ƛ t)         ƛ⇑    = ⊥-elim (Partiality.now≉never ƛ⇑)
@@ -288,20 +289,25 @@ complete↯ em t ρ ¬⇒
   with decidable-stable em $
          Partiality.now-or-never {_∼_ = _≡_} P.refl
                                  {k = Partiality.weak} (⟦ t ⟧ ρ)
-... | inj₂ t⇑             = ⊥-elim (¬⇒ (, sound⇑ em t t⇑))
+... | inj₂ t⇑             = ⊥-elim (proj₂ ¬⇒ (sound⇑ em t t⇑))
 ... | inj₁ (nothing , t↯) = t↯
-... | inj₁ (just v  , t⇓) = ⊥-elim (¬⇒ (, sound⇓ t t⇓))
+... | inj₁ (just v  , t⇓) = ⊥-elim (proj₁ ¬⇒ (, sound⇓ t t⇓))
 
 -- The functional semantics is sound for crashing computations.
 
 sound↯ : ∀ {n} {t : Tm n} {ρ : Env n} →
          ⟦ t ⟧ ρ ≈ fail → ρ ⊢ t ↯
-sound↯ {t = t} {ρ} t↯ (val v , t⇓) with
-  fail  ≈⟨ sym t↯ ⟩
-  ⟦ t ⟧ ρ   ≈⟨ complete⇓ t⇓ ⟩
-  return v  □
-... | now ()
-sound↯ {t = t} {ρ} t↯ (R.⊥ , t⇑) = Partiality.now≉never (
-  fail     ≈⟨ sym t↯ ⟩
-  ⟦ t ⟧ ρ  ≈⟨ complete⇑ t⇑ ⟩
-  never    □)
+sound↯ {t = t} {ρ} t↯ = (¬⇓ , ¬⇑)
+  where
+  ¬⇓ : ¬ (∃ λ v → ρ ⊢ t ⇓ v)
+  ¬⇓ (v , t⇓) with
+    fail      ≈⟨ sym t↯ ⟩
+    ⟦ t ⟧ ρ   ≈⟨ complete⇓ t⇓ ⟩
+    return v  □
+  ... | now ()
+
+  ¬⇑ : ¬ (ρ ⊢ t ⇑)
+  ¬⇑ t⇑ = Partiality.now≉never (
+    fail     ≈⟨ sym t↯ ⟩
+    ⟦ t ⟧ ρ  ≈⟨ complete⇑ t⇑ ⟩
+    never    □)

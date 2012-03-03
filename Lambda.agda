@@ -61,8 +61,8 @@ import Lambda.VirtualMachine
 -- Semantics based on closures
 
 -- A semantics for the untyped λ-calculus, based on closures and
--- environments. Leroy and Grall define a similar semantics but split
--- it up into several definitions, like in Lambda.TwoSemantics above.
+-- environments, as given by Leroy and Grall in "Coinductive big-step
+-- operational semantics" (more or less).
 --
 -- The module also contains a proof which shows that the compiler in
 -- Lambda.VirtualMachine preserves the semantics (assuming that the
