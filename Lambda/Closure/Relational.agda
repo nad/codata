@@ -143,5 +143,5 @@ correct⇓ t⇓ = (_ , correct⇓′ t⇓ , final)
 correct⇑ : ∀ {t} → [] ⊢ t ⇒ ⊥ → ⟨ ⟦ t ⟧ [] , [] , [] ⟩ ⟶∞
 correct⇑ = InfiniteSequence.sound ∘ correct⇑′
 
--- Note that the two correctness statements above do not take account
--- of terms which crash.
+-- Note that the two correctness statements above only apply to terms
+-- that do not crash.
