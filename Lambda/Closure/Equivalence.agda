@@ -25,7 +25,7 @@ private
   open module PE {A : Set} = Partiality.Equality (_≡_ {A = A})
   open module PR {A : Set} =
     Partiality.Reasoning (P.isEquivalence {A = A})
-    renaming (_∎ to _□)
+    hiding (_≡⟨_⟩_) renaming (_∎ to _□)
 
 open import Lambda.Syntax
 open Closure Tm
