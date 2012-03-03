@@ -41,7 +41,7 @@ open PF
 -- one.
 
 complete⇓ : ∀ {n} {t : Tm n} {ρ v} →
-            ρ ⊢ t ⇒ val v → ⟦ t ⟧ ρ ⇓ just v
+            ρ ⊢ t ⇒ val v → ⟦ t ⟧ ρ ≈ return v
 complete⇓ var = _ □
 complete⇓ con = _ □
 complete⇓ ƛ   = _ □
@@ -56,12 +56,12 @@ complete⇓ {ρ = ρ} {v′} (app {t₁} {t₂} {t = t} {ρ′} {v} t₁⇓ t₂
 -- one.
 
 sound⇓ : ∀ {n} (t : Tm n) {ρ : Env n} {v} →
-         ⟦ t ⟧ ρ ⇓ just v → ρ ⊢ t ⇒ val v
+         ⟦ t ⟧ ρ ≈ return v → ρ ⊢ t ⇒ val v
 sound⇓ t t⇓ = <-rec P sound⇓′ (steps t⇓) t t⇓ P.refl
   where
   P : ℕ → Set
   P s = ∀ {n} (t : Tm n) {ρ : Env n} {v}
-          (t⇓ : ⟦ t ⟧ ρ ⇓ just v) → steps t⇓ ≡ s → ρ ⊢ t ⇒ val v
+          (t⇓ : ⟦ t ⟧ ρ ≈ return v) → steps t⇓ ≡ s → ρ ⊢ t ⇒ val v
 
   sound⇓′ : ∀ s → <-Rec P s → P s
   sound⇓′ s rec (con i)           (now P.refl) _  = con
@@ -250,7 +250,7 @@ module Complete⇑ where
     never                  □
 
 complete⇑ : ∀ {n} {t : Tm n} {ρ : Env n} →
-            ρ ⊢ t ⇒ R.⊥ → ⟦ t ⟧ ρ ⇑
+            ρ ⊢ t ⇒ R.⊥ → ⟦ t ⟧ ρ ≈ never
 complete⇑ = Complete⇑.soundP ∘ Complete⇑.complete⇑
 
 -- The functional semantics is sound for non-terminating computations.
@@ -259,7 +259,7 @@ complete⇑ = Complete⇑.soundP ∘ Complete⇑.complete⇑
 
 sound⇑ : Excluded-Middle Level.zero →
          ∀ {n} (t : Tm n) {ρ : Env n} →
-         ⟦ t ⟧ ρ ⇑ → ρ ⊢ t ⇒ R.⊥
+         ⟦ t ⟧ ρ ≈ never → ρ ⊢ t ⇒ R.⊥
 sound⇑ em (con i)       i⇑    = ⊥-elim (Partiality.now≉never i⇑)
 sound⇑ em (var x)       x⇑    = ⊥-elim (Partiality.now≉never x⇑)
 sound⇑ em (ƛ t)         ƛ⇑    = ⊥-elim (Partiality.now≉never ƛ⇑)
@@ -283,7 +283,7 @@ sound⇑ em (t₁ · t₂) ⇑ | inj₂ (ƛ t _ , t₁⇓ , t₂∙⇑) | inj₂
 
 complete↯ : Excluded-Middle Level.zero →
             ∀ {n} (t : Tm n) (ρ : Env n) →
-            ∄ (λ s → ρ ⊢ t ⇒ s) → ⟦ t ⟧ ρ ⇓ nothing
+            ρ ⊢ t ↯ → ⟦ t ⟧ ρ ≈ fail
 complete↯ em t ρ ¬⇒
   with decidable-stable em $
          Partiality.now-or-never {_∼_ = _≡_} P.refl
@@ -295,13 +295,13 @@ complete↯ em t ρ ¬⇒
 -- The functional semantics is sound for crashing computations.
 
 sound↯ : ∀ {n} {t : Tm n} {ρ : Env n} →
-         ⟦ t ⟧ ρ ⇓ nothing → ∄ λ s → ρ ⊢ t ⇒ s
+         ⟦ t ⟧ ρ ≈ fail → ρ ⊢ t ↯
 sound↯ {t = t} {ρ} t↯ (val v , t⇓) with
-  now nothing  ≈⟨ sym t↯ ⟩
-  ⟦ t ⟧ ρ      ≈⟨ complete⇓ t⇓ ⟩
-  return v     □
+  fail  ≈⟨ sym t↯ ⟩
+  ⟦ t ⟧ ρ   ≈⟨ complete⇓ t⇓ ⟩
+  return v  □
 ... | now ()
 sound↯ {t = t} {ρ} t↯ (R.⊥ , t⇑) = Partiality.now≉never (
-  now nothing  ≈⟨ sym t↯ ⟩
-  ⟦ t ⟧ ρ      ≈⟨ complete⇑ t⇑ ⟩
-  never        □)
+  fail     ≈⟨ sym t↯ ⟩
+  ⟦ t ⟧ ρ  ≈⟨ complete⇑ t⇑ ⟩
+  never    □)

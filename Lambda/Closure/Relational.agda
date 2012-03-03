@@ -58,6 +58,13 @@ mutual
   ∞? ρ ⊢ t ⇒ ⊥     = ∞ (ρ ⊢ t ⇒ ⊥)
   ∞? ρ ⊢ t ⇒ val v =    ρ ⊢ t ⇒ val v
 
+-- Crashing computations.
+
+infix 4 _⊢_↯
+
+_⊢_↯ : ∀ {n} → Env n → Tm n → Set
+ρ ⊢ t ↯ = ∄ λ s → ρ ⊢ t ⇒ s
+
 ------------------------------------------------------------------------
 -- The semantics is deterministic
 
