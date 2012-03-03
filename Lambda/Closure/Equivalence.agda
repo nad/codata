@@ -22,6 +22,7 @@ open import Relation.Binary.PropositionalEquality as P using (_≡_)
 open import Relation.Nullary
 open import Relation.Nullary.Negation
 
+open ℕ.SemiringSolver using (solve; _:=_; _:+_; con)
 open Partiality._⊥
 private
   open module PE {A : Set} = Partiality.Equality (_≡_ {A = A})
@@ -76,11 +77,17 @@ sound⇓ t t⇓ = <-rec P sound⇓′ (steps t⇓) t t⇓ P.refl
   sound⇓′ s rec (t₁ · t₂) {ρ}     t₁t₂⇓ eq | (v₁    , t₁⇓ , t₂∙⇓ , eq₁) with >>=-inversion-⇓ (⟦ t₂ ⟧ ρ) t₂∙⇓
   sound⇓′ s rec (t₁ · t₂)         t₁t₂⇓ eq | (con i , t₁⇓ , t₂∙⇓ , eq₁) | (v₂ , t₂⇓ , now ()    , _  )
   sound⇓′ s rec (t₁ · t₂) {ρ} {v} t₁t₂⇓ eq | (ƛ t _ , t₁⇓ , t₂∙⇓ , eq₁) | (v₂ , t₂⇓ , laterˡ ∙⇓ , eq₂) =
-    app (sound⇓′ _ (λ _ s′< → rec _ (s′<s _ s′<)) t₁ t₁⇓ P.refl)
-        (sound⇓′ _ (λ _ s″< → rec _ (s″<s _ s″<)) t₂ t₂⇓ P.refl)
-        (rec (steps ∙⇓) ∙< t ∙⇓ P.refl)
+    app (rec (steps t₁⇓) ₁< t₁ t₁⇓ P.refl)
+        (rec (steps t₂⇓) ₂< t₂ t₂⇓ P.refl)
+        (rec (steps  ∙⇓) ∙< t   ∙⇓ P.refl)
     where
-    ≡s = begin
+    open ≤-Reasoning
+
+    ₁₂∙< = begin
+      1 + steps t₁⇓ + (steps t₂⇓ + steps ∙⇓)                 ≡⟨ solve 3 (λ x y z → con 1 :+ x :+ (y :+ z) :=
+                                                                                   x :+ (y :+ (con 1 :+ z)))
+                                                                        P.refl (steps t₁⇓) (steps t₂⇓) _ ⟩
+      steps t₁⇓ + (steps t₂⇓ + (1 + steps ∙⇓))               ≡⟨ P.cong (_+_ (steps t₁⇓)) eq₂ ⟩
       steps t₁⇓ + steps t₂∙⇓                                 ≡⟨ eq₁ ⟩
       steps (⟦ t₁ ⟧ ρ ⟦·⟧ ⟦ t₂ ⟧ ρ  ≅⟨ sym $ ·-comp t₁ t₂ ⟩
              ⟦ t₁ · t₂ ⟧ ρ          ≈⟨ t₁t₂⇓ ⟩
@@ -89,36 +96,26 @@ sound⇓ t t⇓ = <-rec P sound⇓′ (steps t⇓) t t⇓ P.refl
              return v               □)                       ≡⟨ Steps.right-identity t₁t₂⇓ (return v □) ⟩
       steps t₁t₂⇓                                            ≡⟨ eq ⟩
       s                                                      ∎
-      where open P.≡-Reasoning using (begin_; _≡⟨_⟩_; _∎)
 
-    ≤s = begin
-      steps t₂⇓ + suc (steps ∙⇓)  ≡⟨ eq₂ ⟩
-      steps t₂∙⇓                  ≤⟨ ℕ.n≤m+n (steps t₁⇓) _ ⟩
-      steps t₁⇓ + steps t₂∙⇓      ≡⟨ ≡s ⟩
-      s                           ∎
-      where open ≤-Reasoning
+    ₁< = ℕ.≤⇒≤′ (begin
+      1 + steps t₁⇓                           ≤⟨ ℕ.m≤m+n (1 + steps t₁⇓) _ ⟩
+      1 + steps t₁⇓ + (steps t₂⇓ + steps ∙⇓)  ≤⟨ ₁₂∙< ⟩
+      s                                       ∎)
 
-    s′<s : ∀ s′ → s′ <′ steps t₁⇓ → s′ <′ s
-    s′<s s′ s′< = ℕ.≤⇒≤′ (begin
-      s′                      <⟨ ℕ.≤′⇒≤ s′< ⟩
-      steps t₁⇓               ≤⟨ ℕ.m≤m+n (steps t₁⇓) _ ⟩
-      steps t₁⇓ + steps t₂∙⇓  ≡⟨ ≡s ⟩
-      s                       ∎)
-      where open ≤-Reasoning
+    ₂∙< = begin
+      1 + steps t₂⇓ + steps ∙⇓                ≤⟨ s≤s (ℕ.n≤m+n (steps t₁⇓) _) ⟩
+      1 + steps t₁⇓ + (steps t₂⇓ + steps ∙⇓)  ≤⟨ ₁₂∙< ⟩
+      s                                       ∎
 
-    s″<s : ∀ s″ → s″ <′ steps t₂⇓ → s″ <′ s
-    s″<s s″ s″< = ℕ.≤⇒≤′ (begin
-      s″                          <⟨ ℕ.≤′⇒≤ s″< ⟩
-      steps t₂⇓                   ≤⟨ ℕ.m≤m+n (steps t₂⇓) _ ⟩
-      steps t₂⇓ + suc (steps ∙⇓)  ≤⟨ ≤s ⟩
-      s                           ∎)
-      where open ≤-Reasoning
+    ₂< = ℕ.≤⇒≤′ (begin
+      1 + steps t₂⇓             ≤⟨ ℕ.m≤m+n (1 + steps t₂⇓) _ ⟩
+      1 + steps t₂⇓ + steps ∙⇓  ≤⟨ ₂∙< ⟩
+      s                         ∎)
 
     ∙< = ℕ.≤⇒≤′ (begin
-      steps ∙⇓                    <⟨ ℕ.n≤m+n (steps t₂⇓) _ ⟩
-      steps t₂⇓ + suc (steps ∙⇓)  ≤⟨ ≤s ⟩
-      s                           ∎)
-      where open ≤-Reasoning
+      1 + steps ∙⇓              ≤⟨ s≤s (ℕ.n≤m+n (steps t₂⇓) _) ⟩
+      1 + steps t₂⇓ + steps ∙⇓  ≤⟨ ₂∙< ⟩
+      s                         ∎)
 
 ------------------------------------------------------------------------
 -- Non-terminating computations
