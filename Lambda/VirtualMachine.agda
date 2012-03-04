@@ -52,7 +52,7 @@ open Closure Code
 ------------------------------------------------------------------------
 -- Compiler
 
--- The compiler is formulated in continuation-passing style.
+-- The compiler takes a code continuation.
 
 ⟦_⟧ : ∀ {n} → Tm n → Code n → Code n
 ⟦ con i ⟧   c = Con i ∷ c
@@ -72,7 +72,7 @@ mutual
   ⟦ con i ⟧v = con i
   ⟦ ƛ t ρ ⟧v = ƛ (⟦ t ⟧ [ Ret ]) ⟦ ρ ⟧ρ
 
--- ⟦_⟧ρ/⟦_⟧v is homomorphic with respect to lookup.
+-- lookup x is homomorphic with respect to ⟦_⟧ρ/⟦_⟧v.
 
 lookup-hom : ∀ {n} (x : Fin n) ρ → lookup x ⟦ ρ ⟧ρ ≡ ⟦ lookup x ρ ⟧v
 lookup-hom zero    (v ∷ ρ) = PE.refl
