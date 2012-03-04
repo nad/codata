@@ -97,45 +97,46 @@ deterministic⇓⇑ (app t₁⇓ t₂⇓ t₁t₂⇓) (·ʳ t₁⇓′ t₂⇑) 
 
 correct⇓′ : ∀ {n ρ c s v} {t : Tm n} →
             ρ ⊢ t ⇓ v →
-            ⟨ ⟦ t ⟧ c , s , ⟦ ρ ⟧ρ ⟩ ⟶⋆ ⟨ c , val ⟦ v ⟧v ∷ s , ⟦ ρ ⟧ρ ⟩
+            ⟨ comp t c , s , comp-env ρ ⟩ ⟶⋆
+            ⟨ c , val (comp-val v) ∷ s , comp-env ρ ⟩
 correct⇓′ {ρ = ρ} {c} {s} (var {x}) = begin
-  ⟨ Var x ∷ c , s                         , ⟦ ρ ⟧ρ ⟩ ⟶⟨ Var ⟩
-  ⟨         c , val (lookup x ⟦ ρ ⟧ρ) ∷ s , ⟦ ρ ⟧ρ ⟩ ≡⟨ P.cong (λ v → ⟨ c , val v ∷ s , ⟦ ρ ⟧ρ ⟩)
-                                                               (lookup-hom x ρ) ⟩
-  ⟨         c , val ⟦ lookup x ρ ⟧v   ∷ s , ⟦ ρ ⟧ρ ⟩ ∎
+  ⟨ Var x ∷ c , s                               , comp-env ρ ⟩ ⟶⟨ Var ⟩
+  ⟨         c , val (lookup x (comp-env ρ)) ∷ s , comp-env ρ ⟩ ≡⟨ P.cong (λ v → ⟨ c , val v ∷ s , comp-env ρ ⟩)
+                                                                         (lookup-hom x ρ) ⟩
+  ⟨         c , val (comp-val (lookup x ρ)) ∷ s , comp-env ρ ⟩ ∎
 correct⇓′ {ρ = ρ} {c} {s} (con {i}) = begin
-  ⟨ Con i ∷ c ,                                     s , ⟦ ρ ⟧ρ ⟩ ⟶⟨ Con ⟩
-  ⟨         c , val (Lambda.Syntax.Closure.con i) ∷ s , ⟦ ρ ⟧ρ ⟩ ∎
+  ⟨ Con i ∷ c ,                                     s , comp-env ρ ⟩ ⟶⟨ Con ⟩
+  ⟨         c , val (Lambda.Syntax.Closure.con i) ∷ s , comp-env ρ ⟩ ∎
 correct⇓′ {ρ = ρ} {c} {s} (ƛ {t}) = begin
-  ⟨ Clos (⟦ t ⟧ [ Ret ]) ∷ c ,                  s , ⟦ ρ ⟧ρ ⟩ ⟶⟨ Clos ⟩
-  ⟨                        c , val ⟦ ƛ t ρ ⟧v ∷ s , ⟦ ρ ⟧ρ ⟩ ∎
+  ⟨ Clos (comp t [ Ret ]) ∷ c ,                          s , comp-env ρ ⟩ ⟶⟨ Clos ⟩
+  ⟨                         c , val (comp-val (ƛ t ρ)) ∷ s , comp-env ρ ⟩ ∎
 correct⇓′ {ρ = ρ} {c} {s} {v} (app {t₁} {t₂} {t = t} {ρ′} {v′ = v′} t₁⇓ t₂⇓ t₁t₂⇓) = begin
-  ⟨ ⟦ t₁ ⟧ (⟦ t₂ ⟧ (App ∷ c)) ,                                 s ,           ⟦ ρ ⟧ρ  ⟩ ⟶⋆⟨ correct⇓′ t₁⇓ ⟩
-  ⟨         ⟦ t₂ ⟧ (App ∷ c)  ,               val ⟦ ƛ t ρ′ ⟧v ∷ s ,           ⟦ ρ ⟧ρ  ⟩ ⟶⋆⟨ correct⇓′ t₂⇓ ⟩
-  ⟨                 App ∷ c   , val ⟦ v′ ⟧v ∷ val ⟦ ƛ t ρ′ ⟧v ∷ s ,           ⟦ ρ ⟧ρ  ⟩ ⟶⟨ App ⟩
-  ⟨ ⟦ t ⟧ [ Ret ]             ,                  ret c ⟦ ρ ⟧ρ ∷ s , ⟦ v′ ⟧v ∷ ⟦ ρ′ ⟧ρ ⟩ ⟶⋆⟨ correct⇓′ t₁t₂⇓ ⟩
-  ⟨       [ Ret ]             ,     val ⟦ v ⟧v ∷ ret c ⟦ ρ ⟧ρ ∷ s , ⟦ v′ ⟧v ∷ ⟦ ρ′ ⟧ρ ⟩ ⟶⟨ Ret ⟩
-  ⟨                       c   ,     val ⟦ v ⟧v ∷                s ,           ⟦ ρ ⟧ρ  ⟩ ∎
+  ⟨ comp t₁ (comp t₂ (App ∷ c)) ,                                               s ,               comp-env ρ  ⟩ ⟶⋆⟨ correct⇓′ t₁⇓ ⟩
+  ⟨          comp t₂ (App ∷ c)  ,                     val (comp-val (ƛ t ρ′)) ∷ s ,               comp-env ρ  ⟩ ⟶⋆⟨ correct⇓′ t₂⇓ ⟩
+  ⟨                   App ∷ c   , val (comp-val v′) ∷ val (comp-val (ƛ t ρ′)) ∷ s ,               comp-env ρ  ⟩ ⟶⟨ App ⟩
+  ⟨ comp t [ Ret ]              ,                          ret c (comp-env ρ) ∷ s , comp-val v′ ∷ comp-env ρ′ ⟩ ⟶⋆⟨ correct⇓′ t₁t₂⇓ ⟩
+  ⟨        [ Ret ]              ,       val (comp-val v) ∷ ret c (comp-env ρ) ∷ s , comp-val v′ ∷ comp-env ρ′ ⟩ ⟶⟨ Ret ⟩
+  ⟨                         c   ,       val (comp-val v) ∷                      s ,               comp-env ρ  ⟩ ∎
 
 correct⇑′ : ∀ {n ρ c s} {t : Tm n} →
-            ρ ⊢ t ⇑ → ⟨ ⟦ t ⟧ c , s , ⟦ ρ ⟧ρ ⟩ ⟶∞′
+            ρ ⊢ t ⇑ → ⟨ comp t c , s , comp-env ρ ⟩ ⟶∞′
 correct⇑′ {ρ = ρ} {c} {s} (app {t₁} {t₂} {t = t} {ρ′} {v′} t₁⇓ t₂⇓ t₁t₂⇑) =
-  ⟨ ⟦ t₁ ⟧ (⟦ t₂ ⟧ (App ∷ c)) ,                                 s ,           ⟦ ρ ⟧ρ  ⟩ ⟶⋆⟨ correct⇓′ t₁⇓ ⟩′
-  ⟨         ⟦ t₂ ⟧ (App ∷ c)  ,               val ⟦ ƛ t ρ′ ⟧v ∷ s ,           ⟦ ρ ⟧ρ  ⟩ ⟶⋆⟨ correct⇓′ t₂⇓ ⟩′
-  ⟨                 App ∷ c   , val ⟦ v′ ⟧v ∷ val ⟦ ƛ t ρ′ ⟧v ∷ s ,           ⟦ ρ ⟧ρ  ⟩ ⟶⟨ App ⟩′ ♯
- (⟨ ⟦ t ⟧ [ Ret ]             ,                  ret c ⟦ ρ ⟧ρ ∷ s , ⟦ v′ ⟧v ∷ ⟦ ρ′ ⟧ρ ⟩ ⟶∞⟨ correct⇑′ (♭ t₁t₂⇑) ⟩)
+  ⟨ comp t₁ (comp t₂ (App ∷ c)) ,                                               s ,               comp-env ρ  ⟩ ⟶⋆⟨ correct⇓′ t₁⇓ ⟩′
+  ⟨          comp t₂ (App ∷ c)  ,                     val (comp-val (ƛ t ρ′)) ∷ s ,               comp-env ρ  ⟩ ⟶⋆⟨ correct⇓′ t₂⇓ ⟩′
+  ⟨                   App ∷ c   , val (comp-val v′) ∷ val (comp-val (ƛ t ρ′)) ∷ s ,               comp-env ρ  ⟩ ⟶⟨ App ⟩′ ♯
+ (⟨ comp t [ Ret ]              ,                          ret c (comp-env ρ) ∷ s , comp-val v′ ∷ comp-env ρ′ ⟩ ⟶∞⟨ correct⇑′ (♭ t₁t₂⇑) ⟩)
 correct⇑′ {ρ = ρ} {c} {s} (·ˡ {t₁} {t₂} t₁⇑) =
-  ⟨ ⟦ t₁ ⟧ (⟦ t₂ ⟧ (App ∷ c)) , s , ⟦ ρ ⟧ρ ⟩ ⟶∞⟨ correct⇑′ (♭ t₁⇑) ⟩
+  ⟨ comp t₁ (comp t₂ (App ∷ c)) , s , comp-env ρ ⟩ ⟶∞⟨ correct⇑′ (♭ t₁⇑) ⟩
 correct⇑′ {ρ = ρ} {c} {s} (·ʳ {t₁} {t₂} {v} t₁⇓ t₂⇑) =
-  ⟨ ⟦ t₁ ⟧ (⟦ t₂ ⟧ (App ∷ c)) ,              s , ⟦ ρ ⟧ρ ⟩ ⟶⋆⟨ correct⇓′ t₁⇓ ⟩′
-  ⟨         ⟦ t₂ ⟧ (App ∷ c)  , val ⟦ v ⟧v ∷ s , ⟦ ρ ⟧ρ ⟩ ⟶∞⟨ correct⇑′ (♭ t₂⇑) ⟩
+  ⟨ comp t₁ (comp t₂ (App ∷ c)) ,                    s , comp-env ρ ⟩ ⟶⋆⟨ correct⇓′ t₁⇓ ⟩′
+  ⟨          comp t₂ (App ∷ c)  , val (comp-val v) ∷ s , comp-env ρ ⟩ ⟶∞⟨ correct⇑′ (♭ t₂⇑) ⟩
 
 correct⇓ : ∀ {t v} →
            [] ⊢ t ⇓ v →
-           ∃ λ s → ⟨ ⟦ t ⟧ [] , [] , [] ⟩ ⟶⋆ s × s ⇓ ⟦ v ⟧v
+           ∃ λ s → ⟨ comp t [] , [] , [] ⟩ ⟶⋆ s × s ⇓ comp-val v
 correct⇓ t⇓ = (_ , correct⇓′ t⇓ , final)
 
-correct⇑ : ∀ {t} → [] ⊢ t ⇑ → ⟨ ⟦ t ⟧ [] , [] , [] ⟩ ⟶∞
+correct⇑ : ∀ {t} → [] ⊢ t ⇑ → ⟨ comp t [] , [] , [] ⟩ ⟶∞
 correct⇑ = InfiniteSequence.sound ∘ correct⇑′
 
 -- Note that the two correctness statements above only apply to terms

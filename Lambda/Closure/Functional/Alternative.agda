@@ -36,7 +36,7 @@ private
 
 open import Lambda.Syntax
 open Closure Tm
-open import Lambda.VirtualMachine renaming (⟦_⟧ to ⟦_⟧t)
+open import Lambda.VirtualMachine
 open Functional
 private
   module VM = Closure Code
@@ -348,8 +348,9 @@ module Correctness {k : OtherKind} where
       _≈⟨_⟩P_ : ∀ x {y z} (x≈y : x ≈P y) (y≅z : y ≅ z) → x ≈P z
       correct :
         ∀ {n} t {ρ : Env n} {c s} {k : Value → Maybe VM.Value ⊥} →
-        (hyp : ∀ v → exec ⟨ c , val ⟦ v ⟧v ∷ s , ⟦ ρ ⟧ρ ⟩ ≈W k v) →
-        exec ⟨ ⟦ t ⟧t c , s , ⟦ ρ ⟧ρ ⟩ ≈P ⟦ t ⟧ ρ k
+        (hyp : ∀ v → exec ⟨ c , val (comp-val v) ∷ s , comp-env ρ ⟩
+                       ≈W k v) →
+        exec ⟨ comp t c , s , comp-env ρ ⟩ ≈P ⟦ t ⟧ ρ k
 
     data _≈W_ : Maybe VM.Value ⊥ → Maybe VM.Value ⊥ → Set where
       ⌈_⌉    : ∀ {x y} (x≈y : Rel (other k) x y) → x ≈W y
@@ -367,32 +368,31 @@ module Correctness {k : OtherKind} where
 
   correctW :
     ∀ {n} t {ρ : Env n} {c s} {k : Value → Maybe VM.Value ⊥} →
-    (∀ v → exec ⟨ c , val ⟦ v ⟧v ∷ s , ⟦ ρ ⟧ρ ⟩ ≈W k v) →
-    exec ⟨ ⟦ t ⟧t c , s , ⟦ ρ ⟧ρ ⟩ ≈W ⟦ t ⟧ ρ k
+    (∀ v → exec ⟨ c , val (comp-val v) ∷ s , comp-env ρ ⟩ ≈W k v) →
+    exec ⟨ comp t c , s , comp-env ρ ⟩ ≈W ⟦ t ⟧ ρ k
   correctW (con i) {ρ} {c} {s} {k} hyp = laterˡ (
-    exec ⟨ c , val (Lambda.Syntax.Closure.con i) ∷ s , ⟦ ρ ⟧ρ ⟩  ≈⟨ hyp (con i) ⟩W
-    k (con i)                                                    ∎)
+    exec ⟨ c , val (Lambda.Syntax.Closure.con i) ∷ s , comp-env ρ ⟩  ≈⟨ hyp (con i) ⟩W
+    k (con i)                                                        ∎)
   correctW (var x) {ρ} {c} {s} {k} hyp = laterˡ (
-    exec ⟨ c , val (lookup x ⟦ ρ ⟧ρ) ∷ s , ⟦ ρ ⟧ρ ⟩  ≡⟨ P.cong (λ v → exec ⟨ c , val v ∷ s , ⟦ ρ ⟧ρ ⟩) $
-                                                          lookup-hom x ρ ⟩W
-    exec ⟨ c , val ⟦ lookup x ρ ⟧v   ∷ s , ⟦ ρ ⟧ρ ⟩  ≈⟨ hyp (lookup x ρ) ⟩W
+    exec ⟨ c , val (lookup x (comp-env ρ)) ∷ s , comp-env ρ ⟩  ≡⟨ P.cong (λ v → exec ⟨ c , val v ∷ s , comp-env ρ ⟩) $ lookup-hom x ρ ⟩W
+    exec ⟨ c , val (comp-val (lookup x ρ)) ∷ s , comp-env ρ ⟩  ≈⟨ hyp (lookup x ρ) ⟩W
     k (lookup x ρ)                                   ∎)
   correctW (ƛ t) {ρ} {c} {s} {k} hyp = laterˡ (
-    exec ⟨ c , val ⟦ ƛ t ρ ⟧v ∷ s , ⟦ ρ ⟧ρ ⟩  ≈⟨ hyp (ƛ t ρ) ⟩W
-    k (ƛ t ρ)                                 ∎)
+    exec ⟨ c , val (comp-val (ƛ t ρ)) ∷ s , comp-env ρ ⟩  ≈⟨ hyp (ƛ t ρ) ⟩W
+    k (ƛ t ρ)                                             ∎)
   correctW (t₁ · t₂) {ρ} {c} {s} {k} hyp =
-    exec ⟨ ⟦ t₁ ⟧t (⟦ t₂ ⟧t (App ∷ c)) , s , ⟦ ρ ⟧ρ ⟩  ≈⟨ correctW t₁ (λ v₁ → correctW t₂ (λ v₂ → ∙-correctW v₁ v₂)) ⟩W
-    (⟦ t₁ ⟧ ρ λ v₁ → ⟦ t₂ ⟧ ρ λ v₂ → (v₁ ∙ v₂) k)      ≅⟨ sym $ sem-· t₁ t₂ ⟩
-    ⟦ t₁ · t₂ ⟧ ρ k                                    ∎
+    exec ⟨ comp t₁ (comp t₂ (App ∷ c)) , s , comp-env ρ ⟩  ≈⟨ correctW t₁ (λ v₁ → correctW t₂ (λ v₂ → ∙-correctW v₁ v₂)) ⟩W
+    (⟦ t₁ ⟧ ρ λ v₁ → ⟦ t₂ ⟧ ρ λ v₂ → (v₁ ∙ v₂) k)          ≅⟨ sym $ sem-· t₁ t₂ ⟩
+    ⟦ t₁ · t₂ ⟧ ρ k                                        ∎
     where
     ∙-correctW :
       ∀ v₁ v₂ →
-      exec ⟨ App ∷ c , val ⟦ v₂ ⟧v ∷ val ⟦ v₁ ⟧v ∷ s , ⟦ ρ ⟧ρ ⟩ ≈W
+      exec ⟨ App ∷ c , val (comp-val v₂) ∷ val (comp-val v₁) ∷ s , comp-env ρ ⟩ ≈W
       (v₁ ∙ v₂) k
     ∙-correctW (con i)   v₂ = ⌈ fail ∎ ⌉
     ∙-correctW (ƛ t₁ ρ′) v₂ = later (
-      exec ⟨ ⟦ t₁ ⟧t [ Ret ] , ret c ⟦ ρ ⟧ρ ∷ s , ⟦ v₂ ∷ ρ′ ⟧ρ ⟩  ≈⟨ correct t₁ (λ v → laterˡ (hyp v)) ⟩P
-      ⟦ t₁ ⟧ (v₂ ∷ ρ′) k                                          ∎)
+      exec ⟨ comp t₁ [ Ret ] , ret c (comp-env ρ) ∷ s , comp-env (v₂ ∷ ρ′) ⟩  ≈⟨ correct t₁ (λ v → laterˡ (hyp v)) ⟩P
+      ⟦ t₁ ⟧ (v₂ ∷ ρ′) k                                                      ∎)
 
   whnf : ∀ {x y} → x ≈P y → x ≈W y
   whnf (x ≈⟨ x≈y ⟩P y≅z) = x ≈⟨ whnf x≈y ⟩W y≅z
@@ -416,8 +416,8 @@ module Correctness {k : OtherKind} where
 -- that the VM is deterministic.
 
 correct : ∀ t →
-          exec ⟨ ⟦ t ⟧t [] , [] , [] ⟩ ≈
-          ⟦ t ⟧ [] (λ v → return ⟦ v ⟧v)
+          exec ⟨ comp t [] , [] , [] ⟩ ≈
+          ⟦ t ⟧ [] (λ v → return (comp-val v))
 correct t =
-  soundP $ Correctness.correct t (λ v → ⌈ return ⟦ v ⟧v ∎ ⌉)
+  soundP $ Correctness.correct t (λ v → ⌈ return (comp-val v) ∎ ⌉)
   where open Correctness

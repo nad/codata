@@ -54,27 +54,28 @@ open Closure Code
 
 -- The compiler takes a code continuation.
 
-⟦_⟧ : ∀ {n} → Tm n → Code n → Code n
-⟦ con i ⟧   c = Con i ∷ c
-⟦ var x ⟧   c = Var x ∷ c
-⟦ ƛ t ⟧     c = Clos (⟦ t ⟧ [ Ret ]) ∷ c
-⟦ t₁ · t₂ ⟧ c = ⟦ t₁ ⟧ (⟦ t₂ ⟧ (App ∷ c))
+comp : ∀ {n} → Tm n → Code n → Code n
+comp (con i)   c = Con i ∷ c
+comp (var x)   c = Var x ∷ c
+comp (ƛ t)     c = Clos (comp t [ Ret ]) ∷ c
+comp (t₁ · t₂) c = comp t₁ (comp t₂ (App ∷ c))
 
 -- Environments and values can also be compiled.
 
 mutual
 
-  ⟦_⟧ρ : ∀ {n} → C.Env n → Env n
-  ⟦ []    ⟧ρ = []
-  ⟦ v ∷ ρ ⟧ρ = ⟦ v ⟧v ∷ ⟦ ρ ⟧ρ
+  comp-env : ∀ {n} → C.Env n → Env n
+  comp-env []      = []
+  comp-env (v ∷ ρ) = comp-val v ∷ comp-env ρ
 
-  ⟦_⟧v : C.Value → Value
-  ⟦ con i ⟧v = con i
-  ⟦ ƛ t ρ ⟧v = ƛ (⟦ t ⟧ [ Ret ]) ⟦ ρ ⟧ρ
+  comp-val : C.Value → Value
+  comp-val (con i) = con i
+  comp-val (ƛ t ρ) = ƛ (comp t [ Ret ]) (comp-env ρ)
 
--- lookup x is homomorphic with respect to ⟦_⟧ρ/⟦_⟧v.
+-- lookup x is homomorphic with respect to comp-env/comp-val.
 
-lookup-hom : ∀ {n} (x : Fin n) ρ → lookup x ⟦ ρ ⟧ρ ≡ ⟦ lookup x ρ ⟧v
+lookup-hom : ∀ {n} (x : Fin n) ρ →
+             lookup x (comp-env ρ) ≡ comp-val (lookup x ρ)
 lookup-hom zero    (v ∷ ρ) = PE.refl
 lookup-hom (suc x) (v ∷ ρ) = lookup-hom x ρ
 
