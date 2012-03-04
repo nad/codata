@@ -416,7 +416,7 @@ module Correctness {k : OtherKind} where
 -- that the VM is deterministic.
 
 correct : ∀ t →
-          exec ⟨ ⟦ t ⟧t [] , [] , [] ⟩ ≳
+          exec ⟨ ⟦ t ⟧t [] , [] , [] ⟩ ≈
           ⟦ t ⟧ [] (λ v → return ⟦ v ⟧v)
 correct t =
   soundP $ Correctness.correct t (λ v → ⌈ return ⟦ v ⟧v ∎ ⌉)

@@ -346,11 +346,10 @@ module Correctness {k : OtherKind} where
 -- correctness statement, but relies on a separate proof which shows
 -- that the VM is deterministic.
 
--- Note also that the equality (well, partial order) that is used here
--- is syntactic.
+-- Note also that the equality that is used here is syntactic.
 
 correct : ∀ t →
-          exec ⟨ ⟦ t ⟧t [] , [] , [] ⟩ ≳
+          exec ⟨ ⟦ t ⟧t [] , [] , [] ⟩ ≈
           (⟦ t ⟧ [] >>= λ v → PF.return ⟦ v ⟧v)
 correct t =
   soundP $ Correctness.correct t (λ v → ⌈ PF.return ⟦ v ⟧v ∎ ⌉)
