@@ -263,10 +263,10 @@ module Correctness {k : OtherKind} where
     data _≈P_ : Maybe VM.Value ⊥ → Maybe VM.Value ⊥ → Set where
       _≈⟨_⟩P_ : ∀ x {y z} (x≈y : x ≈P y) (y≅z : y ≅ z) → x ≈P z
       correct :
-        ∀ {n} t {ρ : Env n} {c s} {f : Value → Maybe VM.Value ⊥} →
+        ∀ {n} t {ρ : Env n} {c s} {k : Value → Maybe VM.Value ⊥} →
         (hyp : ∀ v → exec ⟨ c , val (comp-val v) ∷ s , comp-env ρ ⟩
-                       ≈W f v) →
-        exec ⟨ comp t c , s , comp-env ρ ⟩ ≈P (⟦ t ⟧ ρ >>= f)
+                       ≈W k v) →
+        exec ⟨ comp t c , s , comp-env ρ ⟩ ≈P (⟦ t ⟧ ρ >>= k)
 
     data _≈W_ : Maybe VM.Value ⊥ → Maybe VM.Value ⊥ → Set where
       ⌈_⌉    : ∀ {x y} (x≈y : Rel (other k) x y) → x ≈W y
@@ -288,35 +288,38 @@ module Correctness {k : OtherKind} where
   -- if the semantics was also formulated in continuation-passing
   -- style.
 
-  correctW :
-    ∀ {n} t {ρ : Env n} {c s} {f : Value → Maybe VM.Value ⊥} →
-    (∀ v → exec ⟨ c , val (comp-val v) ∷ s , comp-env ρ ⟩ ≈W f v) →
-    exec ⟨ comp t c , s , comp-env ρ ⟩ ≈W (⟦ t ⟧ ρ >>= f)
-  correctW (con i) {ρ} {c} {s} {f} hyp = laterˡ (
-    exec ⟨ c , val (Lambda.Syntax.Closure.con i) ∷ s , comp-env ρ ⟩  ≈⟨ hyp (con i) ⟩W
-    f (con i)                                                        ∎)
-  correctW (var x) {ρ} {c} {s} {f} hyp = laterˡ (
-    exec ⟨ c , val (lookup x (comp-env ρ)) ∷ s , comp-env ρ ⟩  ≡⟨ P.cong (λ v → exec ⟨ c , val v ∷ s , comp-env ρ ⟩) $ lookup-hom x ρ ⟩W
-    exec ⟨ c , val (comp-val (lookup x ρ)) ∷ s , comp-env ρ ⟩  ≈⟨ hyp (lookup x ρ) ⟩W
-    f (lookup x ρ)                                             ∎)
-  correctW (ƛ t) {ρ} {c} {s} {f} hyp = laterˡ (
-    exec ⟨ c , val (comp-val (ƛ t ρ)) ∷ s , comp-env ρ ⟩  ≈⟨ hyp (ƛ t ρ) ⟩W
-    f (ƛ t ρ)                                             ∎)
-  correctW (t₁ · t₂) {ρ} {c} {s} {f} hyp =
-    exec ⟨ comp t₁ (comp t₂ (App ∷ c)) , s , comp-env ρ ⟩           ≈⟨ correctW t₁ (λ v₁ → correctW t₂ (λ v₂ → ∙-correctW v₁ v₂)) ⟩W
-    (⟦ t₁ ⟧ ρ >>= λ v₁ →  ⟦ t₂ ⟧ ρ >>= λ v₂ → ⟪ v₁ ∙ v₂ ⟫P  >>= f)  ≅⟨ ((⟦ t₁ ⟧ ρ ∎) >>=-cong λ _ → sym $ associative (⟦ t₂ ⟧ ρ) _ _) ⟩
-    (⟦ t₁ ⟧ ρ >>= λ v₁ → (⟦ t₂ ⟧ ρ >>= λ v₂ → ⟪ v₁ ∙ v₂ ⟫P) >>= f)  ≅⟨ sym $ associative (⟦ t₁ ⟧ ρ) _ _ ⟩
-    (⟦ t₁ ⟧ ρ ⟦·⟧ ⟦ t₂ ⟧ ρ >>= f)                                   ≅⟨ sym (·-comp t₁ t₂ >>=-cong λ v → f v ∎) ⟩
-    (⟦ t₁ · t₂ ⟧ ρ >>= f)                                           ∎
-    where
+  mutual
+
+    correctW :
+      ∀ {n} t {ρ : Env n} {c s} {k : Value → Maybe VM.Value ⊥} →
+      (∀ v → exec ⟨ c , val (comp-val v) ∷ s , comp-env ρ ⟩ ≈W k v) →
+      exec ⟨ comp t c , s , comp-env ρ ⟩ ≈W (⟦ t ⟧ ρ >>= k)
+    correctW (con i) {ρ} {c} {s} {k} hyp = laterˡ (
+      exec ⟨ c , val (Lambda.Syntax.Closure.con i) ∷ s , comp-env ρ ⟩  ≈⟨ hyp (con i) ⟩W
+      k (con i)                                                        ∎)
+    correctW (var x) {ρ} {c} {s} {k} hyp = laterˡ (
+      exec ⟨ c , val (lookup x (comp-env ρ)) ∷ s , comp-env ρ ⟩  ≡⟨ P.cong (λ v → exec ⟨ c , val v ∷ s , comp-env ρ ⟩) $ lookup-hom x ρ ⟩W
+      exec ⟨ c , val (comp-val (lookup x ρ)) ∷ s , comp-env ρ ⟩  ≈⟨ hyp (lookup x ρ) ⟩W
+      k (lookup x ρ)                                             ∎)
+    correctW (ƛ t) {ρ} {c} {s} {k} hyp = laterˡ (
+      exec ⟨ c , val (comp-val (ƛ t ρ)) ∷ s , comp-env ρ ⟩  ≈⟨ hyp (ƛ t ρ) ⟩W
+      k (ƛ t ρ)                                             ∎)
+    correctW (t₁ · t₂) {ρ} {c} {s} {k} hyp =
+      exec ⟨ comp t₁ (comp t₂ (App ∷ c)) , s , comp-env ρ ⟩           ≈⟨ correctW t₁ (λ v₁ → correctW t₂ (λ v₂ → ∙-correctW v₁ v₂ hyp)) ⟩W
+      (⟦ t₁ ⟧ ρ >>= λ v₁ →  ⟦ t₂ ⟧ ρ >>= λ v₂ → ⟪ v₁ ∙ v₂ ⟫P  >>= k)  ≅⟨ ((⟦ t₁ ⟧ ρ ∎) >>=-cong λ _ → sym $ associative (⟦ t₂ ⟧ ρ) _ _) ⟩
+      (⟦ t₁ ⟧ ρ >>= λ v₁ → (⟦ t₂ ⟧ ρ >>= λ v₂ → ⟪ v₁ ∙ v₂ ⟫P) >>= k)  ≅⟨ sym $ associative (⟦ t₁ ⟧ ρ) _ _ ⟩
+      (⟦ t₁ ⟧ ρ ⟦·⟧ ⟦ t₂ ⟧ ρ >>= k)                                   ≅⟨ sym (·-comp t₁ t₂ >>=-cong λ v → k v ∎) ⟩
+      (⟦ t₁ · t₂ ⟧ ρ >>= k)                                           ∎
+
     ∙-correctW :
-      ∀ v₁ v₂ →
+      ∀ {n} v₁ v₂ {ρ : Env n} {c s} {k : Value → Maybe VM.Value ⊥} →
+      (∀ v → exec ⟨ c , val (comp-val v) ∷ s , comp-env ρ ⟩ ≈W k v) →
       exec ⟨ App ∷ c , val (comp-val v₂) ∷ val (comp-val v₁) ∷ s , comp-env ρ ⟩ ≈W
-      (⟪ v₁ ∙ v₂ ⟫P >>= f)
-    ∙-correctW (con i)   v₂ = ⌈ PF.fail ∎ ⌉
-    ∙-correctW (ƛ t₁ ρ′) v₂ = later (
+      (⟪ v₁ ∙ v₂ ⟫P >>= k)
+    ∙-correctW (con i)   v₂                 _   = ⌈ PF.fail ∎ ⌉
+    ∙-correctW (ƛ t₁ ρ′) v₂ {ρ} {c} {s} {k} hyp = later (
       exec ⟨ comp t₁ [ Ret ] , ret c (comp-env ρ) ∷ s , comp-env (v₂ ∷ ρ′) ⟩  ≈⟨ correct t₁ (λ v → laterˡ (hyp v)) ⟩P
-      (⟦ t₁ ⟧ (v₂ ∷ ρ′) >>= f)                                                ∎)
+      (⟦ t₁ ⟧ (v₂ ∷ ρ′) >>= k)                                                ∎)
 
   whnf : ∀ {x y} → x ≈P y → x ≈W y
   whnf (x ≈⟨ x≈y ⟩P y≅z) = x ≈⟨ whnf x≈y ⟩W y≅z

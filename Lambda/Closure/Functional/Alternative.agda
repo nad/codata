@@ -366,31 +366,34 @@ module Correctness {k : OtherKind} where
   _  ≈⟨ ⌈ x≈y ⌉    ⟩W       y≅z = ⌈ trans x≈y (Partiality.≅⇒ y≅z) ⌉
     where trans = Preorder.trans (Partiality.preorder P.isPreorder _)
 
-  correctW :
-    ∀ {n} t {ρ : Env n} {c s} {k : Value → Maybe VM.Value ⊥} →
-    (∀ v → exec ⟨ c , val (comp-val v) ∷ s , comp-env ρ ⟩ ≈W k v) →
-    exec ⟨ comp t c , s , comp-env ρ ⟩ ≈W ⟦ t ⟧ ρ k
-  correctW (con i) {ρ} {c} {s} {k} hyp = laterˡ (
-    exec ⟨ c , val (Lambda.Syntax.Closure.con i) ∷ s , comp-env ρ ⟩  ≈⟨ hyp (con i) ⟩W
-    k (con i)                                                        ∎)
-  correctW (var x) {ρ} {c} {s} {k} hyp = laterˡ (
-    exec ⟨ c , val (lookup x (comp-env ρ)) ∷ s , comp-env ρ ⟩  ≡⟨ P.cong (λ v → exec ⟨ c , val v ∷ s , comp-env ρ ⟩) $ lookup-hom x ρ ⟩W
-    exec ⟨ c , val (comp-val (lookup x ρ)) ∷ s , comp-env ρ ⟩  ≈⟨ hyp (lookup x ρ) ⟩W
-    k (lookup x ρ)                                   ∎)
-  correctW (ƛ t) {ρ} {c} {s} {k} hyp = laterˡ (
-    exec ⟨ c , val (comp-val (ƛ t ρ)) ∷ s , comp-env ρ ⟩  ≈⟨ hyp (ƛ t ρ) ⟩W
-    k (ƛ t ρ)                                             ∎)
-  correctW (t₁ · t₂) {ρ} {c} {s} {k} hyp =
-    exec ⟨ comp t₁ (comp t₂ (App ∷ c)) , s , comp-env ρ ⟩  ≈⟨ correctW t₁ (λ v₁ → correctW t₂ (λ v₂ → ∙-correctW v₁ v₂)) ⟩W
-    (⟦ t₁ ⟧ ρ λ v₁ → ⟦ t₂ ⟧ ρ λ v₂ → (v₁ ∙ v₂) k)          ≅⟨ sym $ sem-· t₁ t₂ ⟩
-    ⟦ t₁ · t₂ ⟧ ρ k                                        ∎
-    where
+  mutual
+
+    correctW :
+      ∀ {n} t {ρ : Env n} {c s} {k : Value → Maybe VM.Value ⊥} →
+      (∀ v → exec ⟨ c , val (comp-val v) ∷ s , comp-env ρ ⟩ ≈W k v) →
+      exec ⟨ comp t c , s , comp-env ρ ⟩ ≈W ⟦ t ⟧ ρ k
+    correctW (con i) {ρ} {c} {s} {k} hyp = laterˡ (
+      exec ⟨ c , val (Lambda.Syntax.Closure.con i) ∷ s , comp-env ρ ⟩  ≈⟨ hyp (con i) ⟩W
+      k (con i)                                                        ∎)
+    correctW (var x) {ρ} {c} {s} {k} hyp = laterˡ (
+      exec ⟨ c , val (lookup x (comp-env ρ)) ∷ s , comp-env ρ ⟩  ≡⟨ P.cong (λ v → exec ⟨ c , val v ∷ s , comp-env ρ ⟩) $ lookup-hom x ρ ⟩W
+      exec ⟨ c , val (comp-val (lookup x ρ)) ∷ s , comp-env ρ ⟩  ≈⟨ hyp (lookup x ρ) ⟩W
+      k (lookup x ρ)                                   ∎)
+    correctW (ƛ t) {ρ} {c} {s} {k} hyp = laterˡ (
+      exec ⟨ c , val (comp-val (ƛ t ρ)) ∷ s , comp-env ρ ⟩  ≈⟨ hyp (ƛ t ρ) ⟩W
+      k (ƛ t ρ)                                             ∎)
+    correctW (t₁ · t₂) {ρ} {c} {s} {k} hyp =
+      exec ⟨ comp t₁ (comp t₂ (App ∷ c)) , s , comp-env ρ ⟩  ≈⟨ correctW t₁ (λ v₁ → correctW t₂ (λ v₂ → ∙-correctW v₁ v₂ hyp)) ⟩W
+      (⟦ t₁ ⟧ ρ λ v₁ → ⟦ t₂ ⟧ ρ λ v₂ → (v₁ ∙ v₂) k)          ≅⟨ sym $ sem-· t₁ t₂ ⟩
+      ⟦ t₁ · t₂ ⟧ ρ k                                        ∎
+
     ∙-correctW :
-      ∀ v₁ v₂ →
+      ∀ {n} v₁ v₂ {ρ : Env n} {c s} {k : Value → Maybe VM.Value ⊥} →
+      (∀ v → exec ⟨ c , val (comp-val v) ∷ s , comp-env ρ ⟩ ≈W k v) →
       exec ⟨ App ∷ c , val (comp-val v₂) ∷ val (comp-val v₁) ∷ s , comp-env ρ ⟩ ≈W
       (v₁ ∙ v₂) k
-    ∙-correctW (con i)   v₂ = ⌈ fail ∎ ⌉
-    ∙-correctW (ƛ t₁ ρ′) v₂ = later (
+    ∙-correctW (con i)   v₂                 _   = ⌈ fail ∎ ⌉
+    ∙-correctW (ƛ t₁ ρ′) v₂ {ρ} {c} {s} {k} hyp = later (
       exec ⟨ comp t₁ [ Ret ] , ret c (comp-env ρ) ∷ s , comp-env (v₂ ∷ ρ′) ⟩  ≈⟨ correct t₁ (λ v → laterˡ (hyp v)) ⟩P
       ⟦ t₁ ⟧ (v₂ ∷ ρ′) k                                                      ∎)
 
