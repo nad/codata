@@ -317,9 +317,13 @@ module Correctness {k : OtherKind} where
       exec ⟨ app ∷ c , val (comp-val v₂) ∷ val (comp-val v₁) ∷ s , comp-env ρ ⟩ ≈W
       (⟪ v₁ ∙ v₂ ⟫P >>= k)
     ∙-correctW (con i)   v₂                 _   = ⌈ PF.fail ∎ ⌉
-    ∙-correctW (ƛ t₁ ρ′) v₂ {ρ} {c} {s} {k} hyp = later (
-      exec ⟨ comp t₁ [ ret ] , ret c (comp-env ρ) ∷ s , comp-env (v₂ ∷ ρ′) ⟩  ≈⟨ correct t₁ (λ v → laterˡ (hyp v)) ⟩P
-      (⟦ t₁ ⟧ (v₂ ∷ ρ′) >>= k)                                                ∎)
+    ∙-correctW (ƛ t₁ ρ₁) v₂ {ρ} {c} {s} {k} hyp =
+      exec ⟨ app ∷ c , val (comp-val v₂) ∷ val (comp-val (ƛ t₁ ρ₁)) ∷ s , comp-env ρ ⟩  ≈⟨ later (
+
+        exec ⟨ comp t₁ [ ret ] , ret c (comp-env ρ) ∷ s , comp-env (v₂ ∷ ρ₁) ⟩               ≈⟨ correct t₁ (λ v → laterˡ (hyp v)) ⟩P
+        (⟦ t₁ ⟧ (v₂ ∷ ρ₁) >>= k)                                                             ∎) ⟩W
+
+      (⟪ ƛ t₁ ρ₁ ∙ v₂ ⟫P >>= k)                                                         ∎
 
   whnf : ∀ {x y} → x ≈P y → x ≈W y
   whnf (x ≈⟨ x≈y ⟩P y≅z) = x ≈⟨ whnf x≈y ⟩W y≅z
