@@ -34,11 +34,11 @@ mutual
   -- Instructions.
 
   data Instr (n : ℕ) : Set where
-    Var  : (x : Fin n) → Instr n
-    Con  : (i : ℕ) → Instr n
-    Clos : (c : Code (suc n)) → Instr n
-    App  : Instr n
-    Ret  : Instr n
+    var : (x : Fin n) → Instr n
+    con : (i : ℕ) → Instr n
+    clo : (c : Code (suc n)) → Instr n
+    app : Instr n
+    ret : Instr n
 
   -- Code.
 
@@ -55,10 +55,10 @@ open Closure Code
 -- The compiler takes a code continuation.
 
 comp : ∀ {n} → Tm n → Code n → Code n
-comp (con i)   c = Con i ∷ c
-comp (var x)   c = Var x ∷ c
-comp (ƛ t)     c = Clos (comp t [ Ret ]) ∷ c
-comp (t₁ · t₂) c = comp t₁ (comp t₂ (App ∷ c))
+comp (con i)   c = con i ∷ c
+comp (var x)   c = var x ∷ c
+comp (ƛ t)     c = clo (comp t [ ret ]) ∷ c
+comp (t₁ · t₂) c = comp t₁ (comp t₂ (app ∷ c))
 
 -- Environments and values can also be compiled.
 
@@ -70,7 +70,7 @@ mutual
 
   comp-val : C.Value → Value
   comp-val (con i) = con i
-  comp-val (ƛ t ρ) = ƛ (comp t [ Ret ]) (comp-env ρ)
+  comp-val (ƛ t ρ) = ƛ (comp t [ ret ]) (comp-env ρ)
 
 -- lookup x is homomorphic with respect to comp-env/comp-val.
 
@@ -104,16 +104,16 @@ module Relational where
   infix 4 _⟶_
 
   data _⟶_ : State → State → Set where
-    Var  : ∀ {n} {x : Fin n} {c s ρ} →
-           ⟨ Var x ∷ c , s , ρ ⟩ ⟶ ⟨ c , val (lookup x ρ) ∷ s , ρ ⟩
-    Con  : ∀ {n i} {c : Code n} {s ρ} →
-           ⟨ Con i ∷ c , s , ρ ⟩ ⟶ ⟨ c , val (con i) ∷ s , ρ ⟩
-    Clos : ∀ {n} {c : Code n} {c′ s ρ} →
-           ⟨ Clos c′ ∷ c , s , ρ ⟩ ⟶ ⟨ c , val (ƛ c′ ρ) ∷ s , ρ ⟩
-    App  : ∀ {n} {c : Code n} {v n′} {c′ : Code (suc n′)} {ρ′ s ρ} →
-           ⟨ App ∷ c , val v ∷ val (ƛ c′ ρ′) ∷ s , ρ ⟩ ⟶ ⟨ c′ , ret c ρ ∷ s , v ∷ ρ′ ⟩
-    Ret  : ∀ {n} {c : Code n} {v n′} {c′ : Code n′} {ρ′ s ρ} →
-           ⟨ Ret ∷ c , val v ∷ ret c′ ρ′ ∷ s , ρ ⟩ ⟶ ⟨ c′ , val v ∷ s , ρ′ ⟩
+    var : ∀ {n} {x : Fin n} {c s ρ} →
+          ⟨ var x ∷ c , s , ρ ⟩ ⟶ ⟨ c , val (lookup x ρ) ∷ s , ρ ⟩
+    con : ∀ {n i} {c : Code n} {s ρ} →
+          ⟨ con i ∷ c , s , ρ ⟩ ⟶ ⟨ c , val (con i) ∷ s , ρ ⟩
+    clo : ∀ {n} {c : Code n} {c′ s ρ} →
+          ⟨ clo c′ ∷ c , s , ρ ⟩ ⟶ ⟨ c , val (ƛ c′ ρ) ∷ s , ρ ⟩
+    app : ∀ {n} {c : Code n} {v n′} {c′ : Code (suc n′)} {ρ′ s ρ} →
+          ⟨ app ∷ c , val v ∷ val (ƛ c′ ρ′) ∷ s , ρ ⟩ ⟶ ⟨ c′ , ret c ρ ∷ s , v ∷ ρ′ ⟩
+    ret : ∀ {n} {c : Code n} {v n′} {c′ : Code n′} {ρ′ s ρ} →
+          ⟨ ret ∷ c , val v ∷ ret c′ ρ′ ∷ s , ρ ⟩ ⟶ ⟨ c′ , val v ∷ s , ρ′ ⟩
 
   -- Final (stuck) states.
 
@@ -190,13 +190,13 @@ module Functional where
   -- A single step of the computation.
 
   step : State → Result
-  step ⟨ []          ,                 val v ∷ [] , [] ⟩ = done v
-  step ⟨ Var x   ∷ c ,                          s , ρ  ⟩ = continue ⟨ c  , val (lookup x ρ) ∷ s ,     ρ  ⟩
-  step ⟨ Con i   ∷ c ,                          s , ρ  ⟩ = continue ⟨ c  , val (con i)      ∷ s ,     ρ  ⟩
-  step ⟨ Clos c′ ∷ c ,                          s , ρ  ⟩ = continue ⟨ c  , val (ƛ c′ ρ)     ∷ s ,     ρ  ⟩
-  step ⟨ App     ∷ c , val v ∷ val (ƛ c′ ρ′) ∷  s , ρ  ⟩ = continue ⟨ c′ , ret c ρ          ∷ s , v ∷ ρ′ ⟩
-  step ⟨ Ret     ∷ c , val v ∷ ret c′ ρ′     ∷  s , ρ  ⟩ = continue ⟨ c′ , val v            ∷ s ,     ρ′ ⟩
-  step _                                                 = crash
+  step ⟨ []         ,                 val v ∷ [] , [] ⟩ = done v
+  step ⟨ var x  ∷ c ,                          s , ρ  ⟩ = continue ⟨ c  , val (lookup x ρ) ∷ s ,     ρ  ⟩
+  step ⟨ con i  ∷ c ,                          s , ρ  ⟩ = continue ⟨ c  , val (con i)      ∷ s ,     ρ  ⟩
+  step ⟨ clo c′ ∷ c ,                          s , ρ  ⟩ = continue ⟨ c  , val (ƛ c′ ρ)     ∷ s ,     ρ  ⟩
+  step ⟨ app    ∷ c , val v ∷ val (ƛ c′ ρ′) ∷  s , ρ  ⟩ = continue ⟨ c′ , ret c ρ          ∷ s , v ∷ ρ′ ⟩
+  step ⟨ ret    ∷ c , val v ∷ ret c′ ρ′     ∷  s , ρ  ⟩ = continue ⟨ c′ , val v            ∷ s ,     ρ′ ⟩
+  step _                                                = crash
 
   -- The VM.
 
@@ -243,15 +243,15 @@ module Equivalence where
     crash₂  : ∀ {n n′ c ρ′ s ρ}      → Crashing (⟨_,_,_⟩ {    n}        [] (         ret {n′} c ρ′  ∷ s )       ρ )
     crash₃  : ∀ {n v e s ρ}          → Crashing (⟨_,_,_⟩ {    n}        [] (val v  ∷ e              ∷ s )       ρ )
     crash₄  : ∀ {n v₁ v₂ ρ}          → Crashing (⟨_,_,_⟩ {suc n}        [] (         val v₁         ∷ []) (v₂ ∷ ρ))
-    crash₅  : ∀ {n c ρ}              → Crashing (⟨_,_,_⟩ {    n} (App ∷ c)                            []        ρ )
-    crash₆  : ∀ {n c v ρ}            → Crashing (⟨_,_,_⟩ {    n} (App ∷ c) (         val v          ∷ [])       ρ )
-    crash₇  : ∀ {n c n′ c′ ρ′ s ρ}   → Crashing (⟨_,_,_⟩ {    n} (App ∷ c) (         ret {n′} c′ ρ′ ∷ s )       ρ )
-    crash₈  : ∀ {n c v i s ρ}        → Crashing (⟨_,_,_⟩ {    n} (App ∷ c) (val v  ∷ val (con i)    ∷ s )       ρ )
-    crash₉  : ∀ {n c v n′ c′ ρ′ s ρ} → Crashing (⟨_,_,_⟩ {    n} (App ∷ c) (val v  ∷ ret {n′} c′ ρ′ ∷ s )       ρ )
-    crash₁₀ : ∀ {n c ρ}              → Crashing (⟨_,_,_⟩ {    n} (Ret ∷ c)                            []        ρ )
-    crash₁₁ : ∀ {n c v ρ}            → Crashing (⟨_,_,_⟩ {    n} (Ret ∷ c) (         val v          ∷ [])       ρ )
-    crash₁₂ : ∀ {n c n′ c′ ρ′ s ρ}   → Crashing (⟨_,_,_⟩ {    n} (Ret ∷ c) (         ret {n′} c′ ρ′ ∷ s )       ρ )
-    crash₁₃ : ∀ {n c v₁ v₂ s ρ}      → Crashing (⟨_,_,_⟩ {    n} (Ret ∷ c) (val v₁ ∷ val v₂         ∷ s )       ρ )
+    crash₅  : ∀ {n c ρ}              → Crashing (⟨_,_,_⟩ {    n} (app ∷ c)                            []        ρ )
+    crash₆  : ∀ {n c v ρ}            → Crashing (⟨_,_,_⟩ {    n} (app ∷ c) (         val v          ∷ [])       ρ )
+    crash₇  : ∀ {n c n′ c′ ρ′ s ρ}   → Crashing (⟨_,_,_⟩ {    n} (app ∷ c) (         ret {n′} c′ ρ′ ∷ s )       ρ )
+    crash₈  : ∀ {n c v i s ρ}        → Crashing (⟨_,_,_⟩ {    n} (app ∷ c) (val v  ∷ val (con i)    ∷ s )       ρ )
+    crash₉  : ∀ {n c v n′ c′ ρ′ s ρ} → Crashing (⟨_,_,_⟩ {    n} (app ∷ c) (val v  ∷ ret {n′} c′ ρ′ ∷ s )       ρ )
+    crash₁₀ : ∀ {n c ρ}              → Crashing (⟨_,_,_⟩ {    n} (ret ∷ c)                            []        ρ )
+    crash₁₁ : ∀ {n c v ρ}            → Crashing (⟨_,_,_⟩ {    n} (ret ∷ c) (         val v          ∷ [])       ρ )
+    crash₁₂ : ∀ {n c n′ c′ ρ′ s ρ}   → Crashing (⟨_,_,_⟩ {    n} (ret ∷ c) (         ret {n′} c′ ρ′ ∷ s )       ρ )
+    crash₁₃ : ∀ {n c v₁ v₂ s ρ}      → Crashing (⟨_,_,_⟩ {    n} (ret ∷ c) (val v₁ ∷ val v₂         ∷ s )       ρ )
 
   -- There are three kinds of states.
 
@@ -263,26 +263,26 @@ module Equivalence where
   -- We can assign (at least) one kind to every state.
 
   kind : ∀ s → Kind s
-  kind ⟨ []          ,                 val v ∷ [] , [] ⟩ = done final
-  kind ⟨ Var x   ∷ c ,                          s , ρ  ⟩ = continue Var
-  kind ⟨ Con i   ∷ c ,                          s , ρ  ⟩ = continue Con
-  kind ⟨ Clos c′ ∷ c ,                          s , ρ  ⟩ = continue Clos
-  kind ⟨ App     ∷ c , val v ∷ val (ƛ c′ ρ′) ∷  s , ρ  ⟩ = continue App
-  kind ⟨ Ret     ∷ c , val v ∷ ret c′ ρ′     ∷  s , ρ  ⟩ = continue Ret
+  kind ⟨ []         ,                 val v ∷ [] , [] ⟩ = done final
+  kind ⟨ var x  ∷ c ,                          s , ρ  ⟩ = continue var
+  kind ⟨ con i  ∷ c ,                          s , ρ  ⟩ = continue con
+  kind ⟨ clo c′ ∷ c ,                          s , ρ  ⟩ = continue clo
+  kind ⟨ app    ∷ c , val v ∷ val (ƛ c′ ρ′) ∷  s , ρ  ⟩ = continue app
+  kind ⟨ ret    ∷ c , val v ∷ ret c′ ρ′     ∷  s , ρ  ⟩ = continue ret
 
   kind ⟨ []      ,                       [] , _     ⟩ = crash crash₁
   kind ⟨ []      ,         ret _ _     ∷ _  , _     ⟩ = crash crash₂
   kind ⟨ []      , val _ ∷ _           ∷ _  , _     ⟩ = crash crash₃
   kind ⟨ []      ,         val _       ∷ [] , _ ∷ _ ⟩ = crash crash₄
-  kind ⟨ App ∷ _ ,                       [] , _     ⟩ = crash crash₅
-  kind ⟨ App ∷ _ ,         val _       ∷ [] , _     ⟩ = crash crash₆
-  kind ⟨ App ∷ _ ,         ret _ _     ∷ _  , _     ⟩ = crash crash₇
-  kind ⟨ App ∷ _ , val _ ∷ val (con _) ∷ _  , _     ⟩ = crash crash₈
-  kind ⟨ App ∷ _ , val _ ∷ ret _ _     ∷ _  , _     ⟩ = crash crash₉
-  kind ⟨ Ret ∷ _ ,                       [] , _     ⟩ = crash crash₁₀
-  kind ⟨ Ret ∷ _ ,         val _       ∷ [] , _     ⟩ = crash crash₁₁
-  kind ⟨ Ret ∷ _ ,         ret _ _     ∷ _  , _     ⟩ = crash crash₁₂
-  kind ⟨ Ret ∷ _ , val _ ∷ val _       ∷ _  , _     ⟩ = crash crash₁₃
+  kind ⟨ app ∷ _ ,                       [] , _     ⟩ = crash crash₅
+  kind ⟨ app ∷ _ ,         val _       ∷ [] , _     ⟩ = crash crash₆
+  kind ⟨ app ∷ _ ,         ret _ _     ∷ _  , _     ⟩ = crash crash₇
+  kind ⟨ app ∷ _ , val _ ∷ val (con _) ∷ _  , _     ⟩ = crash crash₈
+  kind ⟨ app ∷ _ , val _ ∷ ret _ _     ∷ _  , _     ⟩ = crash crash₉
+  kind ⟨ ret ∷ _ ,                       [] , _     ⟩ = crash crash₁₀
+  kind ⟨ ret ∷ _ ,         val _       ∷ [] , _     ⟩ = crash crash₁₁
+  kind ⟨ ret ∷ _ ,         ret _ _     ∷ _  , _     ⟩ = crash crash₁₂
+  kind ⟨ ret ∷ _ , val _ ∷ val _       ∷ _  , _     ⟩ = crash crash₁₃
 
   -- The functional semantics crashes for crashing states.
 
@@ -344,26 +344,26 @@ module Equivalence where
   -- semantics is deterministic.
 
   ⇒⇓ : ∀ {s s′ v} → s ⟶⋆ s′ → s′ ⇓ v → exec s ≈ return (just v)
-  ⇒⇓ ε            final = now PE.refl
-  ⇒⇓ (Var  ◅ s⟶⋆) ⇓     = laterˡ (⇒⇓ s⟶⋆ ⇓)
-  ⇒⇓ (Con  ◅ s⟶⋆) ⇓     = laterˡ (⇒⇓ s⟶⋆ ⇓)
-  ⇒⇓ (Clos ◅ s⟶⋆) ⇓     = laterˡ (⇒⇓ s⟶⋆ ⇓)
-  ⇒⇓ (App  ◅ s⟶⋆) ⇓     = laterˡ (⇒⇓ s⟶⋆ ⇓)
-  ⇒⇓ (Ret  ◅ s⟶⋆) ⇓     = laterˡ (⇒⇓ s⟶⋆ ⇓)
+  ⇒⇓ ε           final = now PE.refl
+  ⇒⇓ (var ◅ s⟶⋆) ⇓     = laterˡ (⇒⇓ s⟶⋆ ⇓)
+  ⇒⇓ (con ◅ s⟶⋆) ⇓     = laterˡ (⇒⇓ s⟶⋆ ⇓)
+  ⇒⇓ (clo ◅ s⟶⋆) ⇓     = laterˡ (⇒⇓ s⟶⋆ ⇓)
+  ⇒⇓ (app ◅ s⟶⋆) ⇓     = laterˡ (⇒⇓ s⟶⋆ ⇓)
+  ⇒⇓ (ret ◅ s⟶⋆) ⇓     = laterˡ (⇒⇓ s⟶⋆ ⇓)
 
   ⇒⇑ : ∀ {s} → s ⟶∞ → exec s ≈ never
-  ⇒⇑ (Var  ◅ s⟶∞) = later (♯ (⇒⇑ (♭ s⟶∞)))
-  ⇒⇑ (Con  ◅ s⟶∞) = later (♯ (⇒⇑ (♭ s⟶∞)))
-  ⇒⇑ (Clos ◅ s⟶∞) = later (♯ (⇒⇑ (♭ s⟶∞)))
-  ⇒⇑ (App  ◅ s⟶∞) = later (♯ (⇒⇑ (♭ s⟶∞)))
-  ⇒⇑ (Ret  ◅ s⟶∞) = later (♯ (⇒⇑ (♭ s⟶∞)))
+  ⇒⇑ (var ◅ s⟶∞) = later (♯ (⇒⇑ (♭ s⟶∞)))
+  ⇒⇑ (con ◅ s⟶∞) = later (♯ (⇒⇑ (♭ s⟶∞)))
+  ⇒⇑ (clo ◅ s⟶∞) = later (♯ (⇒⇑ (♭ s⟶∞)))
+  ⇒⇑ (app ◅ s⟶∞) = later (♯ (⇒⇑ (♭ s⟶∞)))
+  ⇒⇑ (ret ◅ s⟶∞) = later (♯ (⇒⇑ (♭ s⟶∞)))
 
   ⇒↯ : ∀ {s} → ∃ (λ s′ → s ⟶⋆ s′ × Stuck s′) → exec s ≈ return nothing
-  ⇒↯ (_ , Var  ◅ s⟶⋆ , ↯) = laterˡ (⇒↯ (_ , s⟶⋆ , ↯))
-  ⇒↯ (_ , Con  ◅ s⟶⋆ , ↯) = laterˡ (⇒↯ (_ , s⟶⋆ , ↯))
-  ⇒↯ (_ , Clos ◅ s⟶⋆ , ↯) = laterˡ (⇒↯ (_ , s⟶⋆ , ↯))
-  ⇒↯ (_ , App  ◅ s⟶⋆ , ↯) = laterˡ (⇒↯ (_ , s⟶⋆ , ↯))
-  ⇒↯ (_ , Ret  ◅ s⟶⋆ , ↯) = laterˡ (⇒↯ (_ , s⟶⋆ , ↯))
+  ⇒↯ (_ , var ◅ s⟶⋆ , ↯) = laterˡ (⇒↯ (_ , s⟶⋆ , ↯))
+  ⇒↯ (_ , con ◅ s⟶⋆ , ↯) = laterˡ (⇒↯ (_ , s⟶⋆ , ↯))
+  ⇒↯ (_ , clo ◅ s⟶⋆ , ↯) = laterˡ (⇒↯ (_ , s⟶⋆ , ↯))
+  ⇒↯ (_ , app ◅ s⟶⋆ , ↯) = laterˡ (⇒↯ (_ , s⟶⋆ , ↯))
+  ⇒↯ (_ , ret ◅ s⟶⋆ , ↯) = laterˡ (⇒↯ (_ , s⟶⋆ , ↯))
   ⇒↯ (s , ε          , ↯) with kind s
   ... | done s⇓v       = ⊥-elim (proj₂ ↯ (, s⇓v))
   ... | continue s₁⟶s₂ = ⊥-elim (proj₁ ↯ (, s₁⟶s₂))
@@ -375,12 +375,12 @@ module Equivalence where
 
   ⇐⇓ : ∀ {s v} → exec s ≈ return (just v) → ∃ λ s′ → s ⟶⋆ s′ × s′ ⇓ v
   ⇐⇓ {s = s} ⇓ with kind s
-  ⇐⇓ (now PE.refl) | done final    = (_ , ε , final)
-  ⇐⇓ (laterˡ ⇓)    | continue Var  = Prod.map id (Prod.map (_◅_ Var ) id) (⇐⇓ ⇓)
-  ⇐⇓ (laterˡ ⇓)    | continue Con  = Prod.map id (Prod.map (_◅_ Con ) id) (⇐⇓ ⇓)
-  ⇐⇓ (laterˡ ⇓)    | continue Clos = Prod.map id (Prod.map (_◅_ Clos) id) (⇐⇓ ⇓)
-  ⇐⇓ (laterˡ ⇓)    | continue App  = Prod.map id (Prod.map (_◅_ App ) id) (⇐⇓ ⇓)
-  ⇐⇓ (laterˡ ⇓)    | continue Ret  = Prod.map id (Prod.map (_◅_ Ret ) id) (⇐⇓ ⇓)
+  ⇐⇓ (now PE.refl) | done final   = (_ , ε , final)
+  ⇐⇓ (laterˡ ⇓)    | continue var = Prod.map id (Prod.map (_◅_ var) id) (⇐⇓ ⇓)
+  ⇐⇓ (laterˡ ⇓)    | continue con = Prod.map id (Prod.map (_◅_ con) id) (⇐⇓ ⇓)
+  ⇐⇓ (laterˡ ⇓)    | continue clo = Prod.map id (Prod.map (_◅_ clo) id) (⇐⇓ ⇓)
+  ⇐⇓ (laterˡ ⇓)    | continue app = Prod.map id (Prod.map (_◅_ app) id) (⇐⇓ ⇓)
+  ⇐⇓ (laterˡ ⇓)    | continue ret = Prod.map id (Prod.map (_◅_ ret) id) (⇐⇓ ⇓)
   ⇐⇓ {s} {v} ⇓     | crash s↯      with
     return (just v)  ≈⟨ sym ⇓ ⟩
     exec s           ≈⟨ exec-crashes s↯ ⟩
@@ -390,13 +390,13 @@ module Equivalence where
 
   ⇐⇑ : ∀ {s} → exec s ≈ never → s ⟶∞
   ⇐⇑ {s = s} ⇑ with kind s
-  ⇐⇑         ⇑ | done final    = ⊥-elim (now≉never ⇑)
-  ⇐⇑         ⇑ | continue Var  = Var  ◅ ♯ ⇐⇑ (later⁻¹ ⇑)
-  ⇐⇑         ⇑ | continue Con  = Con  ◅ ♯ ⇐⇑ (later⁻¹ ⇑)
-  ⇐⇑         ⇑ | continue Clos = Clos ◅ ♯ ⇐⇑ (later⁻¹ ⇑)
-  ⇐⇑         ⇑ | continue App  = App  ◅ ♯ ⇐⇑ (later⁻¹ ⇑)
-  ⇐⇑         ⇑ | continue Ret  = Ret  ◅ ♯ ⇐⇑ (later⁻¹ ⇑)
-  ⇐⇑ {s}     ⇑ | crash s↯      = ⊥-elim (now≉never (
+  ⇐⇑         ⇑ | done final   = ⊥-elim (now≉never ⇑)
+  ⇐⇑         ⇑ | continue var = var ◅ ♯ ⇐⇑ (later⁻¹ ⇑)
+  ⇐⇑         ⇑ | continue con = con ◅ ♯ ⇐⇑ (later⁻¹ ⇑)
+  ⇐⇑         ⇑ | continue clo = clo ◅ ♯ ⇐⇑ (later⁻¹ ⇑)
+  ⇐⇑         ⇑ | continue app = app ◅ ♯ ⇐⇑ (later⁻¹ ⇑)
+  ⇐⇑         ⇑ | continue ret = ret ◅ ♯ ⇐⇑ (later⁻¹ ⇑)
+  ⇐⇑ {s}     ⇑ | crash s↯     = ⊥-elim (now≉never (
     return nothing  ≈⟨ sym $ exec-crashes s↯ ⟩
     exec s          ≈⟨ ⇑ ⟩
     never           ∎))
@@ -405,9 +405,9 @@ module Equivalence where
   ⇐↯ : ∀ {s} → exec s ≈ return nothing → ∃ λ s′ → s ⟶⋆ s′ × Stuck s′
   ⇐↯ {s = s} ↯ with kind s
   ⇐↯ (now ())   | done final
-  ⇐↯ (laterˡ ↯) | continue Var  = Prod.map id (Prod.map (_◅_ Var ) id) $ ⇐↯ ↯
-  ⇐↯ (laterˡ ↯) | continue Con  = Prod.map id (Prod.map (_◅_ Con ) id) $ ⇐↯ ↯
-  ⇐↯ (laterˡ ↯) | continue Clos = Prod.map id (Prod.map (_◅_ Clos) id) $ ⇐↯ ↯
-  ⇐↯ (laterˡ ↯) | continue App  = Prod.map id (Prod.map (_◅_ App ) id) $ ⇐↯ ↯
-  ⇐↯ (laterˡ ↯) | continue Ret  = Prod.map id (Prod.map (_◅_ Ret ) id) $ ⇐↯ ↯
-  ⇐↯         ↯  | crash s↯      = (_ , ε , ⟶-crashes s↯)
+  ⇐↯ (laterˡ ↯) | continue var = Prod.map id (Prod.map (_◅_ var) id) $ ⇐↯ ↯
+  ⇐↯ (laterˡ ↯) | continue con = Prod.map id (Prod.map (_◅_ con) id) $ ⇐↯ ↯
+  ⇐↯ (laterˡ ↯) | continue clo = Prod.map id (Prod.map (_◅_ clo) id) $ ⇐↯ ↯
+  ⇐↯ (laterˡ ↯) | continue app = Prod.map id (Prod.map (_◅_ app) id) $ ⇐↯ ↯
+  ⇐↯ (laterˡ ↯) | continue ret = Prod.map id (Prod.map (_◅_ ret) id) $ ⇐↯ ↯
+  ⇐↯         ↯  | crash s↯     = (_ , ε , ⟶-crashes s↯)

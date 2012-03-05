@@ -305,7 +305,7 @@ module Correctness {k : OtherKind} where
       exec ⟨ c , val (comp-val (ƛ t ρ)) ∷ s , comp-env ρ ⟩  ≈⟨ hyp (ƛ t ρ) ⟩W
       k (ƛ t ρ)                                             ∎)
     correctW (t₁ · t₂) {ρ} {c} {s} {k} hyp =
-      exec ⟨ comp t₁ (comp t₂ (App ∷ c)) , s , comp-env ρ ⟩           ≈⟨ correctW t₁ (λ v₁ → correctW t₂ (λ v₂ → ∙-correctW v₁ v₂ hyp)) ⟩W
+      exec ⟨ comp t₁ (comp t₂ (app ∷ c)) , s , comp-env ρ ⟩           ≈⟨ correctW t₁ (λ v₁ → correctW t₂ (λ v₂ → ∙-correctW v₁ v₂ hyp)) ⟩W
       (⟦ t₁ ⟧ ρ >>= λ v₁ →  ⟦ t₂ ⟧ ρ >>= λ v₂ → ⟪ v₁ ∙ v₂ ⟫P  >>= k)  ≅⟨ ((⟦ t₁ ⟧ ρ ∎) >>=-cong λ _ → sym $ associative (⟦ t₂ ⟧ ρ) _ _) ⟩
       (⟦ t₁ ⟧ ρ >>= λ v₁ → (⟦ t₂ ⟧ ρ >>= λ v₂ → ⟪ v₁ ∙ v₂ ⟫P) >>= k)  ≅⟨ sym $ associative (⟦ t₁ ⟧ ρ) _ _ ⟩
       (⟦ t₁ ⟧ ρ ⟦·⟧ ⟦ t₂ ⟧ ρ >>= k)                                   ≅⟨ sym (·-comp t₁ t₂ >>=-cong λ v → k v ∎) ⟩
@@ -314,11 +314,11 @@ module Correctness {k : OtherKind} where
     ∙-correctW :
       ∀ {n} v₁ v₂ {ρ : Env n} {c s} {k : Value → Maybe VM.Value ⊥} →
       (∀ v → exec ⟨ c , val (comp-val v) ∷ s , comp-env ρ ⟩ ≈W k v) →
-      exec ⟨ App ∷ c , val (comp-val v₂) ∷ val (comp-val v₁) ∷ s , comp-env ρ ⟩ ≈W
+      exec ⟨ app ∷ c , val (comp-val v₂) ∷ val (comp-val v₁) ∷ s , comp-env ρ ⟩ ≈W
       (⟪ v₁ ∙ v₂ ⟫P >>= k)
     ∙-correctW (con i)   v₂                 _   = ⌈ PF.fail ∎ ⌉
     ∙-correctW (ƛ t₁ ρ′) v₂ {ρ} {c} {s} {k} hyp = later (
-      exec ⟨ comp t₁ [ Ret ] , ret c (comp-env ρ) ∷ s , comp-env (v₂ ∷ ρ′) ⟩  ≈⟨ correct t₁ (λ v → laterˡ (hyp v)) ⟩P
+      exec ⟨ comp t₁ [ ret ] , ret c (comp-env ρ) ∷ s , comp-env (v₂ ∷ ρ′) ⟩  ≈⟨ correct t₁ (λ v → laterˡ (hyp v)) ⟩P
       (⟦ t₁ ⟧ (v₂ ∷ ρ′) >>= k)                                                ∎)
 
   whnf : ∀ {x y} → x ≈P y → x ≈W y
