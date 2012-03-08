@@ -90,3 +90,8 @@ import Lambda.Closure.Equivalence
 -- definition uses continuation-passing style instead of bind.
 
 import Lambda.Closure.Functional.Alternative
+
+-- A very brief treatment of different kinds of term equivalences,
+-- including contextual equivalence and applicative bisimilarity.
+
+import Lambda.Closure.Equivalences
