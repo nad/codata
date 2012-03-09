@@ -82,6 +82,13 @@ import Lambda.Closure.Relational
 
 import Lambda.Closure.Functional
 
+-- The module above uses some workarounds in order to convince Agda
+-- that the code is productive. The following module contains (more or
+-- less) the same code without the workarounds, but is checked with
+-- the termination checker turned off.
+
+import Lambda.Closure.Functional.No-workarounds
+
 -- The relational and functional semantics are equivalent.
 
 import Lambda.Closure.Equivalence
@@ -100,3 +107,8 @@ import Lambda.Closure.Equivalences
 -- for a non-deterministic untyped λ-calculus with constants.
 
 import Lambda.Closure.Functional.Non-deterministic
+
+-- A variant of the code above without the workarounds used to
+-- convince Agda that the code is productive.
+
+import Lambda.Closure.Functional.Non-deterministic.No-workarounds
