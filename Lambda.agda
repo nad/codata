@@ -95,3 +95,8 @@ import Lambda.Closure.Functional.Alternative
 -- including contextual equivalence and applicative bisimilarity.
 
 import Lambda.Closure.Equivalences
+
+-- A functional semantics, a compiler and a compiler correctness proof
+-- for a non-deterministic untyped λ-calculus with constants.
+
+import Lambda.Closure.Functional.Non-deterministic
