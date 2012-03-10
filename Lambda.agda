@@ -98,6 +98,12 @@ import Lambda.Closure.Equivalence
 
 import Lambda.Closure.Functional.Alternative
 
+-- A definition of a type system (with recursive types) for the
+-- λ-calculus given above, and a proof of type soundness for the
+-- functional semantics.
+
+import Lambda.Closure.Functional.Type-soundness
+
 -- A very brief treatment of different kinds of term equivalences,
 -- including contextual equivalence and applicative bisimilarity.
 
