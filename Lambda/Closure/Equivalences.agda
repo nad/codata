@@ -8,7 +8,7 @@ module Lambda.Closure.Equivalences where
 open import Category.Monad.Partiality as Partiality
   using (_⊥; later⁻¹; laterˡ⁻¹; laterʳ⁻¹)
 open import Coinduction
-open import Data.Fin using (Fin)
+open import Data.Fin using (Fin; zero)
 open import Data.Maybe as Maybe
 open import Data.Nat
 open import Data.Product as Prod
@@ -147,6 +147,70 @@ t₁ ≈! t₂ = ∀ ρ → ⟦ t₁ ⟧ ρ ≈ ⟦ t₂ ⟧ ρ
          (λ _ → later (♯ now P.refl))
          []
 ... | now ()
+
+------------------------------------------------------------------------
+-- Incorrect definition of applicative bisimilarity
+
+-- The difference between this definition and the one below is that in
+-- this definition ƛ is inductive rather than coinductive.
+
+module Incorrect where
+
+  infix 4 _≈mv_ _≈v_
+
+  -- _≈mv_, _≈c_ and _≈v_ are defined mutually (coinductively).
+
+  data _≈v_ : Value → Value → Set
+
+  -- Equivalence of possibly exceptional values.
+
+  _≈mv_ : Maybe Value → Maybe Value → Set
+  _≈mv_ = Maybe.Eq _≈v_
+
+  -- Equivalence of computations.
+
+  open module EA = Partiality.Equality _≈mv_
+    using () renaming (_≈_ to _≈c_)
+
+  -- Equivalence of values.
+
+  data _≈v_ where
+    con : ∀ {i} → con i ≈v con i
+    ƛ   : ∀ {n₁} {t₁ : Tm (1 + n₁)} {ρ₁} {n₂} {t₂ : Tm (1 + n₂)} {ρ₂}
+          (t₁≈t₂ : ∀ v → ⟦ t₁ ⟧ (v ∷ ρ₁) ≈c ⟦ t₂ ⟧ (v ∷ ρ₂)) →
+          ƛ t₁ ρ₁ ≈v ƛ t₂ ρ₂
+
+  -- Applicative bisimilarity.
+
+  infix 4 _≈t_
+
+  _≈t_ : ∀ {n} → Tm n → Tm n → Set
+  t₁ ≈t t₂ = ∀ ρ → ⟦ t₁ ⟧ ρ ≈c ⟦ t₂ ⟧ ρ
+
+  -- This notion of applicative bisimilarity is not reflexive.
+  --
+  -- Note that the definition above is a bit strange in Agda: it is
+  -- subject to the quantifier inversion described by Thorsten
+  -- Altenkirch and myself in "Termination Checking in the Presence of
+  -- Nested Inductive and Coinductive Types". However, for this proof
+  -- it does not matter if _≈c_ is seen as having the form
+  -- μX.νY.μZ. F X Y Z or νX.μY. F X Y; the ν part is never used.
+
+  mutual
+
+    distinct-c : ¬ now (just (ƛ (var zero) [])) ≈c
+                   now (just (ƛ (var zero) []))
+    distinct-c (now eq) = distinct-mv eq
+
+    distinct-mv : ¬ just (ƛ (var zero) []) ≈mv
+                    just (ƛ (var zero) [])
+    distinct-mv (just eq) = distinct-v eq
+
+    distinct-v : ¬ ƛ (var zero) [] ≈v ƛ (var zero) []
+    distinct-v (ƛ eq) = distinct-c (eq (ƛ (var zero) []))
+
+  distinct-t : ¬ ƛ (var zero) ≈t (ƛ (var zero) ∶ Tm 0)
+  distinct-t eq = distinct-c (eq [])
 
 ------------------------------------------------------------------------
 -- Applicative bisimilarity
