@@ -114,8 +114,10 @@ module Soundness where
                                              soundW valid τ₂≤τ₃
   soundW valid (hyp σ≤τ)             = All.lookup valid σ≤τ
   soundW valid (τ₁≤σ₁ ⟶ σ₂≤τ₂)       = proof
-    where proof = ♯ sound (proof ∷ valid) τ₁≤σ₁ ⟶
-                  ♯ sound (proof ∷ valid) σ₂≤τ₂
+    where
+    proof : _ ≤W _
+    proof = ♯ sound (proof ∷ valid) τ₁≤σ₁ ⟶
+            ♯ sound (proof ∷ valid) σ₂≤τ₂
 
   whnf : ∀ {n} {σ τ : Ty n} →
          σ ≤P τ → σ ≤W τ

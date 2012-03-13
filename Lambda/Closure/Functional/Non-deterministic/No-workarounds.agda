@@ -258,6 +258,7 @@ Z = ƛ (t · t)
 ⟦!⟧≅!-sem : ⟦ ! ⟧ [] ≅ !-sem
 ⟦!⟧≅!-sem = later (♯ lem)
   where
+  lem : force 1 (⟦ ! ⟧ []) ≅ force 1 !-sem
   lem = later (♯ later (♯ later (♯ (later (♯ lem) ∣ later (♯ lem)))))
 
 -- How did I come up with this proof term? Through a manual

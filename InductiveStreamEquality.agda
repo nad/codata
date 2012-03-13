@@ -66,7 +66,9 @@ soundW valid (hyp h)             = lookup valid h
 soundW valid (trans xs≈ys ys≈zs) = transW (soundW valid xs≈ys)
                                           (soundW valid ys≈zs)
 soundW valid (x ∷ xs≈ys)         = proof
-  where proof = x ∷ ♯ sound (proof ∷ valid) xs≈ys
+  where
+  proof : _ ≈W _
+  proof = x ∷ ♯ sound (proof ∷ valid) xs≈ys
 
 whnf : ∀ {xs ys} → xs ≈P ys → xs ≈W ys
 whnf (sound valid xs≈ys) = soundW valid xs≈ys
