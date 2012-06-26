@@ -14,6 +14,7 @@ open import Data.Nat
 open import Data.Vec using ([]; _∷_; lookup)
 open import Function
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
+open import Relation.Nullary
 open import Relation.Nullary.Decidable
 
 open import Lambda.Syntax using (module Closure)
@@ -23,6 +24,8 @@ open import Lambda.VirtualMachine
 open Functional
 private
   module VM = Closure Code
+open import Lambda.Closure.Functional.Type-soundness using (Ty; Ctxt)
+open Lambda.Closure.Functional.Type-soundness.Ty
 
 ------------------------------------------------------------------------
 -- A monad with partiality, failure and non-determinism
@@ -552,3 +555,173 @@ correct : ∀ t →
 correct t =
   soundP $ Correctness.correct t (λ _ → ⌈ return ⌉)
   where open Correctness
+
+------------------------------------------------------------------------
+-- Type system (following Leroy and Grall)
+
+infix 4 _⊢_∈_
+
+data _⊢_∈_ {n} (Γ : Ctxt n) : Tm n → Ty → Set where
+  con : ∀ {i} → Γ ⊢ con i ∈ nat
+  var : ∀ {x} → Γ ⊢ var x ∈ lookup x Γ
+  ƛ   : ∀ {t σ τ} (t∈ : ♭ σ ∷ Γ ⊢ t ∈ ♭ τ) → Γ ⊢ ƛ t ∈ σ ⇾ τ
+  _·_ : ∀ {t₁ t₂ σ τ} (t₁∈ : Γ ⊢ t₁ ∈ σ ⇾ τ) (t₂∈ : Γ ⊢ t₂ ∈ ♭ σ) →
+        Γ ⊢ t₁ · t₂ ∈ ♭ τ
+  _∣_ : ∀ {t₁ t₂ σ} (t₁∈ : Γ ⊢ t₁ ∈ σ) (t₂∈ : Γ ⊢ t₂ ∈ σ) →
+        Γ ⊢ t₁ ∣ t₂ ∈ σ
+
+-- Ω is well-typed.
+
+Ω-well-typed : (τ : Ty) → [] ⊢ Ω ∈ τ
+Ω-well-typed τ =
+  _·_ {σ = ♯ σ} {τ = ♯ τ} (ƛ (var · var)) (ƛ (var · var))
+  where σ = ♯ σ ⇾ ♯ τ
+
+-- The call-by-value fix-point combinator is also well-typed.
+
+fix-well-typed :
+  ∀ {σ τ} → [] ⊢ Z ∈ ♯ (♯ (σ ⇾ τ) ⇾ ♯ (σ ⇾ τ)) ⇾ ♯ (σ ⇾ τ)
+fix-well-typed =
+  ƛ (_·_ {σ = υ} {τ = ♯ _}
+         (ƛ (var · ƛ (var · var · var)))
+         (ƛ (var · ƛ (var · var · var))))
+  where
+  υ : ∞ Ty
+  υ = ♯ (υ ⇾ ♯ _)
+
+------------------------------------------------------------------------
+-- Type soundness
+
+-- WF-Value, WF-Env and WF-DV specify when a
+-- value/environment/computation is well-formed with respect to a
+-- given context (and type).
+
+mutual
+
+  data WF-Value : Ty → Value → Set where
+    con : ∀ {i} → WF-Value nat (con i)
+    ƛ   : ∀ {n Γ σ τ} {t : Tm (1 + n)} {ρ}
+          (t∈ : ♭ σ ∷ Γ ⊢ t ∈ ♭ τ) (ρ-wf : WF-Env Γ ρ) →
+          WF-Value (σ ⇾ τ) (ƛ t ρ)
+
+  infixr 5 _∷_
+
+  data WF-Env : ∀ {n} → Ctxt n → Env n → Set where
+    []  : WF-Env [] []
+    _∷_ : ∀ {n} {Γ : Ctxt n} {ρ σ v}
+          (v-wf : WF-Value σ v) (ρ-wf : WF-Env Γ ρ) →
+          WF-Env (σ ∷ Γ) (v ∷ ρ)
+
+data WF-DV (σ : Ty) : D Value → Set where
+  return : ∀ {v} (v-wf : WF-Value σ v) → WF-DV σ (return v)
+  _∣_    : ∀ {x y}
+           (x-wf : WF-DV σ x) (y-wf : WF-DV σ y) → WF-DV σ (x ∣ y)
+  later  : ∀ {x} (x-wf : ∞ (WF-DV σ (♭ x))) → WF-DV σ (later x)
+
+-- Variables pointing into a well-formed environment refer to
+-- well-formed values.
+
+lookup-wf : ∀ {n Γ ρ} (x : Fin n) → WF-Env Γ ρ →
+            WF-Value (lookup x Γ) (lookup x ρ)
+lookup-wf zero    (v-wf ∷ ρ-wf) = v-wf
+lookup-wf (suc x) (v-wf ∷ ρ-wf) = lookup-wf x ρ-wf
+
+-- If we can prove WF-DV σ x, then x does not "go wrong".
+
+does-not-go-wrong : ∀ {σ x} → WF-DV σ x → ¬ now nothing ≈∈ x
+does-not-go-wrong (return v-wf) ()
+does-not-go-wrong (x-wf ∣ y-wf) (∣ˡ x↯)     = does-not-go-wrong x-wf x↯
+does-not-go-wrong (x-wf ∣ y-wf) (∣ʳ y↯)     = does-not-go-wrong y-wf y↯
+does-not-go-wrong (later x-wf)  (laterʳ x↯) =
+  does-not-go-wrong (♭ x-wf) x↯
+
+-- A variant of WF-DV, used to please the productivity checker.
+
+infixr 2 _≅⟨_⟩P_
+infix  2 _⟨_⟩P
+
+data WF-DVP (σ : Ty) : D Value → Set where
+  return      : ∀ {v} (v-wf : WF-Value σ v) → WF-DVP σ (return v)
+  _∣_         : ∀ {x y} (x-wf : WF-DVP σ x) (y-wf : WF-DVP σ y) →
+                WF-DVP σ (x ∣ y)
+  later       : ∀ {x} (x-wf : ∞ (WF-DVP σ (♭ x))) → WF-DVP σ (later x)
+  _>>=-congP_ : ∀ {τ x f}
+                (x-wf : WF-DVP τ x)
+                (f-wf : ∀ {v} → WF-Value τ v → WF-DVP σ (f v)) →
+                WF-DVP σ (x >>= f)
+  _≅⟨_⟩P_     : ∀ x {y} (x≅y : x ≅ y) (y-wf : WF-DVP σ y) → WF-DVP σ x
+  _⟨_⟩P       : ∀ x (x-wf : WF-DVP σ x) → WF-DVP σ x
+
+-- WF-DVP is sound with respect to WF-DV.
+
+private
+
+  -- WHNFs.
+
+  data WF-DVW (σ : Ty) : D Value → Set where
+    return : ∀ {v} (v-wf : WF-Value σ v) → WF-DVW σ (return v)
+    _∣_    : ∀ {x y} (x-wf : WF-DVW σ x) (y-wf : WF-DVW σ y) →
+             WF-DVW σ (x ∣ y)
+    later  : ∀ {x} (x-wf : WF-DVP σ (♭ x)) → WF-DVW σ (later x)
+
+  -- Functions which turn programs into WHNFs.
+
+  trans-≅ : ∀ {σ x y} → x ≅ y → WF-DVW σ y → WF-DVW σ x
+  trans-≅ fail            ()
+  trans-≅ return          (return v-wf)   = return v-wf
+  trans-≅ (x₁≅y₁ ∣ x₂≅y₂) (y₁-wf ∣ y₂-wf) = trans-≅ x₁≅y₁ y₁-wf
+                                          ∣ trans-≅ x₂≅y₂ y₂-wf
+  trans-≅ (later x≅y)     (later y-wf)    = later (_ ≅⟨ ♭ x≅y ⟩P y-wf)
+
+  mutual
+
+    _>>=-congW_ : ∀ {σ τ x f} →
+                  WF-DVW σ x →
+                  (∀ {v} → WF-Value σ v → WF-DVP τ (f v)) →
+                  WF-DVW τ (x >>= f)
+    return v-wf   >>=-congW f-wf = whnf (f-wf v-wf)
+    (x-wf ∣ y-wf) >>=-congW f-wf = (x-wf >>=-congW f-wf)
+                                 ∣ (y-wf >>=-congW f-wf)
+    later x-wf    >>=-congW f-wf = later (x-wf >>=-congP f-wf)
+
+    whnf : ∀ {σ x} → WF-DVP σ x → WF-DVW σ x
+    whnf (return v-wf)         = return v-wf
+    whnf (x-wf ∣ y-wf)         = whnf x-wf ∣ whnf y-wf
+    whnf (later x-wf)          = later (♭ x-wf)
+    whnf (x-wf >>=-congP f-wf) = whnf x-wf >>=-congW f-wf
+    whnf (_ ≅⟨ x≅y ⟩P y-wf)    = trans-≅ x≅y (whnf y-wf)
+    whnf (_ ⟨ x-wf ⟩P)         = whnf x-wf
+
+sound : ∀ {σ x} → WF-DVP σ x → WF-DV σ x
+sound = λ p → soundW (whnf p)
+  where
+  soundW : ∀ {σ x} → WF-DVW σ x → WF-DV σ x
+  soundW (return v-wf) = return v-wf
+  soundW (x-wf ∣ y-wf) = soundW x-wf ∣ soundW y-wf
+  soundW (later x-wf)  = later (♯ sound x-wf)
+
+-- Well-typed programs do not "go wrong".
+
+mutual
+
+  ⟦⟧-wf : ∀ {n Γ} (t : Tm n) {σ} → Γ ⊢ t ∈ σ →
+          ∀ {ρ} → WF-Env Γ ρ → WF-DVP σ (⟦ t ⟧ ρ)
+  ⟦⟧-wf (con i)   con             ρ-wf = return con
+  ⟦⟧-wf (var x)   var             ρ-wf = return (lookup-wf x ρ-wf)
+  ⟦⟧-wf (ƛ t)     (ƛ t∈)          ρ-wf = return (ƛ t∈ ρ-wf)
+  ⟦⟧-wf (t₁ ∣ t₂) (t₁∈ ∣ t₂∈)     ρ-wf = ⟦⟧-wf t₁ t₁∈ ρ-wf
+                                       ∣ ⟦⟧-wf t₂ t₂∈ ρ-wf
+  ⟦⟧-wf (t₁ · t₂) (t₁∈ · t₂∈) {ρ} ρ-wf =
+    ⟦ t₁ · t₂ ⟧ ρ          ≅⟨ ·-comp t₁ t₂ ⟩P
+    ⟦ t₁ ⟧ ρ ⟦·⟧ ⟦ t₂ ⟧ ρ   ⟨ (⟦⟧-wf t₁ t₁∈ ρ-wf >>=-congP λ f-wf →
+                               ⟦⟧-wf t₂ t₂∈ ρ-wf >>=-congP λ v-wf →
+                               ∙-wf f-wf v-wf) ⟩P
+
+  ∙-wf : ∀ {σ τ f v} →
+         WF-Value (σ ⇾ τ) f → WF-Value (♭ σ) v →
+         WF-DVP (♭ τ) ⟪ f ∙ v ⟫P
+  ∙-wf (ƛ t₁∈ ρ₁-wf) v₂-wf = later (♯ ⟦⟧-wf _ t₁∈ (v₂-wf ∷ ρ₁-wf))
+
+type-soundness : ∀ {t : Tm 0} {σ} →
+                 [] ⊢ t ∈ σ → ¬ now nothing ≈∈ ⟦ t ⟧ []
+type-soundness t∈ = does-not-go-wrong (sound (⟦⟧-wf _ t∈ []))

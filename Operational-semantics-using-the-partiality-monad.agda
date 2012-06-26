@@ -112,7 +112,7 @@ import Lambda.Closure.Relational
 -- Section 8
 
 -- The non-deterministic language along with a compiler and a compiler
--- correctness proof.
+-- correctness proof, as well as a type soundness proof.
 
 import Lambda.Closure.Functional.Non-deterministic
 import Lambda.Closure.Functional.Non-deterministic.No-workarounds
