@@ -83,7 +83,7 @@ fix-well-typed =
 -- Type soundness
 
 -- WF-Value, WF-Env and WF-MV specify when a
--- value/environment/potential value are well-formed with respect to a
+-- value/environment/potential value is well-formed with respect to a
 -- given context (and type).
 
 mutual
