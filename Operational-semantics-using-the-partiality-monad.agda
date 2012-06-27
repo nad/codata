@@ -61,7 +61,11 @@ import Lambda.Closure.Functional.Alternative
 ------------------------------------------------------------------------
 -- Section 4
 
--- Type system, type soundness.
+-- Type system.
+
+import Lambda.Syntax
+
+-- Type soundness.
 
 import Lambda.Closure.Functional.Type-soundness
 

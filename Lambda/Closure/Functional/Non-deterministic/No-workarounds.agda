@@ -19,15 +19,14 @@ open import Relation.Binary.PropositionalEquality as P using (_≡_)
 open import Relation.Nullary
 open import Relation.Nullary.Decidable
 
-open import Lambda.Syntax using (module Closure)
-open Closure using (con; ƛ)
+open import Lambda.Syntax using (Ty; Ctxt)
+open Lambda.Syntax.Closure using (con; ƛ)
+open Lambda.Syntax.Ty
 open import Lambda.VirtualMachine
   hiding (comp; comp-val; comp-env; lookup-hom)
 open Functional
 private
-  module VM = Closure Code
-open import Lambda.Closure.Functional.Type-soundness using (Ty; Ctxt)
-open Lambda.Closure.Functional.Type-soundness.Ty
+  module VM = Lambda.Syntax.Closure Code
 
 ------------------------------------------------------------------------
 -- A monad with partiality, failure and non-determinism
@@ -168,7 +167,7 @@ data Tm (n : ℕ) : Set where
 vr : ∀ m {n} {m<n : True (suc m ≤? n)} → Tm n
 vr _ {m<n = m<n} = var (#_ _ {m<n = m<n})
 
-open Closure Tm hiding (con; ƛ)
+open Lambda.Syntax.Closure Tm hiding (con; ƛ)
 
 ------------------------------------------------------------------------
 -- Semantics

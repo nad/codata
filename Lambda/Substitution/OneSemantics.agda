@@ -49,11 +49,5 @@ mutual
 
 -- Example.
 
-ω : Tm 0
-ω = ƛ (vr 0 · vr 0)
-
-Ω : Tm 0
-Ω = ω · ω
-
 Ω-loops : Ω ⇒ ⊥
 Ω-loops = app val val (♯ Ω-loops)
