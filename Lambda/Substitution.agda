@@ -4,16 +4,22 @@
 
 module Lambda.Substitution where
 
+open import Data.Fin using (Fin; zero; suc)
 open import Data.Fin.Substitution
 open import Data.Fin.Substitution.Lemmas
 open import Data.Nat
-open import Data.Vec
+open import Data.Product
+open import Data.Star using (Star; ε; _◅_)
+open import Data.Unit
+open import Data.Vec as Vec
 open import Relation.Binary.PropositionalEquality as PropEq
   using (_≡_; refl; sym; cong; cong₂)
 open PropEq.≡-Reasoning
-open import Data.Star using (Star; ε; _◅_)
 
 open import Lambda.Syntax
+
+------------------------------------------------------------------------
+-- Substitutions
 
 -- Code for applying substitutions.
 
@@ -87,5 +93,95 @@ tmLemmas = record
                                                             (/✶-↑✶ ρs₁ ρs₂ hyp k t₂) ⟩
       (t₁ /✶₂ ρs₂ ↑✶₂ k) · (t₂ /✶₂ ρs₂ ↑✶₂ k)  ≡⟨ sym (TmApp.·-/✶-↑✶ _ k ρs₂) ⟩
       t₁ · t₂ /✶₂ ρs₂ ↑✶₂ k                    ∎
+
+------------------------------------------------------------------------
+-- Types
+
+-- Well-typed substitutions.
+
+infixr 5 _∷_
+infix  4 _⇒_⊢_
+
+data _⇒_⊢_ {n} : ∀ {m} → Ctxt m → Ctxt n → Sub Tm m n → Set where
+  []  : ∀ {Δ} → [] ⇒ Δ ⊢ []
+  _∷_ : ∀ {m} {Γ : Ctxt m} {Δ σ t ρ}
+        (t∈ : Δ ⊢ t ∈ σ) (⊢ρ : Γ ⇒ Δ ⊢ ρ) → σ ∷ Γ ⇒ Δ ⊢ t ∷ ρ
+
+-- Some preservation properties. The lemma duplication below
+-- (Var.↑-preserves/↑-preserves, Var.id-preserves/id-preserves, etc.)
+-- can perhaps be avoided.
+
+module Var where
+
+  map-suc-preserves :
+    ∀ {m n Γ Δ σ} (ρ : Sub Fin m n) →
+    Γ ⇒ Δ ⊢ Vec.map var ρ → Γ ⇒ σ ∷ Δ ⊢ Vec.map var (Vec.map suc ρ)
+  map-suc-preserves []      []         = []
+  map-suc-preserves (x ∷ ρ) (var ∷ ⊢ρ) = var ∷ map-suc-preserves ρ ⊢ρ
+
+  ↑-preserves : ∀ {m n Γ Δ σ} {ρ : Sub Fin m n} →
+                    Γ ⇒ Δ ⊢ Vec.map var ρ →
+                    σ ∷ Γ ⇒ σ ∷ Δ ⊢ Vec.map var (VarSubst._↑ ρ)
+  ↑-preserves ⊢ρ = var ∷ map-suc-preserves _ ⊢ρ
+
+  id-preserves : ∀ {n} {Γ : Ctxt n} → Γ ⇒ Γ ⊢ Vec.map var VarSubst.id
+  id-preserves {Γ = []}    = []
+  id-preserves {Γ = _ ∷ _} = ↑-preserves id-preserves
+
+  wk-preserves : ∀ {n} {Γ : Ctxt n} {σ} →
+                 Γ ⇒ σ ∷ Γ ⊢ Vec.map var VarSubst.wk
+  wk-preserves = map-suc-preserves VarSubst.id id-preserves
+
+  lookup-preserves :
+    ∀ {m n} {Γ : Ctxt m} {Δ : Ctxt n} x ρ →
+    Γ ⇒ Δ ⊢ Vec.map var ρ → Δ ⊢ var (lookup x ρ) ∈ lookup x Γ
+  lookup-preserves zero    (y ∷ ρ) (var ∷ ⊢ρ) = var
+  lookup-preserves (suc x) (y ∷ ρ) (var ∷ ⊢ρ) = lookup-preserves x ρ ⊢ρ
+
+  /-preserves : ∀ {m n} {Γ : Ctxt m} {Δ : Ctxt n} {σ t ρ} →
+                Γ ⊢ t ∈ σ → Γ ⇒ Δ ⊢ Vec.map var ρ → Δ ⊢ t /Var ρ ∈ σ
+  /-preserves con           ⊢ρ = con
+  /-preserves (var {x = x}) ⊢ρ = lookup-preserves x _ ⊢ρ
+  /-preserves (ƛ t∈)        ⊢ρ = ƛ (/-preserves t∈ (↑-preserves ⊢ρ))
+  /-preserves (t₁∈ · t₂∈)   ⊢ρ = /-preserves t₁∈ ⊢ρ · /-preserves t₂∈ ⊢ρ
+
+weaken-preserves :
+  ∀ {n Γ σ τ} {t : Tm n} →
+  Γ ⊢ t ∈ τ → σ ∷ Γ ⊢ weaken t ∈ τ
+weaken-preserves t∈ = Var./-preserves t∈ Var.wk-preserves
+
+map-weaken-preserves :
+  ∀ {m n Γ Δ σ} {ρ : Sub Tm m n} →
+  Γ ⇒ Δ ⊢ ρ → Γ ⇒ σ ∷ Δ ⊢ Vec.map weaken ρ
+map-weaken-preserves []        = []
+map-weaken-preserves (t∈ ∷ ⊢ρ) =
+  weaken-preserves t∈ ∷ map-weaken-preserves ⊢ρ
+
+↑-preserves : ∀ {m n Γ Δ σ} {ρ : Sub Tm m n} →
+              Γ ⇒ Δ ⊢ ρ → σ ∷ Γ ⇒ σ ∷ Δ ⊢ ρ ↑
+↑-preserves ⊢ρ = var ∷ map-weaken-preserves ⊢ρ
+
+id-preserves : ∀ {n} {Γ : Ctxt n} → Γ ⇒ Γ ⊢ id
+id-preserves {Γ = []}    = []
+id-preserves {Γ = _ ∷ _} = ↑-preserves id-preserves
+
+sub-preserves : ∀ {n} {Γ : Ctxt n} {σ t} → Γ ⊢ t ∈ σ → σ ∷ Γ ⇒ Γ ⊢ sub t
+sub-preserves t∈ = t∈ ∷ id-preserves
+
+lookup-preserves :
+  ∀ {m n} {Γ : Ctxt m} {Δ : Ctxt n} x {ρ} →
+  Γ ⇒ Δ ⊢ ρ → Δ ⊢ lookup x ρ ∈ lookup x Γ
+lookup-preserves zero    (t∈ ∷ ⊢ρ) = t∈
+lookup-preserves (suc x) (t∈ ∷ ⊢ρ) = lookup-preserves x ⊢ρ
+
+/-preserves : ∀ {m n} {Γ : Ctxt m} {Δ : Ctxt n} {σ t ρ} →
+              Γ ⊢ t ∈ σ → Γ ⇒ Δ ⊢ ρ → Δ ⊢ t / ρ ∈ σ
+/-preserves con           ⊢ρ = con
+/-preserves (var {x = x}) ⊢ρ = lookup-preserves x ⊢ρ
+/-preserves (ƛ t∈)        ⊢ρ = ƛ (/-preserves t∈ (↑-preserves ⊢ρ))
+/-preserves (t₁∈ · t₂∈)   ⊢ρ = /-preserves t₁∈ ⊢ρ · /-preserves t₂∈ ⊢ρ
+
+------------------------------------------------------------------------
+-- Name-space management
 
 open TermLemmas tmLemmas public hiding (var)

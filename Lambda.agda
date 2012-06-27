@@ -47,6 +47,10 @@ import Lambda.Substitution.TwoSemantics
 
 import Lambda.Substitution.Equivalence
 
+-- A functional semantics, along with a type soundness proof.
+
+import Lambda.Substitution.Functional
+
 ------------------------------------------------------------------------
 -- Virtual machine
 

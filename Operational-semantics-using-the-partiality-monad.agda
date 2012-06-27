@@ -58,6 +58,11 @@ import Lambda.Closure.Functional.No-workarounds
 
 import Lambda.Closure.Functional.Alternative
 
+-- An alternative definition of the functional semantics. This
+-- definition uses substitutions instead of environments and closures.
+
+import Lambda.Substitution.Functional
+
 ------------------------------------------------------------------------
 -- Section 4
 
@@ -76,6 +81,10 @@ import Data.Maybe
 -- All for the partiality monad.
 
 import Category.Monad.Partiality.All
+
+-- Type soundness proof for the semantics based on substitutions.
+
+import Lambda.Substitution.Functional
 
 ------------------------------------------------------------------------
 -- Section 5
