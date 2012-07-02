@@ -333,14 +333,7 @@ module Correctness {k : OtherKind} where
     soundP : ∀ {x y} → x ≈P y → Rel (other k) x y
     soundP x≈y = soundW (whnf x≈y)
 
--- Note that the statement of compiler correctness used here is more
--- useful, and less involved, than the one in
--- Lambda.Closure.Relational. The latter statement does not apply to
--- terms which crash. Furthermore it is not a self-contained
--- correctness statement, but relies on a separate proof which shows
--- that the VM is deterministic.
-
--- Note also that the equality that is used here is syntactic.
+-- Note that the equality that is used here is syntactic.
 
 correct : ∀ t →
           exec ⟨ comp t [] , [] , [] ⟩ ≈

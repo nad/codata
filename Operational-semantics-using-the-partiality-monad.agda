@@ -58,11 +58,6 @@ import Lambda.Closure.Functional.No-workarounds
 
 import Lambda.Closure.Functional.Alternative
 
--- An alternative definition of the functional semantics. This
--- definition uses substitutions instead of environments and closures.
-
-import Lambda.Substitution.Functional
-
 ------------------------------------------------------------------------
 -- Section 4
 
@@ -74,15 +69,16 @@ import Lambda.Syntax
 
 import Lambda.Closure.Functional.Type-soundness
 
--- Any for Maybe.
+-- The use of Lift in the paper is replaced by the use of two
+-- different predicate transformers: Any for Maybe and All for the
+-- partiality monad.
 
 import Data.Maybe
-
--- All for the partiality monad.
-
 import Category.Monad.Partiality.All
 
--- Type soundness proof for the semantics based on substitutions.
+-- An alternative definition of the functional semantics, using
+-- substitutions instead of environments and closures, plus a proof of
+-- type soundness.
 
 import Lambda.Substitution.Functional
 

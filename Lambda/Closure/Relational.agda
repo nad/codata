@@ -92,8 +92,9 @@ deterministic⇓⇑ (app t₁⇓ t₂⇓ t₁t₂⇓) (·ʳ t₁⇓′ t₂⇑) 
 -- Compiler "correctness"
 
 -- The proofs below establish that the compiler in
--- Lambda.VirtualMachine preserves the semantics above, on the
--- assumption that the virtual machine is deterministic.
+-- Lambda.VirtualMachine preserves the semantics above (_⊢_⇓_ and
+-- _⊢_⇑, not necessarily _⊢_↯), given that the virtual machine is
+-- deterministic.
 
 correct⇓′ : ∀ {n ρ c s v} {t : Tm n} →
             ρ ⊢ t ⇓ v →
@@ -138,6 +139,3 @@ correct⇓ t⇓ = (_ , correct⇓′ t⇓ , final)
 
 correct⇑ : ∀ {t} → [] ⊢ t ⇑ → ⟨ comp t [] , [] , [] ⟩ ⟶∞
 correct⇑ = InfiniteSequence.sound ∘ correct⇑′
-
--- Note that the two correctness statements above only apply to terms
--- that do not crash.

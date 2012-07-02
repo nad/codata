@@ -292,7 +292,7 @@ Z = ƛ (t · t)
 --
 -- = c₁ ∙ c₁ ⟦·⟧ return (con 0)
 -- = later (⟦ t₂ ⟧ (c₁ ∷ c₀ ∷ []) ⟦·⟧ return (con 0))
--- = later (c ∙ c₂ ⟦·⟧ return (con 0))
+-- = later (c₀ ∙ c₂ ⟦·⟧ return (con 0))
 -- = later (later (⟦ u₂ ⟧ (c₂ ∷ []) ⟦·⟧ return (con 0)))
 -- = later (later (ƛ u₁ (c₂ ∷ []) ∙ con 0))
 -- = later (later (later (⟦ u₁ ⟧ (con 0 ∷ c₂ ∷ []))))
@@ -308,8 +308,8 @@ Z = ƛ (t · t)
 -- A relation relating deterministic and non-deterministic
 -- computations
 
--- x ≈∈ y means that x implements /one/ possible semantics for y (up
--- to weak bisimilarity).
+-- x ≈∈ y means that x implements /one/ possible semantics of y (up to
+-- weak bisimilarity).
 
 infix 4 _≈∈_
 

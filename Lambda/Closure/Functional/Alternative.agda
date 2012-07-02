@@ -7,9 +7,9 @@
 -- Lambda.Closure.Functional might be easier if the semantics was
 -- defined using continuation-passing style, so I decided to try this
 -- out. The proof at the end of this module /is/ slightly shorter, but
--- the overhead of working with a definition which uses nested
--- recursion/corecursion (in the current version of Agda) is quite
--- high. Furthermore it seemed to me as if the soundness proofs in
+-- the continuation-passing definition of the semantics is quite
+-- awkward (due to the limitations imposed by Agda). Furthermore it
+-- seemed to me as if the soundness proofs in
 -- Lambda.Closure.Equivalence would be harder to prove using this
 -- formulation of the semantics.
 
@@ -408,13 +408,6 @@ module Correctness {k : OtherKind} where
 
     soundP : ∀ {x y} → x ≈P y → Rel (other k) x y
     soundP x≈y = soundW (whnf x≈y)
-
--- Note that the statement of compiler correctness used here is more
--- useful, and less involved, than the one in
--- Lambda.Closure.Relational. The latter statement does not apply to
--- terms which crash. Furthermore it is not a self-contained
--- correctness statement, but relies on a separate proof which shows
--- that the VM is deterministic.
 
 correct : ∀ t →
           exec ⟨ comp t [] , [] , [] ⟩ ≈
