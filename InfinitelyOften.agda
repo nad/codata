@@ -104,6 +104,41 @@ module Has-upper-bound where
     ⇐ ¬P⇑i j i≤j Pj = ¬P⇑i (j , i≤j , Pj)
 
 ------------------------------------------------------------------------
+-- Below
+
+module Below where
+
+  open Above using (_Above_)
+
+  -- P Below i holds if P holds everywhere below i (including at i).
+
+  _Below_ : (ℕ → Set) → (ℕ → Set)
+  P Below i = ∀ j → j ≤ i → P j
+
+  -- _Below_ P has a comonadic structure (at least if morphism
+  -- equality is trivial).
+
+  map : ∀ {P Q} → P ⊆ Q → _Below_ P ⊆ _Below_ Q
+  map P⊆Q P⇓i j j≤i = P⊆Q (P⇓i j j≤i)
+
+  counit : ∀ {P} → _Below_ P ⊆ P
+  counit P⇓i = P⇓i _ NatOrder.refl
+
+  cojoin : ∀ {P} → _Below_ P ⊆ _Below_ (_Below_ P)
+  cojoin P⇓i = λ j j≤i k k≤j → P⇓i _ (NatOrder.trans k≤j j≤i)
+
+  -- _Above_ (_Below_ P) is pointwise equivalent to _Below_ P.
+
+  ⇑⇓⇔⇓ : ∀ {P} i → (_Below_ P) Above i ⇔ P Below i
+  ⇑⇓⇔⇓ {P} i = equivalence ⇒ ⇐
+    where
+    ⇒ : (_Below_ P) Above i → P Below i
+    ⇒ (j , i≤j , P⇓j) k k≤i = P⇓j k (NatOrder.trans k≤i i≤j)
+
+    ⇐ : P Below i → (_Below_ P) Above i
+    ⇐ P⇓i = (i , NatOrder.refl , P⇓i)
+
+------------------------------------------------------------------------
 -- Mixed inductive/coinductive definition of "true infinitely often"
 
 module Mixed where
@@ -195,41 +230,6 @@ module Alternative where
       eventually : ∀ {P} → Mixed.Inf P → Eventually P
       eventually (now p _)  = now p
       eventually (skip inf) = later (eventually inf)
-
-------------------------------------------------------------------------
--- Below
-
-module Below where
-
-  open Above using (_Above_)
-
-  -- P Below i holds if P holds everywhere below i (including at i).
-
-  _Below_ : (ℕ → Set) → (ℕ → Set)
-  P Below i = ∀ j → j ≤ i → P j
-
-  -- _Below_ P has a comonadic structure (at least if morphism
-  -- equality is trivial).
-
-  map : ∀ {P Q} → P ⊆ Q → _Below_ P ⊆ _Below_ Q
-  map P⊆Q P⇓i j j≤i = P⊆Q (P⇓i j j≤i)
-
-  counit : ∀ {P} → _Below_ P ⊆ P
-  counit P⇓i = P⇓i _ NatOrder.refl
-
-  cojoin : ∀ {P} → _Below_ P ⊆ _Below_ (_Below_ P)
-  cojoin P⇓i = λ j j≤i k k≤j → P⇓i _ (NatOrder.trans k≤j j≤i)
-
-  -- _Above_ (_Below_ P) is pointwise equivalent to _Below_ P.
-
-  ⇑⇓⇔⇓ : ∀ {P} i → (_Below_ P) Above i ⇔ P Below i
-  ⇑⇓⇔⇓ {P} i = equivalence ⇒ ⇐
-    where
-    ⇒ : (_Below_ P) Above i → P Below i
-    ⇒ (j , i≤j , P⇓j) k k≤i = P⇓j k (NatOrder.trans k≤i i≤j)
-
-    ⇐ : P Below i → (_Below_ P) Above i
-    ⇐ P⇓i = (i , NatOrder.refl , P⇓i)
 
 ------------------------------------------------------------------------
 -- Functional/inductive definition of "true infinitely often"
