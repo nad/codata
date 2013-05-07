@@ -88,7 +88,7 @@ inconsistency : Theorem → ⊥
 inconsistency theorem = theorem 01^ω (refl , refl , proof)
   where
   proof : tail (tail ⟦ 01^ω ⟧O) ≈ ⟦ 01^ω ⟧O
-  proof = 0b ∷ ♯ (1b ∷ ♯ proof)
+  proof = refl ∷ ♯ (refl ∷ ♯ proof)
 
 -- Using the following elimination principle we can prove the theorem:
 
@@ -105,12 +105,6 @@ theorem O-elim = O-elim P helper
   P : O → Set
   P o = ¬ (head ⟦ o ⟧O ≡ 0b × head (tail ⟦ o ⟧O) ≡ 1b ×
                               tail (tail ⟦ o ⟧O) ≈ ⟦ o ⟧O)
-
-  head-cong : ∀ {A} {xs ys : Stream A} → xs ≈ ys → head xs ≡ head ys
-  head-cong (x ∷ xs≈) = refl
-
-  tail-cong : ∀ {A} {xs ys : Stream A} → xs ≈ ys → tail xs ≈ tail ys
-  tail-cong (x ∷ xs≈) = ♭ xs≈
 
   helper : ∀ {z} → ⇑ P z → P (↓ z)
   helper ([1] p) (()   , eq₂ , eq₃)

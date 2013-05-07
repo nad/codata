@@ -209,7 +209,7 @@ module Incorrect where
     distinct-v : ¬ ƛ (var zero) [] ≈v ƛ (var zero) []
     distinct-v (ƛ eq) = distinct-c (eq (ƛ (var zero) []))
 
-  distinct-t : ¬ ƛ (var zero) ≈t (ƛ (var zero) ∶ Tm 0)
+  distinct-t : ¬ ƛ (var zero) ≈t (Tm 0 ∋ ƛ (var zero))
   distinct-t eq = distinct-c (eq [])
 
 ------------------------------------------------------------------------
