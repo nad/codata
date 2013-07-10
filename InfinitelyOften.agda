@@ -351,6 +351,20 @@ module Double-negation-shift where
   Stable⇒DNS : ∀ {P} → (∀ i → Stable (P i)) → DNS P
   Stable⇒DNS stable ∀¬¬P = λ ¬∀P → ¬∀P (λ i → stable i (∀¬¬P i))
 
+  -- DNS follows from excluded middle.
+
+  EM⇒DNS : ∀ {P} → Excluded-Middle Level.zero → DNS P
+  EM⇒DNS {P} em hyp = return hyp′
+    where
+    hyp′ : ∀ i → P i
+    hyp′ i = decidable-stable em (hyp i)
+
+  -- DNS follows from the double-negation of excluded middle.
+
+  ¬¬EM⇒DNS : ∀ {P} → ¬ ¬ Excluded-Middle Level.zero → DNS P
+  ¬¬EM⇒DNS em hyp =
+    ¬¬-map lower (em >>= λ em → ¬¬-map lift (EM⇒DNS em hyp))
+
   -- DNS respects predicate equivalence.
 
   respects : ∀ {P₁ P₂} → (∀ i → P₁ i ⇔ P₂ i) → DNS P₁ → DNS P₂
