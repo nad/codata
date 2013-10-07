@@ -109,7 +109,7 @@ record ContractiveFun (cofe : COFE) : Set where
   -- The fixpoint is the limit of the following family.
 
   fam : Carrier → Domain
-  fam = wfRec (const Domain) (λ a rec → F (lim↓ a rec))
+  fam = wfRec _ (const Domain) (λ a rec → F (lim↓ a rec))
 
   fixpoint : Domain
   fixpoint = limU fam
@@ -124,7 +124,7 @@ record ContractiveFun (cofe : COFE) : Set where
   -- The family is coherent in several ways.
 
   fam-isCoherent-↓ : ∀ a → IsCoherent {↓ a} (lift fam)
-  fam-isCoherent-↓ = wfRec P step
+  fam-isCoherent-↓ = wfRec _ P step
     where
     P : Carrier → Set
     P a = IsCoherent {↓ a} (lift fam)
@@ -141,7 +141,7 @@ record ContractiveFun (cofe : COFE) : Set where
       fam b                  ∎
 
   fam-isCoherent-U : IsCoherent {U} (lift fam)
-  fam-isCoherent-U {a'} {a} _ _ = wfRec P step a a'
+  fam-isCoherent-U {a'} {a} _ _ = wfRec _ P step a a'
     where
     P : Carrier → Set
     P a = ∀ a' → a' < a → Eq a' (fam a') (fam a)
@@ -172,7 +172,7 @@ record ContractiveFun (cofe : COFE) : Set where
   -- And it is unique.
 
   unique : ∀ x → x ≅ F x → x ≅ fixpoint
-  unique x isFix = wfRec P step
+  unique x isFix = wfRec _ P step
     where
     P = λ a → Eq a x fixpoint
 

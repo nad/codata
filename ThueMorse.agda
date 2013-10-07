@@ -21,6 +21,7 @@ open import Data.Stream as S using (Stream; _≈_)
 open S.Stream; open S._≈_
 open import Function
 open import Relation.Binary
+import Relation.Binary.PropositionalEquality as P
 import Relation.Binary.EqReasoning as EqReasoning
 
 private
@@ -279,13 +280,13 @@ cast-congW (cons m≈m′) (x ∷ xs≈ys) = x ∷ cast-congW (♭ m≈m′) xs�
 
 transPW : ∀ {m A} {xs ys zs : Stream A} →
           xs ≈[ m ]W ys → ys ≈ zs → xs ≈[ m ]W zs
-transPW [ xs≈ys ]   ys≈zs        = [ _ ≈⟨ xs≈ys ⟩P ys≈zs ]
-transPW (x ∷ xs≈ys) (.x ∷ ys≈zs) = x ∷ transPW xs≈ys (♭ ys≈zs)
+transPW [ xs≈ys ]   ys≈zs            = [ _ ≈⟨ xs≈ys ⟩P ys≈zs ]
+transPW (x ∷ xs≈ys) (P.refl ∷ ys≈zs) = x ∷ transPW xs≈ys (♭ ys≈zs)
 
 transW : ∀ {m A} {xs ys zs : Stream A} →
          xs ≈ ys → ys ≈[ m ]W zs → xs ≈[ m ]W zs
-transW (x ∷ xs≈ys) [ ys≈zs ]    = [ _ ≈⟨ x ∷ xs≈ys ⟩ ys≈zs ]
-transW (x ∷ xs≈ys) (.x ∷ ys≈zs) = x ∷ transW (♭ xs≈ys) ys≈zs
+transW (x ∷ xs≈ys)      [ ys≈zs ]   = [ _ ≈⟨ x ∷ xs≈ys ⟩ ys≈zs ]
+transW (P.refl ∷ xs≈ys) (x ∷ ys≈zs) = x ∷ transW (♭ xs≈ys) ys≈zs
 
 whnf≈ : ∀ {m A} {xs ys : Stream A} → xs ≈[ m ]P ys → xs ≈[ m ]W ys
 whnf≈ [ xs ]                 = [ ♭ xs ]
@@ -303,7 +304,7 @@ mutual
 
   soundW : ∀ {m A} {xs ys : Stream A} → xs ≈[ m ]W ys → xs ≈ ys
   soundW [ xs≈ys ]   = soundP xs≈ys
-  soundW (x ∷ xs≈ys) = x ∷ ♯ soundW xs≈ys
+  soundW (x ∷ xs≈ys) = P.refl ∷ ♯ soundW xs≈ys
 
   soundP : ∀ {m A} {xs ys : Stream A} → xs ≈[ m ]P ys → xs ≈ ys
   soundP xs≈ys = soundW (whnf≈ xs≈ys)
@@ -315,7 +316,7 @@ mutual
 
 program-hom : ∀ {m A} (xs : StreamW m A) → ⟦ program xs ⟧P ≈ ⟦ xs ⟧W
 program-hom [ xs ]   = SS.refl
-program-hom (x ∷ xs) = x ∷ ♯ program-hom xs
+program-hom (x ∷ xs) = P.refl ∷ ♯ program-hom xs
 
 mutual
 
@@ -353,7 +354,7 @@ mutual
   evensW-hom : ∀ {A : Set} {m} (xs : StreamW m A) →
                ⟦ evensW xs ⟧W ≈ S.evens ⟦ xs ⟧W
   evensW-hom [ xs ]   = evens-hom xs
-  evensW-hom (x ∷ xs) = x ∷ ♯ oddsW-hom xs
+  evensW-hom (x ∷ xs) = P.refl ∷ ♯ oddsW-hom xs
 
   evens-hom : ∀ {A : Set} {m} (xs : StreamP m A) →
               ⟦ evens xs ⟧P ≈ S.evens ⟦ xs ⟧P
@@ -373,7 +374,7 @@ mutual
   mapW-hom : ∀ {A B : Set} {m} (f : A → B) (xs : StreamW m A) →
              ⟦ mapW f xs ⟧W ≈ S.map f ⟦ xs ⟧W
   mapW-hom f [ xs ]   = map-hom f xs
-  mapW-hom f (x ∷ xs) = f x ∷ ♯ mapW-hom f xs
+  mapW-hom f (x ∷ xs) = P.refl ∷ ♯ mapW-hom f xs
 
   map-hom : ∀ {A B : Set} {m} (f : A → B) (xs : StreamP m A) →
             ⟦ map f xs ⟧P ≈ S.map f ⟦ xs ⟧P
@@ -384,7 +385,7 @@ mutual
   castW-hom : ∀ {m m′ A} (m≈m′ : m ≈C m′) (xs : StreamW m A) →
               ⟦ castW m≈m′ xs ⟧W ≈ ⟦ xs ⟧W
   castW-hom (next m≈m′) [ xs ]   = cast-hom m≈m′ xs
-  castW-hom (cons m≈m′) (x ∷ xs) = x ∷ ♯ castW-hom (♭ m≈m′) xs
+  castW-hom (cons m≈m′) (x ∷ xs) = P.refl ∷ ♯ castW-hom (♭ m≈m′) xs
 
   cast-hom : ∀ {m m′ A} (m≈m′ : m ≈C m′) (xs : StreamP m A) →
              ⟦ cast m≈m′ xs ⟧P ≈ ⟦ xs ⟧P

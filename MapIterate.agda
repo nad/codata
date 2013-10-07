@@ -19,7 +19,7 @@ private
 
 map-iterate :  {A : Set} (f : A → A) (x : A) →
                map f (iterate f x) ≈ iterate f (f x)
-map-iterate f x = f x ∷ ♯ map-iterate f (f x)
+map-iterate f x = refl ∷ ♯ map-iterate f (f x)
 
 -- An equality proof language.
 
@@ -41,7 +41,7 @@ data _≈P_ {A : Set} : Stream A → Stream A → Set where
 -- Completeness.
 
 completeP : {A : Set} {xs ys : Stream A} → xs ≈ ys → xs ≈P ys
-completeP (x ∷ xs≈ys) = x ∷ ♯ completeP (♭ xs≈ys)
+completeP (refl ∷ xs≈ys) = _ ∷ ♯ completeP (♭ xs≈ys)
 
 -- Weak head normal forms.
 
@@ -73,7 +73,7 @@ whnf (zipWith-cong _∙_ xs₁≈ys₁ xs₂≈ys₂) =
 mutual
 
   soundW : {A : Set} {xs ys : Stream A} → xs ≈W ys → xs ≈ ys
-  soundW (x ∷ xs≈ys) = x ∷ ♯ soundP xs≈ys
+  soundW (x ∷ xs≈ys) = refl ∷ ♯ soundP xs≈ys
 
   soundP : {A : Set} {xs ys : Stream A} → xs ≈P ys → xs ≈ ys
   soundP xs≈ys = soundW (whnf xs≈ys)

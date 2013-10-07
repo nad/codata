@@ -7,6 +7,7 @@ module Nested where
 open import Coinduction
 open import Data.Stream
 open import Function
+import Relation.Binary.PropositionalEquality as P
 
 ------------------------------------------------------------------------
 -- A definition of φ (x ∷ xs) = x ∷ φ (φ xs)
@@ -77,7 +78,7 @@ module Equality where
   -- Completeness.
 
   completeP : {A : Set} {xs ys : Stream A} → xs ≈ ys → xs ≈P ys
-  completeP (x ∷ xs≈ys) = x ∷ ♯ completeP (♭ xs≈ys)
+  completeP (P.refl ∷ xs≈ys) = _ ∷ ♯ completeP (♭ xs≈ys)
 
   -- Weak head normal forms.
 
@@ -126,7 +127,7 @@ module Equality where
   mutual
 
     soundW : {A : Set} {xs ys : Stream A} → xs ≈W ys → xs ≈ ys
-    soundW (x ∷ xs≈ys) = x ∷ ♯ soundP xs≈ys
+    soundW (x ∷ xs≈ys) = P.refl ∷ ♯ soundP xs≈ys
 
     soundP : {A : Set} {xs ys : Stream A} → xs ≈P ys → xs ≈ ys
     soundP xs≈ys = soundW (whnf xs≈ys)

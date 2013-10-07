@@ -6,6 +6,7 @@ module BreadthFirst.Lemmas where
 
 open import Coinduction
 open import Function
+open import Data.List using ([]; _∷_)
 open import Data.List.NonEmpty as List⁺ using (List⁺; [_]; _∷_; _⁺++⁺_)
 import Data.Vec as Vec
 open import Data.Colist as Colist using (Colist; []; _∷_; concat; _++_)
@@ -206,10 +207,11 @@ data PrefixOfW (a : U) :
 
 whnf⊑ : ∀ {a xs ys} →
         PrefixOfP a xs ys → PrefixOfW a xs ys
-whnf⊑ []                         = []
+whnf⊑ [] = []
 
-whnf⊑ (⁺++-mono [ x ]    ys⊑ys′) = refl x ∷ ♭ ys⊑ys′
-whnf⊑ (⁺++-mono (x ∷ xs) ys⊑ys′) = refl x ∷ ⁺++-mono xs ys⊑ys′
+whnf⊑ (⁺++-mono (x ∷ [])        ys⊑ys′) = refl x ∷ ♭ ys⊑ys′
+whnf⊑ (⁺++-mono (x ∷ (x′ ∷ xs)) ys⊑ys′) =
+  refl x ∷ ⁺++-mono (x′ ∷ xs) ys⊑ys′
 
 whnf⊑ (._ ≋⟨ []          ⟩ _    ) = []
 whnf⊑ (._ ≋⟨ x≈y ∷ xs≈ys ⟩ ys⊑zs) with whnf⊑ ys⊑zs
@@ -235,14 +237,14 @@ mutual
             Eq ⌈ List⁺ (El a) ⌉ xs xs′ →
             Eq (stream a) ys ys′ →
             Eq (stream a) (xs ⁺++∞ ys) (xs′ ⁺++∞ ys′)
-⁺++∞-cong {xs = [ x ]}  ⌈ ≡-refl ⌉ ys≈ys′ = refl x ≺ ♯ ys≈ys′
-⁺++∞-cong {xs = x ∷ xs} ⌈ ≡-refl ⌉ ys≈ys′ =
-  refl x ≺ ♯ ⁺++∞-cong {xs = xs} ⌈ ≡-refl ⌉ ys≈ys′
+⁺++∞-cong {xs = x ∷ []}        ⌈ ≡-refl ⌉ ys≈ys′ = refl x ≺ ♯ ys≈ys′
+⁺++∞-cong {xs = x ∷ (x′ ∷ xs)} ⌈ ≡-refl ⌉ ys≈ys′ =
+  refl x ≺ ♯ ⁺++∞-cong {xs = x′ ∷ xs} ⌈ ≡-refl ⌉ ys≈ys′
 
 ++-assoc : ∀ {a} xs ys zs →
            Eq (stream a) (xs ⁺++∞ (ys ⁺++∞ zs)) ((xs ⁺++⁺ ys) ⁺++∞ zs)
-++-assoc [ x ]    ys zs = refl x ≺ ♯ refl (ys ⁺++∞ zs)
-++-assoc (x ∷ xs) ys zs = refl x ≺ ♯ ++-assoc xs ys zs
+++-assoc (x ∷ [])        ys zs = refl x ≺ ♯ refl (ys ⁺++∞ zs)
+++-assoc (x ∷ (x′ ∷ xs)) ys zs = refl x ≺ ♯ ++-assoc (x′ ∷ xs) ys zs
 
 zip-++-assoc : ∀ {a} xss yss (zss : Stream (Stream (El a))) →
                Eq (stream (stream a))
@@ -258,5 +260,5 @@ zip-++-assoc xss yss (zs ≺ zss) with whnf xss | whnf yss
 concat-lemma : ∀ {a} xs xss →
                Eq (colist a) (concat (xs ∷ xss))
                              (xs ⁺++ concat (♭ xss))
-concat-lemma [ x ]    xss = refl x ∷ ♯ refl (concat (♭ xss))
-concat-lemma (x ∷ xs) xss = refl x ∷ ♯ concat-lemma xs xss
+concat-lemma (x ∷ [])        xss = refl x ∷ ♯ refl (concat (♭ xss))
+concat-lemma (x ∷ (x′ ∷ xs)) xss = refl x ∷ ♯ concat-lemma (x′ ∷ xs) xss

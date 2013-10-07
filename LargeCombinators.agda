@@ -7,6 +7,7 @@ module LargeCombinators where
 open import Coinduction
 open import Data.Nat
 open import Data.Stream as S using (Stream; _∷_; _≈_)
+import Relation.Binary.PropositionalEquality as P
 
 -- Stream programs. Note that the destructor tail is encapsulated in a
 -- larger combinator, which also incorporates a constructor. This
@@ -64,14 +65,15 @@ zipWith-hom :
   ∀ {A} (f : A → A → A) (xs ys : StreamP A) →
   ⟦ zipWith f xs ys ⟧P ≈ S.zipWith f ⟦ xs ⟧P ⟦ ys ⟧P
 zipWith-hom f xs ys with whnf xs | whnf ys
-... | x ∷ xs′ | y ∷ ys′ = f x y ∷ ♯ zipWith-hom f xs′ ys′
+... | x ∷ xs′ | y ∷ ys′ = P.refl ∷ ♯ zipWith-hom f xs′ ys′
 
 -- The stream ⟦ fib ⟧P satisfies its intended defining equation.
 
 fib-correct :
   ⟦ fib ⟧P ≈ 0 ∷ ♯ (1 ∷ ♯ (S.zipWith _+_ ⟦ fib ⟧P (S.tail ⟦ fib ⟧P)))
 fib-correct =
-  0 ∷ ♯ (1 ∷ ♯ zipWith-hom _+_ fib (1 ∷zipWith _+_ · fib [tail fib ]))
+  P.refl ∷ ♯ (P.refl ∷ ♯
+    zipWith-hom _+_ fib (1 ∷zipWith _+_ · fib [tail fib ]))
 
 -- For completeness, let us show that _∷zipWith_·_[tail_] is correctly
 -- implemented.
@@ -83,7 +85,7 @@ _∷zipWith_·_[tail_]-hom :
   ⟦ x ∷zipWith f · xs [tail ys ] ⟧P ≈
   x ∷ ♯ S.zipWith f ⟦ xs ⟧P (S.tail ⟦ ys ⟧P)
 x ∷zipWith f · xs [tail ys ]-hom with whnf ys | P.inspect whnf ys
-... | y ∷ ys′ | [ eq ] = x ∷ ♯ helper
+... | y ∷ ys′ | [ eq ] = P.refl ∷ ♯ helper
   where
   helper : ⟦ zipWith f xs ys′ ⟧P ≈
            S.zipWith f ⟦ xs ⟧P (S.tail ⟦ ys ⟧P)

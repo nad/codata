@@ -221,8 +221,11 @@ module Alternative where
   equivalent = equivalence ⇒ ⇐
     where
     ⇒ : ∀ {P} → Inf P → Mixed.Inf P
-    ⇒     (now (now   p) inf) = now p (♯ ⇒ (♭ inf))
-    ⇒ {P} (now (later p) inf) = skip (⇒ (now p (♯ up (P ∘ suc) (♭ inf))))
+    ⇒ (now p inf) = ⇒′ p (♭ inf)
+      where
+      ⇒′ : ∀ {P} → Eventually P → Inf (P ∘ suc) → Mixed.Inf P
+      ⇒′     (now   p) inf = now p (♯ ⇒ inf)
+      ⇒′ {P} (later p) inf = skip (⇒′ p (up (P ∘ suc) inf))
 
     ⇐ : ∀ {P} → Mixed.Inf P → Inf P
     ⇐ inf = now (eventually inf) (♯ ⇐ (Mixed.up inf))
@@ -288,11 +291,14 @@ module Fin where
   -- Fin implies the negation of Mixed.Inf.
 
   ⇐ : ∀ {P} → Fin P → ¬ Mixed.Inf P
-  ⇐ (zero  , fin) (now p inf) = fin 0 z≤n p
-  ⇐ (zero  , fin) (skip  inf) = ⇐ (zero , λ j i≤j → fin (suc j) z≤n) inf
-  ⇐ (suc i , fin) inf         =
-    ⇐ (i , Equivalence.to Has-upper-bound.move-suc ⟨$⟩ fin)
-      (Mixed.up inf)
+  ⇐ = uncurry ⇐′
+    where
+    ⇐′ : ∀ {P} i → P Has-upper-bound i → ¬ Mixed.Inf P
+    ⇐′ zero    fin (now p inf) = fin 0 z≤n p
+    ⇐′ zero    fin (skip  inf) = ⇐′ zero (λ j i≤j → fin (suc j) z≤n) inf
+    ⇐′ (suc i) fin inf         =
+      ⇐′ i (Equivalence.to Has-upper-bound.move-suc ⟨$⟩ fin)
+         (Mixed.up inf)
 
   -- The other direction (with a double-negated conclusion) implies
   -- that Mixed.Inf commutes with binary sums (in the double-negation

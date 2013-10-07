@@ -9,6 +9,7 @@ open import Data.Bool
 open import Data.Nat
 open import Data.Stream as S using (Stream; _≈_; _∷_)
 open import Data.Vec as V using (Vec; []; _∷_)
+import Relation.Binary.PropositionalEquality as P
 
 ------------------------------------------------------------------------
 -- Stream programs
@@ -71,7 +72,7 @@ zipWith-hom : ∀ {A B C} (_∙_ : A → B → C) xs ys →
               ⟦ zipWith _∙_ xs ys ⟧P ≈ S.zipWith _∙_ ⟦ xs ⟧P ⟦ ys ⟧P
 zipWith-hom _∙_ xs ys with whnf xs | whnf ys
 zipWith-hom _∙_ xs ys | x ∷ [ xs′ ] | y ∷ [ ys′ ] =
-  (x ∙ y) ∷ ♯ zipWith-hom _∙_ xs′ ys′
+  P.refl ∷ ♯ zipWith-hom _∙_ xs′ ys′
 
 -- forget is the identity on streams.
 
@@ -94,10 +95,10 @@ module SS {A : Set} = Setoid (S.setoid A)
 fib-correct :
   ⟦ fib ⟧P ≈ 0 ∷ ♯ (1 ∷ ♯ S.zipWith _+_ ⟦ fib ⟧P (S.tail ⟦ fib ⟧P))
 fib-correct =
-  0 ∷ ♯ (1 ∷ ♯ SS.trans
-    (zipWith-hom _+_ (0 ∷ forget fib′) fib′)
-    (S.zipWith-cong _+_ (SS.trans (M.soundP (forget-lemma 0 fib′))
-                                  (0 ∷ ♯ SS.refl)) SS.refl))
+  P.refl ∷ ♯ (P.refl ∷ ♯ SS.trans
+   (zipWith-hom _+_ (0 ∷ forget fib′) fib′)
+   (S.zipWith-cong _+_ (SS.trans (M.soundP (forget-lemma 0 fib′))
+                                 (P.refl ∷ ♯ SS.refl)) SS.refl))
   where fib′ = 1 ∷ zipWith _+_ (forget fib) (tail fib)
 
 ------------------------------------------------------------------------
@@ -128,7 +129,7 @@ data _≈[_]P_ : {A : Set} → Stream A → Bool → Stream A → Set₁ where
 
 completeP : ∀ {A : Set} {xs ys : Stream A} →
             xs ≈ ys → xs ≈[ true ]P ys
-completeP (x ∷ xs≈ys) = x ∷ [ ♯ completeP (♭ xs≈ys) ]
+completeP (P.refl ∷ xs≈ys) = _ ∷ [ ♯ completeP (♭ xs≈ys) ]
 
 -- Weak head normal forms.
 
@@ -185,7 +186,7 @@ whnf≈ (zipWith f xs≈xs′ ys≈ys′) = zipWithW≈ f (whnf≈ xs≈xs′) (
 mutual
 
   soundW : {A : Set} {xs ys : Stream A} → xs ≈[ true ]W ys → xs ≈ ys
-  soundW (x ∷ xs≈ys) = x ∷ ♯ soundP xs≈ys
+  soundW (x ∷ xs≈ys) = P.refl ∷ ♯ soundP xs≈ys
 
   soundP : {A : Set} {xs ys : Stream A} → xs ≈[ true ]P ys → xs ≈ ys
   soundP xs≈ys = soundW (whnf≈ xs≈ys)

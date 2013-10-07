@@ -63,15 +63,17 @@ data _≃_ {A} : (xs ys : Stream A) → Set1 where
                 ys ys′ ys≈ys′) with whnf xs | whnf xs′ | ≅⇒≃ xs≈xs′
                                   | whnf ys | whnf ys′ | ≅⇒≃ ys≈ys′
 ≅⇒≃ (⟨ ∙ ⟩-cong xs xs′ xs≈xs′
-                ys ys′ ys≈ys′) | _ ≺ _ | _ ≺ _ | x≡y  ≺ xs≈ys
-                               | _ ≺ _ | _ ≺ _ | x≡y′ ≺ xs≈ys′ =
+                ys ys′ ys≈ys′) | _ ≺ txs | _ ≺ txs′ | x≡y  ≺ txs≈txs′
+                               | _ ≺ tys | _ ≺ tys′ | x≡y′ ≺ tys≈tys′ =
                                  cong₂ ∙ x≡y x≡y′ ≺
-                                 ⟨ ∙ ⟩-cong _ _ xs≈ys _ _ xs≈ys′
+                                 ⟨ ∙ ⟩-cong txs txs′ txs≈txs′
+                                            tys tys′ tys≈tys′
 ≅⇒≃ (⋎-cong xs xs′ xs≈xs′
             ys ys′ ys≈ys′)     with whnf xs | whnf xs′ | ≅⇒≃ xs≈xs′
 ≅⇒≃ (⋎-cong xs xs′ xs≈xs′
-            ys ys′ ys≈ys′)     | _ ≺ _ | _ ≺ _ | x≡y ≺ txs≈txs′ =
-                                 x≡y ≺ ⋎-cong _ _ ys≈ys′ _ _ txs≈txs′
+            ys ys′ ys≈ys′)     | _ ≺ txs | _ ≺ txs′ | x≡y ≺ txs≈txs′ =
+                                 x≡y ≺ ⋎-cong ys  ys′  ys≈ys′
+                                              txs txs′ txs≈txs′
 ≅⇒≃ (≺≺-cong [] [] refl
              ys ys′ ys≈ys′)    = ≅⇒≃ ys≈ys′
 ≅⇒≃ (≺≺-cong
@@ -81,7 +83,7 @@ data _≃_ {A} : (xs ys : Stream A) → Set1 where
 mutual
 
   ≃⇒≈ : ∀ {A} {xs ys : Stream A} → xs ≃ ys → xs ≈ ys
-  ≃⇒≈ (refl ≺ xs≈) = _ ≺ ♯ ≅⇒≈ xs≈
+  ≃⇒≈ (refl ≺ xs≈) = refl ≺ ♯ ≅⇒≈ xs≈
 
   ≅⇒≈ : ∀ {A} {xs ys : Stream A} → xs ≅ ys → xs ≈ ys
   ≅⇒≈ xs≈ = ≃⇒≈ (≅⇒≃ xs≈)
@@ -90,7 +92,7 @@ mutual
 ≊⇒≈ = ≅⇒≈
 
 ≈⇒≅ : ∀ {A} {xs ys : Stream A} → xs ≈ ys → xs ≅ ys
-≈⇒≅ (x ≺ xs≈) = refl ≺ ♯ ≈⇒≅ (♭ xs≈)
+≈⇒≅ (refl ≺ xs≈) = refl ≺ ♯ ≈⇒≅ (♭ xs≈)
 
 _∎ : ∀ {A} (xs : Prog A) → xs ≊ xs
 xs ∎ = ≈⇒≅ (Setoid.refl (Stream.setoid _))

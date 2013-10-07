@@ -94,9 +94,9 @@ mutual
     (xs : StreamW (suc m) (suc n) A) ys →
     ⟦ zipWithW _∙_ xs ys ⟧W ≈ S.zipWith _∙_ ⟦ xs ⟧W ⟦ ys ⟧W
   zipWithW-hom _∙_ (x ∷ [ xs ]) (y ∷ [ ys ])   =
-    (x ∙ y) ∷ ♯ zipWith-hom _∙_ xs ys
+    refl ∷ ♯ zipWith-hom _∙_ xs ys
   zipWithW-hom _∙_ (x ∷ x′ ∷ xs) (y ∷ y′ ∷ ys) =
-    (x ∙ y) ∷ ♯ zipWithW-hom _∙_ (x′ ∷ xs) (y′ ∷ ys)
+    refl ∷ ♯ zipWithW-hom _∙_ (x′ ∷ xs) (y′ ∷ ys)
 
   zipWith-hom : ∀ {m n A B C} (_∙_ : A → B → C)
                 (xs : StreamP (suc m) (suc n) A) ys →
@@ -134,10 +134,10 @@ module SS {A : Set} = Setoid (S.setoid A)
 fib-correct :
   ⟦ fib ⟧P ≈ 0 ∷ ♯ (1 ∷ ♯ S.zipWith _+_ ⟦ fib ⟧P (S.tail ⟦ fib ⟧P))
 fib-correct =
-  0 ∷ ♯ (1 ∷ ♯ SS.trans
+  refl ∷ ♯ (refl ∷ ♯ SS.trans
     (zipWith-hom _+_ (0 ∷ forget fib′) fib′)
     (S.zipWith-cong _+_ (SS.trans (soundP (forget-lemma 0 fib′))
-                                  (0 ∷ ♯ SS.refl)) SS.refl))
+                                  (refl ∷ ♯ SS.refl)) SS.refl))
   where fib′ = 1 ∷ zipWith _+_ (forget fib) (tail fib)
 
 ------------------------------------------------------------------------
@@ -154,12 +154,12 @@ map₂ f (x ∷ xs) | y ∷ ys = f x ∷ ♯ (f y ∷ ♯ map₂ f (♭ ys))
 map≈map₂ : ∀ {A B} →
            (f : A → B) → (xs : Stream A) → S.map f xs ≈ map₂ f xs
 map≈map₂ f (x ∷ xs) with ♭ xs | P.inspect ♭ xs
-map≈map₂ f (x ∷ xs) | y ∷ ys | [ eq ] = f x ∷ ♯ helper eq
+map≈map₂ f (x ∷ xs) | y ∷ ys | [ eq ] = refl ∷ ♯ helper eq
   where
   map-f-y∷ys = _
 
   helper : ∀ {xs} → xs ≡ y ∷ ys → S.map f xs ≈ map-f-y∷ys
-  helper refl = f y ∷ ♯ map≈map₂ f (♭ ys)
+  helper refl = refl ∷ ♯ map≈map₂ f (♭ ys)
 
 -- However, as explained in "Beating the Productivity Checker Using
 -- Embedded Languages", the two functions are not interchangeable

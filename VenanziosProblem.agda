@@ -9,6 +9,7 @@ open import Data.Nat
 open import Data.Stream as Stream using (Stream; _⋎_; evens; odds; _≈_)
 open Stream.Stream; open Stream._≈_
 open import Relation.Binary
+import Relation.Binary.PropositionalEquality as P
 
 private
   module S {A} = Setoid (Stream.setoid A)
@@ -102,8 +103,8 @@ module Solution {A : Set} where
   -- The equality language is complete.
 
   completeW : ∀ {n m xs ys} → xs ≈ ys → m ∣ n ∣ xs ≈W ys
-  completeW {zero}  xs≈ys       = reset (♯ ↑ (completeW xs≈ys))
-  completeW {suc n} (x ∷ xs≈ys) = x ∷ completeW (♭ xs≈ys)
+  completeW {zero}  xs≈ys            = reset (♯ ↑ (completeW xs≈ys))
+  completeW {suc n} (P.refl ∷ xs≈ys) = _ ∷ completeW (♭ xs≈ys)
 
   -- If we can prove that the equality language is sound, then the
   -- following lemma implies the intended result.
@@ -171,8 +172,8 @@ module Solution {A : Set} where
 
   ⟦_⟧W : ∀ {xs ys m n} → m ∣ n ∣ xs ≈W ys → xs ≈ ys
   ⟦ reset ys≈zs ⟧W with whnf (♭ ys≈zs)
-  ... | x ∷ ys≈zs′ = x ∷ ♯ ⟦ ys≈zs′ ⟧W
-  ⟦ x ∷ ys≈zs   ⟧W = x ∷ ♯ ⟦ ys≈zs ⟧W
+  ... | x ∷ ys≈zs′ = P.refl ∷ ♯ ⟦ ys≈zs′ ⟧W
+  ⟦ x ∷ ys≈zs   ⟧W = P.refl ∷ ♯ ⟦ ys≈zs ⟧W
 
   ⟦_⟧P : ∀ {xs ys m n} → m ∣ n ∣ xs ≈P ys → xs ≈ ys
   ⟦ xs≈ys ⟧P = ⟦ whnf xs≈ys ⟧W

@@ -79,7 +79,7 @@ whnf (trans xs≈ys ys≈zs) = transW (whnf xs≈ys) (whnf ys≈zs)
 mutual
 
   ⟦_⟧W : ∀ {xs ys} → xs ≈W ys → xs ≈ ys
-  ⟦ x ∷ xs≈ys ⟧W = x ∷ ♯ ⟦ ♭ xs≈ys ⟧P
+  ⟦ x ∷ xs≈ys ⟧W = refl ∷ ♯ ⟦ ♭ xs≈ys ⟧P
 
   ⟦_⟧P : ∀ {xs ys} → xs ≈P ys → xs ≈ ys
   ⟦ xs≈ys ⟧P = ⟦ whnf xs≈ys ⟧W
@@ -92,7 +92,7 @@ mutual
   completeP xs≈ys = sound (completeW xs≈ys ∷ []) (hyp (here refl))
 
   completeW : ∀ {xs ys} → xs ≈ ys → xs ≈W ys
-  completeW (x ∷ xs≈ys) = x ∷ ♯ completeP (♭ xs≈ys)
+  completeW (refl ∷ xs≈ys) = _ ∷ ♯ completeP (♭ xs≈ys)
 
 -- Finally we get the intended soundness result for _⊢_≈_.
 

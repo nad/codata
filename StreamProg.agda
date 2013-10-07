@@ -105,7 +105,7 @@ zipWith-hom : ∀ {A B C} (_∙_ : A → B → C) xs ys →
               ⟦ zipWith _∙_ xs ys ⟧P ≈ S.zipWith _∙_ ⟦ xs ⟧P ⟦ ys ⟧P
 zipWith-hom _∙_ xs ys with whnf xs | whnf ys
 zipWith-hom _∙_ xs ys | x ∷ xs′ | y ∷ ys′ =
-  (x ∙ y) ∷ ♯ zipWith-hom _∙_ xs′ ys′
+  P.refl ∷ ♯ zipWith-hom _∙_ xs′ ys′
 
 -- Unfortunately Agda's definitional equality for coinductive
 -- constructors is currently a little strange, so the result type
@@ -113,14 +113,15 @@ zipWith-hom _∙_ xs ys | x ∷ xs′ | y ∷ ys′ =
 
 fib-correct′ :
   ⟦ fib ⟧P ≈ 0 ∷ ♯ S.zipWith _+_ ⟦ fib ⟧P (1 ∷ _ {- ♯ ⟦ fib ⟧P -})
-fib-correct′ = 0 ∷ ♯ zipWith-hom _+_ fib (1 ∷ ♯ fib)
+fib-correct′ = P.refl ∷ ♯ zipWith-hom _+_ fib (1 ∷ ♯ fib)
 
 -- Fortunately there is a workaround.
 
 fib-correct : ⟦ fib ⟧P ≈ 0 ∷ ♯ S.zipWith _+_ ⟦ fib ⟧P (1 ∷ ♯ ⟦ fib ⟧P)
 fib-correct =
-  0 ∷ ♯ SS.trans (zipWith-hom  _+_ fib     (1 ∷ ♯ fib))
-                 (S.zipWith-cong _+_ SS.refl (1 ∷ ♯ SS.refl))
+  P.refl ∷ ♯ SS.trans (zipWith-hom _+_ fib (1 ∷ ♯ fib))
+                      (S.zipWith-cong _+_ (SS.refl {x = 0 ∷ _})
+                                          (P.refl ∷ ♯ SS.refl))
 
 -- For a proof showing that the given equation for fib has a unique
 -- solution, see MapIterate.
@@ -133,7 +134,7 @@ fib-correct =
 map-hom : ∀ {A B} (f : A → B) xs →
           ⟦ map f xs ⟧P ≈ S.map f ⟦ xs ⟧P
 map-hom f xs with whnf xs
-... | x ∷ xs′ = f x ∷ ♯ map-hom f xs′
+... | x ∷ xs′ = P.refl ∷ ♯ map-hom f xs′
 
 -- ⟦_⟧P is homomorphic with respect to mergeP/merge.
 
@@ -141,19 +142,20 @@ merge-hom : ∀ {A} (cmp : A → A → Ord) xs ys →
             ⟦ mergeP cmp xs ys ⟧P ≈ merge cmp ⟦ xs ⟧P ⟦ ys ⟧P
 merge-hom cmp xs ys with whnf xs | whnf ys
 ... | x ∷ xs′ | y ∷ ys′ with cmp x y
-...   | lt = x ∷ ♯ merge-hom cmp xs′ (y ∷ ♯ ys′)
-...   | eq = x ∷ ♯ merge-hom cmp xs′ ys′
-...   | gt = y ∷ ♯ merge-hom cmp (x ∷ ♯ xs′) ys′
+...   | lt = P.refl ∷ ♯ merge-hom cmp xs′ (y ∷ ♯ ys′)
+...   | eq = P.refl ∷ ♯ merge-hom cmp xs′ ys′
+...   | gt = P.refl ∷ ♯ merge-hom cmp (x ∷ ♯ xs′) ys′
 
 -- merge is a congruence.
 
 merge-cong : ∀ {A} (cmp : A → A → Ord) {xs xs′ ys ys′} →
              xs ≈ xs′ → ys ≈ ys′ →
              merge cmp xs ys ≈ merge cmp xs′ ys′
-merge-cong cmp (x ∷ xs≈) (y ∷ ys≈) with cmp x y
-... | lt = x ∷ ♯ merge-cong cmp (♭ xs≈) (y ∷ ys≈)
-... | eq = x ∷ ♯ merge-cong cmp (♭ xs≈) (♭ ys≈)
-... | gt = y ∷ ♯ merge-cong cmp (x ∷ xs≈) (♭ ys≈)
+merge-cong cmp (_∷_ {x = x} P.refl xs≈)
+               (_∷_ {x = y} P.refl ys≈) with cmp x y
+... | lt = P.refl ∷ ♯ merge-cong cmp (♭ xs≈) (P.refl ∷ ys≈)
+... | eq = P.refl ∷ ♯ merge-cong cmp (♭ xs≈) (♭ ys≈)
+... | gt = P.refl ∷ ♯ merge-cong cmp (P.refl ∷ xs≈) (♭ ys≈)
 
 -- hamming is correct.
 
@@ -161,7 +163,7 @@ hamming-correct : ⟦ hamming ⟧P ≈
                   1 ∷ ♯ merge cmp (S.map (_*_ 2) ⟦ hamming ⟧P)
                                   (S.map (_*_ 3) ⟦ hamming ⟧P)
 hamming-correct =
-  1 ∷ ♯ SS.trans (merge-hom cmp (map (_*_ 2) hamming)
-                                (map (_*_ 3) hamming))
-                 (merge-cong cmp (map-hom (_*_ 2) hamming)
-                                 (map-hom (_*_ 3) hamming))
+  P.refl ∷ ♯ SS.trans (merge-hom cmp (map (_*_ 2) hamming)
+                                     (map (_*_ 3) hamming))
+                      (merge-cong cmp (map-hom (_*_ 2) hamming)
+                                      (map-hom (_*_ 3) hamming))
