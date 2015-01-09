@@ -78,15 +78,16 @@ fib-correct =
 -- For completeness, let us show that _∷zipWith_·_[tail_] is correctly
 -- implemented.
 
-open import Relation.Binary.PropositionalEquality as P using ([_])
+open import Relation.Binary.PropositionalEquality as P using (_≡_; [_])
 
 _∷zipWith_·_[tail_]-hom :
   ∀ {A} (x : A) (f : A → A → A) (xs ys : StreamP A) →
   ⟦ x ∷zipWith f · xs [tail ys ] ⟧P ≈
   x ∷ ♯ S.zipWith f ⟦ xs ⟧P (S.tail ⟦ ys ⟧P)
 x ∷zipWith f · xs [tail ys ]-hom with whnf ys | P.inspect whnf ys
-... | y ∷ ys′ | [ eq ] = P.refl ∷ ♯ helper
+... | y ∷ ys′ | [ eq ] = P.refl ∷ ♯ helper eq
   where
-  helper : ⟦ zipWith f xs ys′ ⟧P ≈
+  helper : whnf ys ≡ y ∷ ys′ →
+           ⟦ zipWith f xs ys′ ⟧P ≈
            S.zipWith f ⟦ xs ⟧P (S.tail ⟦ ys ⟧P)
-  helper rewrite eq = zipWith-hom f xs ys′
+  helper eq rewrite eq = zipWith-hom f xs ys′

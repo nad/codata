@@ -82,10 +82,11 @@ open import Relation.Binary.PropositionalEquality as P using (_≡_; [_])
 forget-lemma : ∀ {A} x (xs : StreamP true A) →
                ⟦ x ∷ forget xs ⟧P ≈P x ∷ ♯ ⟦ xs ⟧P
 forget-lemma x xs with whnf xs | P.inspect whnf xs
-... | y ∷ [ ys ] | [ eq ] = x ∷ ♯ helper
+... | y ∷ [ ys ] | [ eq ] = x ∷ ♯ helper eq
   where
-  helper : ⟦ y ∷ forget ys ⟧P ≈P ⟦ xs ⟧P
-  helper rewrite eq = _ ≈⟨ forget-lemma y ys ⟩ (y ∷ ♯ (_ ∎))
+  helper : whnf xs ≡ y ∷ [ ys ] →
+           ⟦ y ∷ forget ys ⟧P ≈P ⟦ xs ⟧P
+  helper eq rewrite eq = _ ≈⟨ forget-lemma y ys ⟩ (y ∷ ♯ (_ ∎))
 
 -- The stream ⟦ fib ⟧P satisfies its intended defining equation.
 
