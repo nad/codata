@@ -85,7 +85,7 @@ data _≅_ {A : Set} : D A → D A → Set where
 
 -- Strong bisimilarity is reflexive.
 
-infixr 2 _∎
+infixr 3 _∎
 
 _∎ : {A : Set} (x : D A) → x ≅ x
 fail     ∎ = fail

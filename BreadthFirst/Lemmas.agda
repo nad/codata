@@ -72,8 +72,8 @@ trans {a = ⌈ A ⌉}    ⌈ x≡x′  ⌉ ⌈ x′≡x″ ⌉      = ⌈ PropEq
 -- Productivity checker workaround for Eq
 
 infixr 5 _≺_ _∷_
+infix  3 _∎
 infixr 2 _≈⟨_⟩_ _≊⟨_⟩_
-infix  2 _∎
 
 data EqP : ∀ a → El a → El a → Set₁ where
   leaf : ∀ {a} → EqP (tree a) leaf leaf

@@ -250,7 +250,7 @@ t₁ ≈t t₂ = ∀ ρ → ⟦ t₁ ⟧ ρ ≈c ⟦ t₂ ⟧ ρ
 
 mutual
 
-  infix 2 _∎mv _∎c _∎v
+  infix 3 _∎mv _∎c _∎v
 
   _∎mv : (v : Maybe Value) → v ≈mv v
   just v  ∎mv = just (v ∎v)
@@ -264,7 +264,7 @@ mutual
   con i ∎v = con
   ƛ t ρ ∎v = ƛ (λ v → ♯ (⟦ t ⟧ (v ∷ ρ) ∎c))
 
-infix 2 _∎t
+infix 3 _∎t
 
 _∎t : ∀ {n} (t : Tm n) → t ≈t t
 t ∎t = λ ρ → ⟦ t ⟧ ρ ∎c

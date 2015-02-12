@@ -86,7 +86,7 @@ module D where
 
   -- Strong bisimilarity is reflexive.
 
-  infixr 2 _∎
+  infixr 3 _∎
 
   _∎ : {A : Set} (x : D A) → x ≅ x
   fail     ∎ = fail
@@ -636,8 +636,8 @@ does-not-go-wrong (later x-wf)  (laterʳ x↯) =
 
 -- A variant of WF-DV, used to please the productivity checker.
 
+infix  3 _⟨_⟩P
 infixr 2 _≅⟨_⟩P_
-infix  2 _⟨_⟩P
 
 data WF-DVP (σ : Ty) : D Value → Set where
   return      : ∀ {v} (v-wf : WF-Value σ v) → WF-DVP σ (return v)

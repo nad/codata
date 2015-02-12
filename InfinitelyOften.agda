@@ -25,7 +25,7 @@ open import Relation.Binary hiding (_⇒_)
 open import Relation.Nullary
 open import Relation.Nullary.Negation
 import Relation.Nullary.Universe as Univ
-open import Relation.Unary
+open import Relation.Unary hiding (_⇒_)
 private
   open module M {f} = RawMonad {f = f} ¬¬-Monad
   module NatOrder   = DecTotalOrder       Nat.decTotalOrder
@@ -94,7 +94,7 @@ module Has-upper-bound where
   -- _Has-upper-bound_ and _Above_ are mutually inconsistent.
 
   mutually-inconsistent :
-    ∀ {P i} → P Has-upper-bound i ⇔ ¬ (P Above i)
+    ∀ {P i} → P Has-upper-bound i ⇔ (¬ (P Above i))
   mutually-inconsistent {P} {i} = equivalence ⇒ ⇐
     where
     ⇒ : P Has-upper-bound i → ¬ (P Above i)
@@ -496,16 +496,16 @@ module NonConstructive where
 
     ⇒shift : ∀ {P} → Other-direction (_Below_ P) → DNS P
     ⇒shift {P} =
-      Other-direction (_Below_ P)                 ∼⟨ (λ other₁ →
-        Inf (_Below_ (_Below_ P))                       ∼⟨ map Below.counit ⟩
-        Inf (_Below_ P)                                 ∼⟨ other₁ ⟩
-        ¬ ¬ Functional.Inf (_Below_ P)                  ∼⟨ _<$>_ (Functional.map Below.cojoin) ⟩
-        ¬ ¬ Functional.Inf (_Below_ (_Below_ P))        ∎) ⟩
-      Other-direction (_Below_ (_Below_ P))       ∼⟨ _⟨$⟩_ (Equivalence.to equivalent₁) ⟩
-      DNS (_Above_ (_Below_ (_Below_ P)))         ∼⟨ Double-negation-shift.respects Below.⇑⇓⇔⇓ ⟩
-      DNS (_Below_ (_Below_ P))                   ∼⟨ Double-negation-shift.DNS⇒DNS⇓ ⟩
-      DNS⇓ (_Below_ P)                            ∼⟨ Double-negation-shift.DNS⇓⇒DNS ⟩
-      DNS P                                       ∎
+      Other-direction (_Below_ P)                   ∼⟨ (λ other₁ →
+        Inf (_Below_ (_Below_ P))                         ∼⟨ map Below.counit ⟩
+        Inf (_Below_ P)                                   ∼⟨ other₁ ⟩
+        ¬ ¬ Functional.Inf (_Below_ P)                    ∼⟨ _<$>_ (Functional.map Below.cojoin) ⟩
+        (¬ ¬ Functional.Inf (_Below_ (_Below_ P)))        ∎) ⟩
+      Other-direction (_Below_ (_Below_ P))         ∼⟨ _⟨$⟩_ (Equivalence.to equivalent₁) ⟩
+      DNS (_Above_ (_Below_ (_Below_ P)))           ∼⟨ Double-negation-shift.respects Below.⇑⇓⇔⇓ ⟩
+      DNS (_Below_ (_Below_ P))                     ∼⟨ Double-negation-shift.DNS⇒DNS⇓ ⟩
+      DNS⇓ (_Below_ P)                              ∼⟨ Double-negation-shift.DNS⇓⇒DNS ⟩
+      DNS P                                         ∎
       where open Related.EquationalReasoning
 
   equivalent : (∀ P → Other-direction P) ⇔ (∀ P → DNS P)
@@ -590,7 +590,7 @@ module DoubleNegated where
   ⇒ {P} =
     NonConstructive.Inf P  ∼⟨ _⟨$⟩_ (Equivalence.to ¬¬equivalent) ⟩
     ¬¬Inf P                ∼⟨ expand ⟩
-    ¬ ¬ Inf P              ∎
+    (¬ ¬ Inf P)            ∎
     where open Related.EquationalReasoning
 
   equivalent : ∀ {P} → ¬ ¬ (NonConstructive.Inf P ⇔ Inf P)

@@ -39,7 +39,7 @@ module Solution {A : Set} where
 
   infixr 5 _∷_
   infix  4 _∣_∣_≈P_ _∣_∣_≈W_
-  infix  2 _∎
+  infix  3 _∎
   infixr 2 _≈⟨_⟩_
 
   -- Let us first define a small language of equality proofs.

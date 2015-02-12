@@ -158,8 +158,8 @@ module Relational where
   module InfiniteSequence where
 
     infix  4 _⟶∞′
+    infix  3 _⟶∞⟨_⟩
     infixr 2 _⟶⟨_⟩′_ _⟶⋆⟨_⟩′_
-    infix  2 _⟶∞⟨_⟩
 
     data _⟶∞′ : State → Set where
       _⟶⟨_⟩′_  : ∀ s₁ {s₂} (s₁⟶s₂ : s₁ ⟶ s₂) (s₂⟶∞ : ∞ (s₂ ⟶∞′)) → s₁ ⟶∞′

@@ -36,7 +36,7 @@ ofe = record
     }
   }
 
-open OFE ofe
+open OFE ofe hiding (_<_)
 
 private
 

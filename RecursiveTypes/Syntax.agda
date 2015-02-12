@@ -13,7 +13,7 @@ open import Relation.Nullary
 import Relation.Nullary.Decidable as Dec
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality
-import Data.Fin.Props as FP
+import Data.Fin.Properties as FP
 private
   open module DF {n} = DecSetoid (FP.decSetoid n)
                          using () renaming (_≟_ to _≟F_)

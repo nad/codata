@@ -35,8 +35,8 @@ open import RecursiveTypes.Subtyping.Axiomatic.Coinductive as Ax
 
 infixr 10 _⟶_
 infix  4  _⊢_≤_
+infix  3  _∎
 infixr 2  _≤⟨_⟩_
-infix  2  _∎
 
 -- This inductive subtyping relation is parameterised on a list of
 -- hypotheses. Note Brandt and Henglein's unusual definition of _⟶_.

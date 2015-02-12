@@ -30,8 +30,8 @@ open import RecursiveTypes.Subtyping.Semantic.Coinductive as Sem
 
 infixr 10 _⟶_
 infix  4  _≤_
+infix  3  _∎
 infixr 2  _≤⟨_⟩_
-infix  2  _∎
 
 data _≤_ {n} : Ty n → Ty n → Set where
   -- Structural rules. Note that the rule for _⟶_ is coinductive.
