@@ -77,7 +77,9 @@ module Soundness where
   -- The soundness proof uses my trick to show that the code is
   -- productive.
 
-  infix 4 _≤P_ _≤W_
+  infixr 10 _⟶_
+  infix   4 _≤P_ _≤W_
+  infixr  2 _≤⟨_⟩_
 
   mutual
 
@@ -240,8 +242,8 @@ module Decidable {n} (χ₁ χ₂ : Ty n) where
   -- Finally we have to prove that an upper bound ℓ actually exists.
 
   dec : [] ⊢ χ₁ ≤ χ₂ ⊎ (¬ χ₁ ≤ χ₂)
-  dec = Sum.map id (λ σ≰τ → σ≰τ ∘ Ax.sound) $
-        empty ⊢ χ₁ , inj₁ ST.refl ≤? χ₂ , inj₂ ST.refl
+  dec = Sum.map id (λ σ≰τ → σ≰τ ∘ Ax.sound)
+          (empty ⊢ χ₁ , inj₁ ST.refl ≤? χ₂ , inj₂ ST.refl)
 
 infix 4 []⊢_≤?_ _≤?_
 

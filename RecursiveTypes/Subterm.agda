@@ -184,8 +184,8 @@ mutual
     lem₂ : _ ⊆ _
     lem₂ = begin
       (σ₁ / wk ↑⋆ (suc k) ∗ ++
-       σ₂ / wk ↑⋆ (suc k) ∗) // sub (σ / wk ↑⋆ k)           ⊆⟨ map-mono _ $ wk-∗-commute (suc k) σ₁ ++-mono
-                                                                            wk-∗-commute (suc k) σ₂ ⟩
+       σ₂ / wk ↑⋆ (suc k) ∗) // sub (σ / wk ↑⋆ k)           ⊆⟨ map-mono _ (wk-∗-commute (suc k) σ₁ ++-mono
+                                                                           wk-∗-commute (suc k) σ₂) ⟩
       (σ₁ ∗ // wk ↑⋆ (suc k) ++
        σ₂ ∗ // wk ↑⋆ (suc k)) // sub (σ / wk ↑⋆ k)          ≡⟨ P.cong (λ σs → σs // sub (σ / wk ↑⋆ k)) $
                                                                  P.sym $ map-++-commute

@@ -39,6 +39,8 @@ module Above where
   -- P Above i holds if P holds somewhere above i (perhaps at i
   -- itself).
 
+  infix 4 _Above_
+
   _Above_ : (ℕ → Set) → (ℕ → Set)
   P Above i = ∃ λ j → i ≤ j × P j
 
@@ -70,6 +72,8 @@ module Has-upper-bound where
   open Above using (_Above_)
 
   -- P Has-upper-bound i means that P does not hold for any j ≥ i.
+
+  infix 4 _Has-upper-bound_
 
   _Has-upper-bound_ : (ℕ → Set) → (ℕ → Set)
   P Has-upper-bound i = ∀ j → i ≤ j → ¬ P j
@@ -111,6 +115,8 @@ module Below where
   open Above using (_Above_)
 
   -- P Below i holds if P holds everywhere below i (including at i).
+
+  infix 4 _Below_
 
   _Below_ : (ℕ → Set) → (ℕ → Set)
   P Below i = ∀ j → j ≤ i → P j

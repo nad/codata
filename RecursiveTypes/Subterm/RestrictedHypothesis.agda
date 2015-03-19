@@ -67,7 +67,7 @@ _≈_ = _≡_ on ⟨_⟩
 
 open Membership
        (record { isEquivalence =
-                   On.isEquivalence ⟨_⟩ PropEq.isEquivalence })
+                   On.isEquivalence (⟨_⟩) PropEq.isEquivalence })
   using () renaming (_∈_ to _⟨∈⟩_)
 
 ------------------------------------------------------------------------

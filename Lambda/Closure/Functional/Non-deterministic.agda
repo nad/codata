@@ -159,6 +159,7 @@ open D._≅_
 -- Syntax
 
 infixl 9 _·_
+infixr 6 _∣_
 
 data Tm (n : ℕ) : Set where
   con : (i : ℕ) → Tm n

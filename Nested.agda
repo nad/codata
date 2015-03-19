@@ -176,7 +176,7 @@ module Correctness where
   infix 10 ♯′_
 
   ♯′_ : {A : Set} → A → ∞ A
-  ♯′_ = ♯_
+  ♯′ x = ♯ x
 
   φW-hom : {A : Set} (xs : φ.StreamW A) →
            ⟦ φW xs ⟧W ≈P head ⟦ xs ⟧W ∷ ♯′ φ (φ (tail ⟦ xs ⟧W))

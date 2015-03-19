@@ -27,8 +27,8 @@ data Rec : Set where
 ∞? ν = ∞
 
 ♯? : ∀ (r : Rec) {A} → A → ∞? r A
-♯? μ = id
-♯? ν = ♯_
+♯? μ x = x
+♯? ν x = ♯ x
 
 ♭? : ∀ (r : Rec) {A} → ∞? r A → A
 ♭? μ = id

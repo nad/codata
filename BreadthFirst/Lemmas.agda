@@ -26,6 +26,8 @@ zipWith : {A B : Set} (f : A → B → B) → Colist A → Stream B → Stream B
 zipWith f []       ys       = ys
 zipWith f (x ∷ xs) (y ≺ ys) = f x y ≺ ♯ zipWith f (♭ xs) (♭ ys)
 
+infixr 5 _⁺++_ _⁺++∞_
+
 _⁺++∞_ : {A : Set} → List⁺ A → Stream A → Stream A
 xs ⁺++∞ ys = Colist.fromList (Vec.toList $ List⁺.toVec xs) ++∞ ys
 
@@ -72,6 +74,7 @@ trans {a = ⌈ A ⌉}    ⌈ x≡x′  ⌉ ⌈ x′≡x″ ⌉      = ⌈ PropEq
 -- Productivity checker workaround for Eq
 
 infixr 5 _≺_ _∷_
+infixr 4 _,_
 infix  3 _∎
 infixr 2 _≈⟨_⟩_ _≊⟨_⟩_
 

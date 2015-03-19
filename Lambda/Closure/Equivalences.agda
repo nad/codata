@@ -84,6 +84,8 @@ open module EC {A : Set} = Partiality.Equality (λ (_ _ : A) → ⊤)
 -- expect terms of type Tm m, and if we fill those holes we get a term
 -- of type Tm n.
 
+infixl 9 _·_
+
 data Context (m : ℕ) : ℕ → Set where
   •   : Context m m
   con : ∀ {n} (i : ℕ) → Context m n
