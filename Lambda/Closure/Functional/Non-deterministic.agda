@@ -151,7 +151,7 @@ module D where
   fail-left-zero : {A B : Set} {f : A → D B} → fail >>= f ≅ fail
   fail-left-zero = fail ∎
 
-open D using (D; _≅_; _≅⟨_⟩_; _∎; _>>=-cong_)
+open D using (D; _≅_; _≅⟨_⟩_; _∎; _>>=-cong_) hiding (module D)
 open D.D
 open D._≅_
 
