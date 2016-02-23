@@ -1,4 +1,4 @@
 name: codata
-depend: agda-stdlib
+depend: standard-library
         parser-combinators
 include: .
