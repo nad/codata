@@ -147,7 +147,7 @@ fib-correct =
 
 -- A variant of S.map which processes streams in chunks of size 2.
 
-map₂ : ∀ {A B} → (A → B) → Stream A → Stream B
+map₂ : {A B : Set} → (A → B) → Stream A → Stream B
 map₂ f (x ∷ xs) with ♭ xs
 map₂ f (x ∷ xs) | y ∷ ys = f x ∷ ♯ (f y ∷ ♯ map₂ f (♭ ys))
 

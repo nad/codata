@@ -12,7 +12,7 @@ open import Relation.Binary
 import Relation.Binary.PropositionalEquality as P
 
 private
-  module S {A} = Setoid (Stream.setoid A)
+  module S {A : Set} = Setoid (Stream.setoid A)
 
 ------------------------------------------------------------------------
 -- Problem formulation

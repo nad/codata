@@ -7,7 +7,7 @@ module Lambda.Syntax where
 
 open import Coinduction
 open import Data.Nat
-open import Data.Fin
+open import Data.Fin hiding (_≤?_)
 open import Data.Vec
 open import Relation.Nullary.Decidable
 

@@ -13,7 +13,7 @@ open import Relation.Binary
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 
 private
-  module SS {A} = Setoid (Stream.setoid A)
+  module SS {A : Set} = Setoid (Stream.setoid A)
 
 -- The map-iterate property:
 

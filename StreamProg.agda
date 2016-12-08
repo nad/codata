@@ -13,7 +13,7 @@ open import Relation.Binary
 import Relation.Binary.PropositionalEquality as P
 
 private
-  module SS {A} = Setoid (S.setoid A)
+  module SS {A : Set} = Setoid (S.setoid A)
 
 ------------------------------------------------------------------------
 -- Merging of streams
@@ -23,7 +23,7 @@ data Ord : Set where
   eq : Ord
   gt : Ord
 
-merge : ∀ {A} → (A → A → Ord) → Stream A → Stream A → Stream A
+merge : {A : Set} → (A → A → Ord) → Stream A → Stream A → Stream A
 merge cmp (x ∷ xs) (y ∷ ys) with cmp x y
 ... | lt = x ∷ ♯ merge cmp (♭ xs)   (y ∷ ys)
 ... | eq = x ∷ ♯ merge cmp (♭ xs)   (♭ ys)

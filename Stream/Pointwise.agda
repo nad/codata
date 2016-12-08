@@ -17,7 +17,7 @@ open import Data.Vec as Vec using (Vec; _∷_)
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality
 private
-  module IsEq {A} =
+  module IsEq {A : Set} =
     IsEquivalence (Setoid.isEquivalence (Stream.setoid A))
 
 ------------------------------------------------------------------------
