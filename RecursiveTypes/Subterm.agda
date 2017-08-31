@@ -9,11 +9,11 @@ open import Data.Fin using (Fin; zero; suc; lift)
 open import Data.Nat
 open import Data.List using (List; []; _∷_; [_]; _++_)
 open import Data.List.Properties
-open import Data.List.Any as Any using (here; there)
-open Any.Membership-≡
-open import Data.List.Any.Properties
-open import Data.List.Any.Membership
+open import Data.List.Any using (here; there)
 open import Data.List.Any.BagAndSetEquality as BSEq
+open import Data.List.Any.Membership.Propositional
+open import Data.List.Any.Membership.Propositional.Properties
+open import Data.List.Any.Properties
 open import Data.Product
 open import Data.Sum
 open import Function

@@ -8,7 +8,7 @@ open import Coinduction hiding (unfold)
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.List using (List; []; _∷_; _++_)
 open import Data.List.Any as Any using (Any)
-open Any.Membership-≡ using (_∈_)
+open import Data.List.Any.Membership.Propositional using (_∈_)
 open import Data.List.Any.Properties
 open import Data.List.All as All using (All; []; _∷_)
 open import Data.Product

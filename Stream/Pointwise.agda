@@ -203,5 +203,3 @@ private
                          +-assoc
     where
     open import Data.Nat.Properties
-    open import Algebra.Structures
-    open IsCommutativeSemiring isCommutativeSemiring

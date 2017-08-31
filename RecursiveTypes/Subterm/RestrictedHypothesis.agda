@@ -16,8 +16,10 @@ open import Function.Equality using (_⟨$⟩_)
 open import Function.Inverse using (module Inverse)
 open import Data.List as List
 open import Data.List.Any as Any
+import Data.List.Any.Membership
+open import Data.List.Any.Membership.Propositional using (_∈_)
+open import Data.List.Any.Membership.Propositional.Properties
 open import Data.List.Any.Properties
-open import Data.List.Any.Membership
 import Data.List.Countdown as Countdown
 open import Data.Product as Prod
 open import Data.Sum as Sum
@@ -27,7 +29,6 @@ open import Relation.Binary
 import Relation.Binary.On as On
 open import Relation.Binary.PropositionalEquality as PropEq
 
-open Membership-≡ using (_∈_)
 open RawMonad (List.monad {ℓ = zero})
 
 open import RecursiveTypes.Subterm as ST using (_⊑_; _∗)
@@ -65,7 +66,7 @@ _≈_ = _≡_ on ⟨_⟩
 
 -- List membership relation for restricted hypotheses.
 
-open Membership
+open Data.List.Any.Membership
        (record { isEquivalence =
                    On.isEquivalence (⟨_⟩) PropEq.isEquivalence })
   using () renaming (_∈_ to _⟨∈⟩_)

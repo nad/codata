@@ -10,7 +10,7 @@ open import Algebra
 open import Category.Monad
 open import Coinduction
 open import Data.Empty
-open import Data.Nat as Nat
+open import Data.Nat
 import Data.Nat.Properties as NatProp
 open import Data.Product as Prod hiding (map)
 open import Data.Sum hiding (map)
@@ -28,7 +28,7 @@ import Relation.Nullary.Universe as Univ
 open import Relation.Unary hiding (_⇒_)
 private
   open module M {f} = RawMonad {f = f} ¬¬-Monad
-  module NatOrder   = DecTotalOrder       Nat.decTotalOrder
+  module NatOrder   = DecTotalOrder       NatProp.≤-decTotalOrder
   module NatLattice = DistributiveLattice NatProp.distributiveLattice
 
 ------------------------------------------------------------------------
@@ -333,7 +333,7 @@ module Fin where
   ∪-preserves : ∀ {P Q} → Fin P → Fin Q → Fin (P ∪ Q)
   ∪-preserves {P} {Q} (i , ¬p) (j , ¬q) = (i ⊔ j , helper)
     where
-    open ≤-Reasoning
+    open NatProp.≤-Reasoning
 
     helper : ∀ k → i ⊔ j ≤ k → ¬ (P ∪ Q) k
     helper k i⊔j≤k (inj₁ p) = ¬p k (begin

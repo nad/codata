@@ -12,12 +12,11 @@ module InductiveStreamEquality {A : Set} where
 open import Coinduction
 open import Data.List
 open import Data.List.All as All
-open import Data.List.Any as Any using (here; there)
+open import Data.List.Any using (here; there)
+open import Data.List.Any.Membership.Propositional
 open import Data.Product
 open import Data.Stream hiding (_∈_; lookup)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
-
-open Any.Membership-≡
 
 infixr 5 _∷_
 infix  4 _⊢_≈_ _≈P_ _≈W_

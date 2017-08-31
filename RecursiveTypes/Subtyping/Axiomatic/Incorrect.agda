@@ -155,12 +155,12 @@ incomplete : ¬ (∀ {n} {σ τ : Ty n} → σ ≤Coind τ → σ ≤ τ)
 incomplete hyp = σ≴τ $ ≲-complete $ hyp σ≤τ
   where
   σ≴τ : ¬ σ ≲ τ
-  σ≴τ σ≲τ = <-rec Pred ≴ _ σ≲τ refl
+  σ≴τ σ≲τ = <′-rec Pred ≴ _ σ≲τ refl
     where
     Pred : ℕ → Set
     Pred n = (σ≲τ : σ ≲ τ) → length σ≲τ ≢ n
 
-    ≴ : ∀ n → <-Rec Pred n → Pred n
+    ≴ : ∀ n → <′-Rec Pred n → Pred n
     ≴ n  rec [ () ]           _
     ≴ ._ rec ((._ ∎) ∷ τ₂≲τ₃) refl = rec _ ≤′-refl τ₂≲τ₃ refl
     ≴ ._ rec (unfold ∷ τ₂≲τ₃) refl with codomain-⟶μ τ₂≲τ₃

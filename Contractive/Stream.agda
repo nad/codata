@@ -34,7 +34,7 @@ open import Induction.Nat
                        suc i  ≤⟨ ≤′⇒≤ (≤′-step i+1≤j) ⟩
                        suc j  ≤⟨ ≤′⇒≤ j+1≤k ⟩
                        k      ∎)
-  ; isWellFounded = <-well-founded
+  ; isWellFounded = <′-well-founded
   }
   where open ≤-Reasoning
 

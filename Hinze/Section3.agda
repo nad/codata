@@ -18,12 +18,9 @@ open import Data.Vec hiding (_⋎_)
 open import Data.Nat
 import Data.Nat.Properties as Nat
 import Relation.Binary.PropositionalEquality as P
-open import Algebra
 open import Algebra.Structures
 private
   module CS = IsCommutativeSemiring Nat.isCommutativeSemiring
-import Algebra.Operations as Op
-open Op (CommutativeSemiring.semiring Nat.commutativeSemiring)
 
 ------------------------------------------------------------------------
 -- Definitions

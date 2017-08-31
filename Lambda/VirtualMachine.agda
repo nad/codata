@@ -69,8 +69,8 @@ mutual
   comp-env (v ∷ ρ) = comp-val v ∷ comp-env ρ
 
   comp-val : C.Value → Value
-  comp-val (con i) = con i
-  comp-val (ƛ t ρ) = ƛ (comp t [ ret ]) (comp-env ρ)
+  comp-val (C.con i) = con i
+  comp-val (C.ƛ t ρ) = ƛ (comp t [ ret ]) (comp-env ρ)
 
 -- lookup x is homomorphic with respect to comp-env/comp-val.
 

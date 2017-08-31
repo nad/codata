@@ -59,13 +59,13 @@ complete⇓ {ρ = ρ} {v} (app {t₁} {t₂} {t = t} {ρ′} {v′ = v′} t₁�
 
 sound⇓ : ∀ {n} (t : Tm n) {ρ : Env n} {v} →
          ⟦ t ⟧ ρ ≈ return v → ρ ⊢ t ⇓ v
-sound⇓ t t⇓ = <-rec P sound⇓′ (steps t⇓) t t⇓ P.refl
+sound⇓ t t⇓ = <′-rec P sound⇓′ (steps t⇓) t t⇓ P.refl
   where
   P : ℕ → Set
   P s = ∀ {n} (t : Tm n) {ρ : Env n} {v}
           (t⇓ : ⟦ t ⟧ ρ ≈ return v) → steps t⇓ ≡ s → ρ ⊢ t ⇓ v
 
-  sound⇓′ : ∀ s → <-Rec P s → P s
+  sound⇓′ : ∀ s → <′-Rec P s → P s
   sound⇓′ s rec (con i)           (now P.refl) _  = con
   sound⇓′ s rec (var x)           (now P.refl) _  = var
   sound⇓′ s rec (ƛ t)             (now P.refl) _  = ƛ
@@ -81,7 +81,7 @@ sound⇓ t t⇓ = <-rec P sound⇓′ (steps t⇓) t t⇓ P.refl
         (rec (steps t₂⇓) ₂< t₂ t₂⇓ P.refl)
         (rec (steps  ∙⇓) ∙< t   ∙⇓ P.refl)
     where
-    open ≤-Reasoning
+    open ℕ.≤-Reasoning
 
     ₁₂∙< = begin
       1 + steps t₁⇓ + (steps t₂⇓ + steps ∙⇓)                 ≡⟨ solve 3 (λ x y z → con 1 :+ x :+ (y :+ z) :=
