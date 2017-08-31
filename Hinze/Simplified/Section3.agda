@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- A simplification of Hinze.Section2-4
+-- A simplification of Hinze.Section3
 ------------------------------------------------------------------------
 
 module Hinze.Simplified.Section3 where
