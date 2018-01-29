@@ -20,6 +20,7 @@ import Data.List.Any.Membership
 open import Data.List.Any.Membership.Propositional using (_∈_)
 open import Data.List.Any.Membership.Propositional.Properties
 open import Data.List.Any.Properties
+import Data.List.Categorical
 import Data.List.Countdown as Countdown
 open import Data.Product as Prod
 open import Data.Sum as Sum
@@ -29,7 +30,7 @@ open import Relation.Binary
 import Relation.Binary.On as On
 open import Relation.Binary.PropositionalEquality as PropEq
 
-open RawMonad (List.monad {ℓ = zero})
+open RawMonad (Data.List.Categorical.monad {ℓ = zero})
 
 open import RecursiveTypes.Subterm as ST using (_⊑_; _∗)
 
