@@ -13,7 +13,7 @@ open import Coinduction
 open import Data.List
 open import Data.List.All as All
 open import Data.List.Any using (here; there)
-open import Data.List.Any.Membership.Propositional
+open import Data.List.Membership.Propositional
 open import Data.Product
 open import Data.Stream hiding (_∈_; lookup)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
@@ -61,7 +61,7 @@ transW : ∀ {xs ys zs} → xs ≈W ys → ys ≈W zs → xs ≈W zs
 transW (x ∷ xs≈ys) (.x ∷ ys≈zs) = x ∷ ♯ trans (♭ xs≈ys) (♭ ys≈zs)
 
 soundW : ∀ {A xs ys} → All (Valid _≈W_) A → A ⊢ xs ≈ ys → xs ≈W ys
-soundW valid (hyp h)             = lookup valid h
+soundW valid (hyp h)             = All.lookup valid h
 soundW valid (trans xs≈ys ys≈zs) = transW (soundW valid xs≈ys)
                                           (soundW valid ys≈zs)
 soundW valid (x ∷ xs≈ys)         = proof

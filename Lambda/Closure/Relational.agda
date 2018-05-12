@@ -6,7 +6,7 @@ module Lambda.Closure.Relational where
 
 open import Coinduction
 open import Data.Empty
-open import Data.List
+open import Data.List hiding (lookup)
 open import Data.Product
 open import Data.Star.Properties
 open import Data.Vec using (Vec; _∷_; []; lookup)

@@ -10,7 +10,7 @@ open import Category.Monad.Partiality as P
 open import Coinduction
 open import Data.Empty using (⊥-elim)
 open import Data.Fin
-open import Data.List
+open import Data.List hiding (lookup)
 open import Data.Maybe
 open import Data.Nat
 open import Data.Product as Prod

@@ -19,7 +19,7 @@ open import Category.Monad
 open import Category.Monad.Partiality as Partiality
   using (_⊥; never; Kind; OtherKind)
 open import Coinduction
-open import Data.List
+open import Data.List hiding (lookup)
 open import Data.Maybe as Maybe
 open import Data.Vec using (Vec; []; _∷_; lookup)
 open import Function

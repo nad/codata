@@ -16,12 +16,12 @@ open import Function.Equality using (_⟨$⟩_)
 open import Function.Inverse using (module Inverse)
 open import Data.List as List
 open import Data.List.Any as Any
-import Data.List.Any.Membership
-open import Data.List.Any.Membership.Propositional using (_∈_)
-open import Data.List.Any.Membership.Propositional.Properties
 open import Data.List.Any.Properties
 import Data.List.Categorical
 import Data.List.Countdown as Countdown
+open import Data.List.Membership.Propositional using (_∈_)
+open import Data.List.Membership.Propositional.Properties
+import Data.List.Membership.Setoid
 open import Data.Product as Prod
 open import Data.Sum as Sum
 open import Level
@@ -67,7 +67,7 @@ _≈_ = _≡_ on ⟨_⟩
 
 -- List membership relation for restricted hypotheses.
 
-open Data.List.Any.Membership
+open Data.List.Membership.Setoid
        (record { isEquivalence =
                    On.isEquivalence (⟨_⟩) PropEq.isEquivalence })
   using () renaming (_∈_ to _⟨∈⟩_)

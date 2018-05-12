@@ -9,7 +9,7 @@ open import Category.Monad.Partiality as Partiality
   using (_⊥; never; OtherKind; other; steps)
 open import Coinduction
 open import Data.Empty using (⊥-elim)
-open import Data.List
+open import Data.List hiding (lookup)
 open import Data.Maybe as Maybe
 open import Data.Nat
 open import Data.Product

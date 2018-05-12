@@ -9,7 +9,7 @@ open import Data.Fin.Substitution.Lemmas
 import Data.Fin.Substitution.List as ListSubst
 open import Data.Nat
 open import Data.List
-open import Data.Vec
+open import Data.Vec as Vec
 open import Relation.Binary.PropositionalEquality as PropEq
   using (_≡_; refl; sym; cong₂)
 open PropEq.≡-Reasoning
@@ -29,7 +29,7 @@ module TyApp {T} (l : Lift T Ty) where
   _/_ : ∀ {m n} → Ty m → Sub T m n → Ty n
   ⊥       / ρ = ⊥
   ⊤       / ρ = ⊤
-  var x   / ρ = lift (lookup x ρ)
+  var x   / ρ = lift (Vec.lookup x ρ)
   σ ⟶ τ   / ρ = (σ / ρ) ⟶ (τ / ρ)
   μ σ ⟶ τ / ρ = μ (σ / ρ ↑) ⟶ (τ / ρ ↑)
 

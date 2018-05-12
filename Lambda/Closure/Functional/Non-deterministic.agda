@@ -8,7 +8,7 @@ module Lambda.Closure.Functional.Non-deterministic where
 open import Category.Monad.Partiality as Pa using (_⊥; now; later)
 open import Coinduction
 open import Data.Fin using (Fin; zero; suc; #_)
-open import Data.List
+open import Data.List hiding (lookup)
 open import Data.Maybe
 open import Data.Nat
 open import Data.Vec using ([]; _∷_; lookup)
