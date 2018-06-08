@@ -19,7 +19,7 @@ open import RecursiveTypes.Syntax
 
 -- Code for applying substitutions.
 
-module TyApp {T} (l : Lift T Ty) where
+module TyApp {T : ℕ → Set} (l : Lift T Ty) where
   open Lift l hiding (var)
 
   -- Applies a substitution to a recursive type.

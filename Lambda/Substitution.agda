@@ -23,7 +23,7 @@ open import Lambda.Syntax
 
 -- Code for applying substitutions.
 
-module TmApp {T} (l : Lift T Tm) where
+module TmApp {T : ℕ → Set} (l : Lift T Tm) where
   open Lift l hiding (var)
 
   -- Applies a substitution to a term.
