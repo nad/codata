@@ -6,9 +6,9 @@
 
 module StreamProg where
 
-open import Coinduction
+open import Codata.Musical.Notation
+open import Codata.Musical.Stream as S using (Stream; _∷_; _≈_)
 open import Data.Nat
-open import Data.Stream as S using (Stream; _∷_; _≈_)
 open import Relation.Binary
 import Relation.Binary.PropositionalEquality as P
 

@@ -4,7 +4,7 @@
 
 module RecursiveTypes.Subtyping.Example where
 
-open import Coinduction
+open import Codata.Musical.Notation
 open import Data.Fin
 open import Data.Nat
 

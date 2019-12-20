@@ -8,14 +8,14 @@ open import Data.Nat
 open import Data.Fin
 open import Function
 open import Data.Product
-open import Coinduction
+open import Codata.Musical.Notation
 open import Relation.Nullary
 import Relation.Nullary.Decidable as Dec
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality
 import Data.Fin.Properties as FP
 private
-  open module DF {n} = DecSetoid (FP.decSetoid n)
+  open module DF {n} = DecSetoid (FP.≡-decSetoid n)
                          using () renaming (_≟_ to _≟F_)
 
 ------------------------------------------------------------------------

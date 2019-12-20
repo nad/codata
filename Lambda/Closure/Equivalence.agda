@@ -5,13 +5,15 @@
 
 module Lambda.Closure.Equivalence where
 
+open import Axiom.ExcludedMiddle
 open import Category.Monad.Partiality as Partiality
   using (_⊥; never; steps; module Steps)
-open import Coinduction
+open import Codata.Musical.Notation
 open import Data.Empty using (⊥-elim)
-open import Data.Maybe
+open import Data.Maybe hiding (_>>=_)
 open import Data.Nat
 import Data.Nat.Properties as ℕ
+import Data.Nat.Solver as ℕ
 open import Data.Product
 open import Data.Sum
 open import Data.Vec using (Vec; []; _∷_)
@@ -22,7 +24,7 @@ open import Relation.Binary.PropositionalEquality as P using (_≡_)
 open import Relation.Nullary
 open import Relation.Nullary.Negation
 
-open ℕ.SemiringSolver using (solve; _:=_; _:+_; con)
+open ℕ.+-*-Solver using (solve; _:=_; _:+_; con)
 open Partiality._⊥
 private
   open module PE {A : Set} = Partiality.Equality (_≡_ {A = A})
@@ -103,7 +105,7 @@ sound⇓ t t⇓ = <′-rec P sound⇓′ (steps t⇓) t t⇓ P.refl
       s                                       ∎)
 
     ₂∙< = begin
-      1 + steps t₂⇓ + steps ∙⇓                ≤⟨ s≤s (ℕ.n≤m+n (steps t₁⇓) _) ⟩
+      1 + steps t₂⇓ + steps ∙⇓                ≤⟨ s≤s (ℕ.m≤n+m _ (steps t₁⇓)) ⟩
       1 + steps t₁⇓ + (steps t₂⇓ + steps ∙⇓)  ≤⟨ ₁₂∙< ⟩
       s                                       ∎
 
@@ -113,7 +115,7 @@ sound⇓ t t⇓ = <′-rec P sound⇓′ (steps t⇓) t t⇓ P.refl
       s                         ∎)
 
     ∙< = ℕ.≤⇒≤′ (begin
-      1 + steps ∙⇓              ≤⟨ s≤s (ℕ.n≤m+n (steps t₂⇓) _) ⟩
+      1 + steps ∙⇓              ≤⟨ s≤s (ℕ.m≤n+m _ (steps t₂⇓)) ⟩
       1 + steps t₂⇓ + steps ∙⇓  ≤⟨ ₂∙< ⟩
       s                         ∎)
 
@@ -255,7 +257,7 @@ complete⇑ = Complete⇑.soundP ∘ Complete⇑.complete⇑
 -- I assume excluded middle here because double-negation elimination
 -- is used "infinitely often".
 
-sound⇑ : Excluded-Middle Level.zero →
+sound⇑ : ExcludedMiddle Level.zero →
          ∀ {n} (t : Tm n) {ρ : Env n} →
          ⟦ t ⟧ ρ ≈ never → ρ ⊢ t ⇑
 sound⇑ em (con i)       i⇑    = ⊥-elim (Partiality.now≉never i⇑)
@@ -279,7 +281,7 @@ sound⇑ em (t₁ · t₂) ⇑ | inj₂ (ƛ t _ , t₁⇓ , t₂∙⇑) | inj₂
 
 -- The functional semantics is complete for crashing computations.
 
-complete↯ : Excluded-Middle Level.zero →
+complete↯ : ExcludedMiddle Level.zero →
             ∀ {n} (t : Tm n) (ρ : Env n) →
             ρ ⊢ t ↯ → ⟦ t ⟧ ρ ≈ fail
 complete↯ em t ρ ¬⇒
@@ -288,7 +290,7 @@ complete↯ em t ρ ¬⇒
                                  {k = Partiality.weak} (⟦ t ⟧ ρ)
 ... | inj₂ t⇑             = ⊥-elim (proj₂ ¬⇒ (sound⇑ em t t⇑))
 ... | inj₁ (nothing , t↯) = t↯
-... | inj₁ (just v  , t⇓) = ⊥-elim (proj₁ ¬⇒ (, sound⇓ t t⇓))
+... | inj₁ (just v  , t⇓) = ⊥-elim (proj₁ ¬⇒ (-, sound⇓ t t⇓))
 
 -- The functional semantics is sound for crashing computations.
 

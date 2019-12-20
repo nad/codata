@@ -16,11 +16,11 @@
 
 module Contractive.Stream {A : Set} where
 
-open import Coinduction
+open import Codata.Musical.Notation
+open import Codata.Musical.Stream
 open import Contractive
 open import Data.Nat
 open import Data.Nat.Properties
-open import Data.Stream
 import Data.Vec as Vec
 open Vec using (_∷_; [])
 open import Function
@@ -34,7 +34,7 @@ open import Induction.Nat
                        suc i  ≤⟨ ≤′⇒≤ (≤′-step i+1≤j) ⟩
                        suc j  ≤⟨ ≤′⇒≤ j+1≤k ⟩
                        k      ∎)
-  ; isWellFounded = <′-well-founded
+  ; isWellFounded = <′-wellFounded
   }
   where open ≤-Reasoning
 

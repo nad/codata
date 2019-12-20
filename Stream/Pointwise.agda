@@ -6,7 +6,7 @@
 
 module Stream.Pointwise where
 
-open import Coinduction hiding (∞; unfold)
+open import Codata.Musical.Notation hiding (∞)
 open import Stream
 open import Stream.Equality
 import Stream.Programs as Prog
@@ -48,7 +48,7 @@ data Pointwise A n : Set where
 -- Stream semantics.
 
 ⟦_⟧ : ∀ {A n} → Pointwise A n → (Vec (Prog A) n → Prog A)
-⟦ var x ⟧         ρ = Vec.lookup x ρ
+⟦ var x ⟧         ρ = Vec.lookup ρ x
 ⟦ x ∞ ⟧           ρ = x ∞
 ⟦ f · xs ⟧        ρ = f · ⟦ xs ⟧ ρ
 ⟦ xs ⟨ _∙_ ⟩ ys ⟧ ρ = ⟦ xs ⟧ ρ ⟨ _∙_ ⟩ ⟦ ys ⟧ ρ
@@ -56,7 +56,7 @@ data Pointwise A n : Set where
 -- Pointwise semantics.
 
 ⟪_⟫ : ∀ {A n} → Pointwise A n → (Vec A n → A)
-⟪ var x ⟫         ρ = Vec.lookup x ρ
+⟪ var x ⟫         ρ = Vec.lookup ρ x
 ⟪ x ∞ ⟫           ρ = x
 ⟪ f · xs ⟫        ρ = f (⟪ xs ⟫ ρ)
 ⟪ xs ⟨ _∙_ ⟩ ys ⟫ ρ = ⟪ xs ⟫ ρ ∙ ⟪ ys ⟫ ρ
@@ -70,7 +70,7 @@ private
 
   lookup-nat : ∀ {a b n} {A : Set a} {B : Set b}
                (f : A → B) (x : Fin n) ρ →
-               f (Vec.lookup x ρ) ≡ Vec.lookup x (Vec.map f ρ)
+               f (Vec.lookup ρ x) ≡ Vec.lookup (Vec.map f ρ) x
   lookup-nat f zero    (x ∷ ρ) = refl
   lookup-nat f (suc i) (x ∷ ρ) = lookup-nat f i ρ
 
@@ -103,14 +103,14 @@ private
   unfold-lemma : ∀ {A n} (xs : Pointwise A n) ρ →
                  ⟦ xs ⟧ ρ ≊ unfold xs ρ
   unfold-lemma (var x) ρ =
-    Vec.lookup x ρ
-      ≊⟨ ≊-η (Vec.lookup x ρ) ⟩
-    headP (Vec.lookup x ρ) ≺♯ tailP (Vec.lookup x ρ)
+    Vec.lookup ρ x
+      ≊⟨ ≊-η (Vec.lookup ρ x) ⟩
+    headP (Vec.lookup ρ x) ≺♯ tailP (Vec.lookup ρ x)
       ≊⟨ lookup-nat headP x ρ ≺
          ♯ ≈⇒≅ (IsEq.reflexive
                   (cong Prog.⟦_⟧ (lookup-nat tailP x ρ))) ⟩
-    Vec.lookup x (Vec.map headP ρ) ≺♯
-    Vec.lookup x (Vec.map tailP ρ)
+    Vec.lookup (Vec.map headP ρ) x ≺♯
+    Vec.lookup (Vec.map tailP ρ) x
       ≡⟨ refl ⟩
     unfold (var x) ρ
       ∎

@@ -5,9 +5,9 @@
 
 module BreadthFirst.Programs where
 
-open import Coinduction
+open import Codata.Musical.Notation
+open import Codata.Musical.Colist hiding ([_])
 open import Data.List.NonEmpty using (List⁺; [_]; _⁺++⁺_)
-open import Data.Colist hiding ([_])
 open import Data.Product
 
 open import BreadthFirst.Universe

@@ -9,20 +9,21 @@ open import Data.Fin using (Fin; zero; suc; lift)
 open import Data.Nat
 open import Data.List using (List; []; _∷_; [_]; _++_)
 open import Data.List.Properties
-open import Data.List.Any using (here; there)
-open import Data.List.Any.Properties
+open import Data.List.Relation.Unary.Any using (here; there)
+open import Data.List.Relation.Unary.Any.Properties
 open import Data.List.Membership.Propositional
 open import Data.List.Membership.Propositional.Properties
-open import Data.List.Relation.BagAndSetEquality as BSEq
-open import Data.List.Relation.Sublist.Propositional
-open import Data.List.Relation.Sublist.Propositional.Properties
+open import Data.List.Relation.Binary.BagAndSetEquality as BSEq
+open import Data.List.Relation.Binary.Subset.Propositional
+open import Data.List.Relation.Binary.Subset.Propositional.Properties
 open import Data.Product
 open import Data.Sum
 open import Function
 open import Function.Equality using (_⟨$⟩_)
 open import Function.Inverse using (module Inverse)
 open import Relation.Binary
-import Relation.Binary.EqReasoning as EqR
+import Relation.Binary.Reasoning.Preorder as PreR
+import Relation.Binary.Reasoning.Setoid as EqR
 import Relation.Binary.PropositionalEquality as P
 open import Data.Fin.Substitution
 
@@ -119,7 +120,7 @@ sound (τ₁ ⟶ τ₂) (there σ∈)    =
     (Inverse.from (++↔ {xs = τ₁ ∗}) ⟨$⟩ σ∈)
 sound (μ τ₁ ⟶ τ₂) (there (here P.refl)) = unfold refl
 sound (μ τ₁ ⟶ τ₂) (there (there σ∈))
-  with Inverse.from (map-∈↔ {f = λ σ → σ / sub (μ τ₁ ⟶ τ₂)}
+  with Inverse.from (map-∈↔ (λ σ → σ / sub (μ τ₁ ⟶ τ₂))
                             {xs = τ₁ ∗ ++ τ₂ ∗}) ⟨$⟩ σ∈
 ... | (χ , χ∈ , P.refl) =
   sub-⊑-μ $ [ ⟶ˡ ∘ sound τ₁ , ⟶ʳ ∘ sound τ₂ ]′
@@ -146,6 +147,10 @@ sound (var x) (there ())
   where open EqR ([ set ]-Equality _)
 
 open BSEq.⊆-Reasoning
+private
+  open module R {A : Set} = PreR (⊆-preorder A)
+    using (begin_; _≡⟨_⟩_; _∎)
+    renaming (_∼⟨_⟩_ to _⊆⟨_⟩_)
 
 mutual
 
@@ -219,7 +224,7 @@ sub-∗′-commute-var (suc k) zero τ = begin
   []                  ⊆⟨ (λ ()) ⟩
   τ ∗ // wk⋆ (suc k)  ∎
 sub-∗′-commute-var (suc k) (suc x) τ = begin
-  var (suc x) / sub τ ↑⋆ suc k ∗′         ≡⟨ P.cong _∗′ (suc-/-↑ x) ⟩
+  var (suc x) / sub τ ↑⋆ suc k ∗′         ≡⟨ P.cong _∗′ (suc-/-↑ {ρ = sub τ ↑⋆ k} x) ⟩
   var x / sub τ ↑⋆ k / wk ∗′              ⊆⟨ wk-∗′-commute zero (var x / sub τ ↑⋆ k) ⟩
   var x / sub τ ↑⋆ k ∗′ // wk             ⊆⟨ map-mono _ (sub-∗′-commute-var k x τ) ⟩
   τ ∗ // wk⋆ k // wk                      ≡⟨ P.sym $ //./-weaken (τ ∗) ⟩
@@ -301,12 +306,12 @@ complete (unfold {σ} {τ₁} {τ₂} σ⊑) =
 -- Pairs up subterms with proofs.
 
 subtermsOf : ∀ {n} (τ : Ty n) → List (∃ λ σ → σ ⊑ τ)
-subtermsOf τ = map-with-∈ (τ ∗) (,_ ∘′ sound τ)
+subtermsOf τ = map-with-∈ (τ ∗) (-,_ ∘′ sound τ)
 
 -- subtermsOf is complete.
 
 subtermsOf-complete : ∀ {n} {σ τ : Ty n} →
                       σ ⊑ τ → ∃ λ σ⊑τ → (σ , σ⊑τ) ∈ subtermsOf τ
 subtermsOf-complete {σ = σ} {τ} σ⊑τ =
-  (, Inverse.to (map-with-∈↔ {f = ,_ ∘′ sound τ}) ⟨$⟩
-       (σ , complete σ⊑τ , P.refl))
+  (-, Inverse.to (map-with-∈↔ {f = -,_ ∘′ sound τ}) ⟨$⟩
+        (σ , complete σ⊑τ , P.refl))

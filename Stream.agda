@@ -4,4 +4,4 @@
 
 module Stream where
 
-open import Data.Stream public renaming (_∷_ to _≺_)
+open import Codata.Musical.Stream public renaming (_∷_ to _≺_)

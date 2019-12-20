@@ -4,10 +4,10 @@
 
 module SingletonChunks where
 
-open import Coinduction
+open import Codata.Musical.Notation
+open import Codata.Musical.Stream as S using (Stream; _≈_; _∷_)
 open import Data.Bool
 open import Data.Nat
-open import Data.Stream as S using (Stream; _≈_; _∷_)
 open import Data.Vec as V using (Vec; []; _∷_)
 import Relation.Binary.PropositionalEquality as P
 

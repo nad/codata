@@ -7,15 +7,16 @@
 module InfinitelyOften where
 
 open import Algebra
+open import Axiom.ExcludedMiddle
 open import Category.Monad
-open import Coinduction
+open import Codata.Musical.Notation
 open import Data.Empty
 open import Data.Nat
 import Data.Nat.Properties as NatProp
 open import Data.Product as Prod hiding (map)
 open import Data.Sum hiding (map)
 open import Data.Unit using (tt)
-open import Function
+open import Function.Base
 open import Function.Equality using (_⟨$⟩_)
 open import Function.Equivalence
   using (_⇔_; equivalence; module Equivalence)
@@ -28,8 +29,9 @@ import Relation.Nullary.Universe as Univ
 open import Relation.Unary hiding (_⇒_)
 private
   open module M {f} = RawMonad {f = f} ¬¬-Monad
-  module NatOrder   = DecTotalOrder       NatProp.≤-decTotalOrder
-  module NatLattice = DistributiveLattice NatProp.distributiveLattice
+  module NatOrder   = DecTotalOrder NatProp.≤-decTotalOrder
+  module NatLattice = DistributiveLattice
+                        NatProp.⊓-⊔-distributiveLattice
 
 ------------------------------------------------------------------------
 -- Above
@@ -365,7 +367,7 @@ module Double-negation-shift where
 
   -- DNS follows from excluded middle.
 
-  EM⇒DNS : ∀ {P} → Excluded-Middle Level.zero → DNS P
+  EM⇒DNS : ∀ {P} → ExcludedMiddle Level.zero → DNS P
   EM⇒DNS {P} em hyp = return hyp′
     where
     hyp′ : ∀ i → P i
@@ -373,7 +375,7 @@ module Double-negation-shift where
 
   -- DNS follows from the double-negation of excluded middle.
 
-  ¬¬EM⇒DNS : ∀ {P} → ¬ ¬ Excluded-Middle Level.zero → DNS P
+  ¬¬EM⇒DNS : ∀ {P} → ¬ ¬ ExcludedMiddle Level.zero → DNS P
   ¬¬EM⇒DNS em hyp =
     ¬¬-map lower (em >>= λ em → ¬¬-map lift (EM⇒DNS em hyp))
 

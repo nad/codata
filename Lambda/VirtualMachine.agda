@@ -7,17 +7,18 @@ module Lambda.VirtualMachine where
 open import Category.Monad
 open import Category.Monad.Partiality as P
   using (_⊥; never); open P._⊥
-open import Coinduction
+open import Codata.Musical.Notation
 open import Data.Empty using (⊥-elim)
 open import Data.Fin
 open import Data.List hiding (lookup)
 open import Data.Maybe
 open import Data.Nat
 open import Data.Product as Prod
-open import Data.Star hiding (return)
 open import Data.Vec using (Vec; []; _∷_; lookup)
-open import Function
+open import Function.Base
 import Level
+open import Relation.Binary.Construct.Closure.ReflexiveTransitive
+  hiding (return)
 open import Relation.Binary.PropositionalEquality as PE using (_≡_)
 open import Relation.Nullary
 
@@ -75,7 +76,7 @@ mutual
 -- lookup x is homomorphic with respect to comp-env/comp-val.
 
 lookup-hom : ∀ {n} (x : Fin n) ρ →
-             lookup x (comp-env ρ) ≡ comp-val (lookup x ρ)
+             lookup (comp-env ρ) x ≡ comp-val (lookup ρ x)
 lookup-hom zero    (v ∷ ρ) = PE.refl
 lookup-hom (suc x) (v ∷ ρ) = lookup-hom x ρ
 
@@ -105,7 +106,7 @@ module Relational where
 
   data _⟶_ : State → State → Set where
     var : ∀ {n} {x : Fin n} {c s ρ} →
-          ⟨ var x ∷ c , s , ρ ⟩ ⟶ ⟨ c , val (lookup x ρ) ∷ s , ρ ⟩
+          ⟨ var x ∷ c , s , ρ ⟩ ⟶ ⟨ c , val (lookup ρ x) ∷ s , ρ ⟩
     con : ∀ {n i} {c : Code n} {s ρ} →
           ⟨ con i ∷ c , s , ρ ⟩ ⟶ ⟨ c , val (con i) ∷ s , ρ ⟩
     clo : ∀ {n} {c : Code n} {c′ s ρ} →
@@ -191,7 +192,7 @@ module Functional where
 
   step : State → Result
   step ⟨ []         ,                 val v ∷ [] , [] ⟩ = done v
-  step ⟨ var x  ∷ c ,                          s , ρ  ⟩ = continue ⟨ c  , val (lookup x ρ) ∷ s ,     ρ  ⟩
+  step ⟨ var x  ∷ c ,                          s , ρ  ⟩ = continue ⟨ c  , val (lookup ρ x) ∷ s ,     ρ  ⟩
   step ⟨ con i  ∷ c ,                          s , ρ  ⟩ = continue ⟨ c  , val (con i)      ∷ s ,     ρ  ⟩
   step ⟨ clo c′ ∷ c ,                          s , ρ  ⟩ = continue ⟨ c  , val (ƛ c′ ρ)     ∷ s ,     ρ  ⟩
   step ⟨ app    ∷ c , val v ∷ val (ƛ c′ ρ′) ∷  s , ρ  ⟩ = continue ⟨ c′ , ret c ρ          ∷ s , v ∷ ρ′ ⟩
@@ -365,8 +366,8 @@ module Equivalence where
   ⇒↯ (_ , app ◅ s⟶⋆ , ↯) = laterˡ (⇒↯ (_ , s⟶⋆ , ↯))
   ⇒↯ (_ , ret ◅ s⟶⋆ , ↯) = laterˡ (⇒↯ (_ , s⟶⋆ , ↯))
   ⇒↯ (s , ε          , ↯) with kind s
-  ... | done s⇓v       = ⊥-elim (proj₂ ↯ (, s⇓v))
-  ... | continue s₁⟶s₂ = ⊥-elim (proj₁ ↯ (, s₁⟶s₂))
+  ... | done s⇓v       = ⊥-elim (proj₂ ↯ (-, s⇓v))
+  ... | continue s₁⟶s₂ = ⊥-elim (proj₁ ↯ (-, s₁⟶s₂))
   ... | crash s↯       = exec-crashes s↯
 
   ----------------------------------------------------------------------

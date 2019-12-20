@@ -4,7 +4,7 @@
 
 module RecursiveTypes.Semantics where
 
-open import Coinduction
+open import Codata.Musical.Notation
 
 open import RecursiveTypes.Syntax
 open import RecursiveTypes.Substitution

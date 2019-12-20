@@ -4,10 +4,11 @@
 
 module VenanziosProblem where
 
-open import Coinduction
-open import Data.Nat
-open import Data.Stream as Stream using (Stream; _⋎_; evens; odds; _≈_)
+open import Codata.Musical.Notation
+open import Codata.Musical.Stream as Stream
+  using (Stream; _⋎_; evens; odds; _≈_)
 open Stream.Stream; open Stream._≈_
+open import Data.Nat
 open import Relation.Binary
 import Relation.Binary.PropositionalEquality as P
 

@@ -4,11 +4,11 @@
 
 module BreadthFirst where
 
-open import Coinduction
+open import Codata.Musical.Notation
+open import Codata.Musical.Colist using ([]; _∷_; concat)
 open import Function
 open import Data.Unit
 open import Data.List.NonEmpty using (_⁺++⁺_)
-open import Data.Colist using ([]; _∷_; concat)
 open import Relation.Binary.PropositionalEquality as PropEq
   using () renaming (refl to ≡-refl)
 

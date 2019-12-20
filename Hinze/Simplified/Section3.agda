@@ -10,7 +10,7 @@ open import Stream.Pointwise
 open import Hinze.Simplified.Section2-4
 open import Hinze.Lemmas
 
-open import Coinduction hiding (∞)
+open import Codata.Musical.Notation hiding (∞)
 open import Data.Product
 open import Data.Bool
 open import Data.Vec hiding (_⋎_)
@@ -19,7 +19,7 @@ import Data.Nat.Properties as Nat
 import Relation.Binary.PropositionalEquality as P
 open import Algebra.Structures
 private
-  module CS = IsCommutativeSemiring Nat.isCommutativeSemiring
+  module CS = IsCommutativeSemiring Nat.*-+-isCommutativeSemiring
 
 ------------------------------------------------------------------------
 -- Abbreviations

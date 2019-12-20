@@ -4,10 +4,10 @@
 
 module BreadthFirst.Universe where
 
+open import Codata.Musical.Colist using (Colist; []; _∷_)
+open import Codata.Musical.Notation
 open import Data.Product using (_×_; _,_)
-open import Data.Colist using (Colist; []; _∷_)
 open import Relation.Binary.PropositionalEquality using (_≡_)
-open import Coinduction
 
 open import Stream using (Stream; _≺_)
 open import Tree using (Tree; node; leaf)

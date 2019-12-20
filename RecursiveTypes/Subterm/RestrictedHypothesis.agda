@@ -15,8 +15,8 @@ open import Function
 open import Function.Equality using (_⟨$⟩_)
 open import Function.Inverse using (module Inverse)
 open import Data.List as List
-open import Data.List.Any as Any
-open import Data.List.Any.Properties
+open import Data.List.Relation.Unary.Any as Any
+open import Data.List.Relation.Unary.Any.Properties
 import Data.List.Categorical
 import Data.List.Countdown as Countdown
 open import Data.List.Membership.Propositional using (_∈_)
@@ -27,8 +27,9 @@ open import Data.Sum as Sum
 open import Level
 open import Relation.Nullary
 open import Relation.Binary
-import Relation.Binary.On as On
+import Relation.Binary.Construct.On as On
 open import Relation.Binary.PropositionalEquality as PropEq
+  using (_≡_; refl)
 
 open RawMonad (Data.List.Categorical.monad {ℓ = zero})
 
@@ -84,7 +85,7 @@ subtermsOf-complete :
   ∀ {τ} (f : ∀ {σ} → σ ⊑ τ → Subterm σ) {σ} →
   σ ⊑ τ → ∃ λ σ⊑τ → (σ , f σ⊑τ) ∈ subtermsOf τ f
 subtermsOf-complete f σ⊑τ =
-  Prod.map id (λ ∈ → Inverse.to map-∈↔ ⟨$⟩ (_ , ∈ , refl)) $
+  Prod.map id (λ ∈ → Inverse.to (map-∈↔ _) ⟨$⟩ (_ , ∈ , refl)) $
     ST.subtermsOf-complete σ⊑τ
 
 subtermsOf²-complete :
@@ -95,7 +96,7 @@ subtermsOf²-complete :
   ((σ₁ , f σ₁⊑τ₁) ≲ (σ₂ , g σ₂⊑τ₂)) ⟨∈⟩
     (subtermsOf τ₁ f ⊗ subtermsOf τ₂ g)
 subtermsOf²-complete f g σ₁⊑τ₁ σ₂⊑τ₂ =
-  Any.map (cong $ Prod.map proj₁ proj₁) $
+  Any.map (PropEq.cong $ Prod.map proj₁ proj₁) $
     Inverse.to ⊗-∈↔ ⟨$⟩
       ( proj₂ (subtermsOf-complete f σ₁⊑τ₁)
       , proj₂ (subtermsOf-complete g σ₂⊑τ₂)
@@ -119,21 +120,21 @@ restrictedHyps = (⊑-χ₁ ⊗ ⊑-χ₂) ++ (⊑-χ₂ ⊗ ⊑-χ₁) ++
 
 complete : ∀ h → h ⟨∈⟩ restrictedHyps
 complete ((σ , inj₁ σ⊑χ₁) ≲ (τ , inj₂ τ⊑χ₂)) =
-  Inverse.to (++↔ {a = zero} {p = zero}) ⟨$⟩ (inj₁ $
+  Inverse.to ++↔ ⟨$⟩ (inj₁ $
   subtermsOf²-complete inj₁ inj₂ σ⊑χ₁ τ⊑χ₂)
 complete ((σ , inj₂ σ⊑χ₂) ≲ (τ , inj₁ τ⊑χ₁)) =
-  Inverse.to (++↔ {a = zero} {p = zero} {xs = ⊑-χ₁ ⊗ ⊑-χ₂}) ⟨$⟩ (inj₂ $
-  Inverse.to (++↔ {a = zero} {p = zero})                    ⟨$⟩ (inj₁ $
+  Inverse.to (++↔ {xs = ⊑-χ₁ ⊗ ⊑-χ₂}) ⟨$⟩ (inj₂ $
+  Inverse.to ++↔                      ⟨$⟩ (inj₁ $
   subtermsOf²-complete inj₂ inj₁ σ⊑χ₂ τ⊑χ₁))
 complete ((σ , inj₁ σ⊑χ₁) ≲ (τ , inj₁ τ⊑χ₁)) =
-  Inverse.to (++↔ {a = zero} {p = zero} {xs = ⊑-χ₁ ⊗ ⊑-χ₂}) ⟨$⟩ (inj₂ $
-  Inverse.to (++↔ {a = zero} {p = zero} {xs = ⊑-χ₂ ⊗ ⊑-χ₁}) ⟨$⟩ (inj₂ $
-  Inverse.to (++↔ {a = zero} {p = zero})                    ⟨$⟩ (inj₁ $
+  Inverse.to (++↔ {xs = ⊑-χ₁ ⊗ ⊑-χ₂}) ⟨$⟩ (inj₂ $
+  Inverse.to (++↔ {xs = ⊑-χ₂ ⊗ ⊑-χ₁}) ⟨$⟩ (inj₂ $
+  Inverse.to ++↔                      ⟨$⟩ (inj₁ $
   subtermsOf²-complete inj₁ inj₁ σ⊑χ₁ τ⊑χ₁)))
 complete ((σ , inj₂ σ⊑χ₂) ≲ (τ , inj₂ τ⊑χ₂)) =
-  Inverse.to (++↔ {a = zero} {p = zero} {xs = ⊑-χ₁ ⊗ ⊑-χ₂}) ⟨$⟩ (inj₂ $
-  Inverse.to (++↔ {a = zero} {p = zero} {xs = ⊑-χ₂ ⊗ ⊑-χ₁}) ⟨$⟩ (inj₂ $
-  Inverse.to (++↔ {a = zero} {p = zero} {xs = ⊑-χ₁ ⊗ ⊑-χ₁}) ⟨$⟩ (inj₂ $
+  Inverse.to (++↔ {xs = ⊑-χ₁ ⊗ ⊑-χ₂}) ⟨$⟩ (inj₂ $
+  Inverse.to (++↔ {xs = ⊑-χ₂ ⊗ ⊑-χ₁}) ⟨$⟩ (inj₂ $
+  Inverse.to (++↔ {xs = ⊑-χ₁ ⊗ ⊑-χ₁}) ⟨$⟩ (inj₂ $
   subtermsOf²-complete inj₂ inj₂ σ⊑χ₂ τ⊑χ₂)))
 
 ------------------------------------------------------------------------
@@ -144,8 +145,8 @@ complete ((σ , inj₂ σ⊑χ₂) ≲ (τ , inj₂ τ⊑χ₂)) =
 _≟_ : Decidable (_≡_ {A = Hyp n})
 ( σ₁ ≲  σ₂) ≟ (τ₁ ≲ τ₂) with σ₁ ≡? τ₁ | σ₂ ≡? τ₂
 (.τ₁ ≲ .τ₂) ≟ (τ₁ ≲ τ₂) | yes refl | yes refl = yes refl
-... | no σ₁≢τ₁ | _ = no (σ₁≢τ₁ ∘ cong proj₁)
-... | _ | no σ₂≢τ₂ = no (σ₂≢τ₂ ∘ cong proj₂)
+... | no σ₁≢τ₁ | _ = no (σ₁≢τ₁ ∘ PropEq.cong proj₁)
+... | _ | no σ₂≢τ₂ = no (σ₂≢τ₂ ∘ PropEq.cong proj₂)
 
 isDecEquivalence : IsDecEquivalence _≈_
 isDecEquivalence =

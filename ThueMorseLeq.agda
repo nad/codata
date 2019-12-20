@@ -9,10 +9,11 @@
 
 module ThueMorseLeq where
 
-open import Coinduction
+open import Codata.Musical.Notation
+open import Codata.Musical.Stream using (Stream; _≈_)
+open Codata.Musical.Stream.Stream
 open import Data.Bool using (Bool; not); open Data.Bool.Bool
 open import Data.Nat using (ℕ); open Data.Nat.ℕ
-open import Data.Stream using (Stream; _≈_); open Data.Stream.Stream
 open import Data.Vec using (Vec; _∷ʳ_); open Data.Vec.Vec
 
 ------------------------------------------------------------------------

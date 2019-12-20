@@ -4,7 +4,7 @@
 
 module Lambda.Substitution.OneSemantics where
 
-open import Coinduction
+open import Codata.Musical.Notation
 open import Data.Fin
 open import Function
 open import Data.Nat

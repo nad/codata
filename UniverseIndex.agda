@@ -5,9 +5,9 @@
 
 module UniverseIndex where
 
-open import Coinduction
+open import Codata.Musical.Notation
+open import Codata.Musical.Stream
 open import Data.Product
-open import Data.Stream
 
 infixr 5 _∷_
 infixr 4 _,_

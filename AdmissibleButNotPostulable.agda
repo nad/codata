@@ -10,7 +10,7 @@
 
 module AdmissibleButNotPostulable where
 
-open import Coinduction using (∞; ♯_; ♭)
+open import Codata.Musical.Notation using (∞; ♯_; ♭)
 open import Data.Nat
 open import Data.Product as Prod
 open import Function

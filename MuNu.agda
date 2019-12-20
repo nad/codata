@@ -4,15 +4,15 @@
 
 module MuNu where
 
-open import Coinduction
-import Data.Colist as Colist
+open import Codata.Musical.Notation
+import Codata.Musical.Colist as Colist
+open import Codata.Musical.Stream
 open import Data.Digit
 open import Data.Empty
 open import Data.List using (List; _∷_; [])
 open import Data.Product
-open import Data.Stream
 open import Relation.Binary.PropositionalEquality
-open import Relation.Nullary
+open import Relation.Nullary using (¬_)
 
 -- Christophe Raffalli discusses (essentially) the type μO. νZ. Z + O
 -- in his thesis. If Z is read as zero and O as one, then this type

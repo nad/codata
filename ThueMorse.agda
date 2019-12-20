@@ -15,14 +15,14 @@
 
 module ThueMorse where
 
-open import Coinduction
-open import Data.Bool using (Bool; not); open Data.Bool.Bool
-open import Data.Stream as S using (Stream; _≈_)
+open import Codata.Musical.Notation
+open import Codata.Musical.Stream as S using (Stream; _≈_)
 open S.Stream; open S._≈_
+open import Data.Bool using (Bool; not); open Data.Bool.Bool
 open import Function
 open import Relation.Binary
 import Relation.Binary.PropositionalEquality as P
-import Relation.Binary.EqReasoning as EqReasoning
+import Relation.Binary.Reasoning.Setoid as EqReasoning
 
 private
   module SS {A : Set} = Setoid (S.setoid A)

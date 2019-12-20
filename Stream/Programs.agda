@@ -4,7 +4,7 @@
 
 module Stream.Programs where
 
-open import Coinduction renaming (∞ to ∞_)
+open import Codata.Musical.Notation renaming (∞ to ∞_)
 import Stream as S
 open S using (Stream; _≈_; _≺_; head; tail)
 open import Relation.Binary.PropositionalEquality

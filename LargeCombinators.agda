@@ -4,9 +4,9 @@
 
 module LargeCombinators where
 
-open import Coinduction
+open import Codata.Musical.Notation
+open import Codata.Musical.Stream as S using (Stream; _∷_; _≈_)
 open import Data.Nat
-open import Data.Stream as S using (Stream; _∷_; _≈_)
 import Relation.Binary.PropositionalEquality as P
 
 -- Stream programs. Note that the destructor tail is encapsulated in a

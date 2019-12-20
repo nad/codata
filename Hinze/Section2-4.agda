@@ -17,14 +17,14 @@ open import Stream.Equality
 open import Stream.Pointwise hiding (⟦_⟧)
 open import Hinze.Lemmas
 
-open import Coinduction hiding (∞)
+open import Codata.Musical.Notation hiding (∞)
 open import Data.Nat
 open import Relation.Binary.PropositionalEquality
 open ≡-Reasoning renaming (_≡⟨_⟩_ to _=⟨_⟩_; _∎ to _QED)
 open import Algebra.Structures
 import Data.Nat.Properties as Nat
 private
-  module CS = IsCommutativeSemiring Nat.isCommutativeSemiring
+  module CS = IsCommutativeSemiring Nat.*-+-isCommutativeSemiring
 open import Data.Product
 
 ------------------------------------------------------------------------

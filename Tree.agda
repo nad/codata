@@ -4,7 +4,7 @@
 
 module Tree where
 
-open import Coinduction
+open import Codata.Musical.Notation
 import Relation.Binary.PropositionalEquality as PropEq
 open PropEq using (_≡_)
 

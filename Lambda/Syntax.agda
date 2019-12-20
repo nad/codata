@@ -5,7 +5,7 @@
 
 module Lambda.Syntax where
 
-open import Coinduction
+open import Codata.Musical.Notation
 open import Data.Nat
 open import Data.Fin hiding (_≤?_)
 open import Data.Vec
@@ -86,7 +86,7 @@ infix 4 _⊢_∈_
 
 data _⊢_∈_ {n} (Γ : Ctxt n) : Tm n → Ty → Set where
   con : ∀ {i} → Γ ⊢ con i ∈ nat
-  var : ∀ {x} → Γ ⊢ var x ∈ lookup x Γ
+  var : ∀ {x} → Γ ⊢ var x ∈ lookup Γ x
   ƛ   : ∀ {t σ τ} (t∈ : ♭ σ ∷ Γ ⊢ t ∈ ♭ τ) → Γ ⊢ ƛ t ∈ σ ⇾ τ
   _·_ : ∀ {t₁ t₂ σ τ} (t₁∈ : Γ ⊢ t₁ ∈ σ ⇾ τ) (t₂∈ : Γ ⊢ t₂ ∈ ♭ σ) →
         Γ ⊢ t₁ · t₂ ∈ ♭ τ

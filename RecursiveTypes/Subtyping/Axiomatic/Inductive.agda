@@ -4,19 +4,19 @@
 
 module RecursiveTypes.Subtyping.Axiomatic.Inductive where
 
-open import Coinduction hiding (unfold)
+open import Codata.Musical.Notation
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.List using (List; []; _∷_; _++_)
-open import Data.List.Any as Any using (Any)
-open import Data.List.Any.Properties
-open import Data.List.All as All using (All; []; _∷_)
+open import Data.List.Relation.Unary.Any as Any using (Any)
+open import Data.List.Relation.Unary.Any.Properties
+open import Data.List.Relation.Unary.All as All using (All; []; _∷_)
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.Product
 open import Data.Sum as Sum using (_⊎_; inj₁; inj₂; [_,_]′)
 open import Function
 open import Function.Equality using (_⟨$⟩_)
 open import Function.Inverse using (module Inverse)
-open import Relation.Nullary
+open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Relation.Binary.PropositionalEquality as PropEq
   using (_≡_; refl)
 
@@ -214,7 +214,7 @@ module Decidable {n} (χ₁ χ₂ : Ty n) where
     _⊪_,_≤?_,_ {A} T (σ₁ ⟶ σ₂) σ⊑ (τ₁ ⟶ τ₂) τ⊑ =
       helper (lookupOrInsert T H)
       where
-      H = (, σ⊑) ≲ (, τ⊑)
+      H = (-, σ⊑) ≲ (-, τ⊑)
 
       helper₂ :
         ⟨ H ∷ A ⟩⋆ ⊢ τ₁      ≤ σ₁      ⊎ ¬ τ₁      ≤Coind σ₁      →

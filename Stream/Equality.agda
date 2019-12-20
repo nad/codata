@@ -4,7 +4,7 @@
 
 module Stream.Equality where
 
-open import Coinduction
+open import Codata.Musical.Notation
 open import Stream hiding (_⋎_)
 open import Stream.Programs
 open import Relation.Binary

@@ -9,9 +9,10 @@ open import Data.Fin.Substitution
 open import Data.Fin.Substitution.Lemmas
 open import Data.Nat
 open import Data.Product
-open import Data.Star using (Star; ε; _◅_)
 open import Data.Unit
 open import Data.Vec as Vec
+open import Relation.Binary.Construct.Closure.ReflexiveTransitive
+  using (Star; ε; _◅_)
 open import Relation.Binary.PropositionalEquality as PropEq
   using (_≡_; refl; sym; cong; cong₂)
 open PropEq.≡-Reasoning
@@ -32,7 +33,7 @@ module TmApp {T : ℕ → Set} (l : Lift T Tm) where
 
   _/_ : ∀ {m n} → Tm m → Sub T m n → Tm n
   con i   / ρ = con i
-  var x   / ρ = lift (lookup x ρ)
+  var x   / ρ = lift (lookup ρ x)
   ƛ t     / ρ = ƛ (t / ρ ↑)
   t₁ · t₂ / ρ = (t₁ / ρ) · (t₂ / ρ)
 
@@ -134,7 +135,7 @@ module Var where
 
   lookup-preserves :
     ∀ {m n} {Γ : Ctxt m} {Δ : Ctxt n} x ρ →
-    Γ ⇒ Δ ⊢ Vec.map var ρ → Δ ⊢ var (lookup x ρ) ∈ lookup x Γ
+    Γ ⇒ Δ ⊢ Vec.map var ρ → Δ ⊢ var (lookup ρ x) ∈ lookup Γ x
   lookup-preserves zero    (y ∷ ρ) (var ∷ ⊢ρ) = var
   lookup-preserves (suc x) (y ∷ ρ) (var ∷ ⊢ρ) = lookup-preserves x ρ ⊢ρ
 
@@ -170,7 +171,7 @@ sub-preserves t∈ = t∈ ∷ id-preserves
 
 lookup-preserves :
   ∀ {m n} {Γ : Ctxt m} {Δ : Ctxt n} x {ρ} →
-  Γ ⇒ Δ ⊢ ρ → Δ ⊢ lookup x ρ ∈ lookup x Γ
+  Γ ⇒ Δ ⊢ ρ → Δ ⊢ lookup ρ x ∈ lookup Γ x
 lookup-preserves zero    (t∈ ∷ ⊢ρ) = t∈
 lookup-preserves (suc x) (t∈ ∷ ⊢ρ) = lookup-preserves x ⊢ρ
 

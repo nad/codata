@@ -7,9 +7,9 @@
 
 module BreadthFirstWithoutProof where
 
-open import Coinduction
+open import Codata.Musical.Notation
+open import Codata.Musical.Stream
 open import Data.Product
-open import Data.Stream
 
 open import Tree using (Tree; leaf; node)
 

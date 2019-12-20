@@ -18,9 +18,10 @@ module Lambda.Closure.Functional.Alternative where
 open import Category.Monad
 open import Category.Monad.Partiality as Partiality
   using (_⊥; never; Kind; OtherKind)
-open import Coinduction
+open import Codata.Musical.Notation
 open import Data.List hiding (lookup)
-open import Data.Maybe as Maybe
+open import Data.Maybe
+import Data.Maybe.Categorical as Maybe
 open import Data.Vec using (Vec; []; _∷_; lookup)
 open import Function
 open import Level
@@ -83,7 +84,7 @@ module Workaround₁ where
 
     ⟦_⟧W : ∀ {A n} → Tm n → Env n → (Value → Maybe A ⊥W) → Maybe A ⊥W
     ⟦ con i ⟧W   ρ k = k (con i)
-    ⟦ var x ⟧W   ρ k = k (lookup x ρ)
+    ⟦ var x ⟧W   ρ k = k (lookup ρ x)
     ⟦ ƛ t ⟧W     ρ k = k (ƛ t ρ)
     ⟦ t₁ · t₂ ⟧W ρ k = ⟦ t₁ ⟧W ρ (λ v₁ →
                        ⟦ t₂ ⟧W ρ (λ v₂ →
@@ -149,7 +150,7 @@ module Workaround₂ {k : Kind} where
                  (∀ v → ⟪ k₁ v ⟫W ≈W ⟪ k₂ v ⟫W) →
                  ⟪ ⟦ t ⟧W ρ k₁ ⟫W ≈W ⟪ ⟦ t ⟧W ρ k₂ ⟫W
     ⟦ con i   ⟧W-congW ρ k₁≈k₂ = k₁≈k₂ (con i)
-    ⟦ var x   ⟧W-congW ρ k₁≈k₂ = k₁≈k₂ (lookup x ρ)
+    ⟦ var x   ⟧W-congW ρ k₁≈k₂ = k₁≈k₂ (lookup ρ x)
     ⟦ ƛ t     ⟧W-congW ρ k₁≈k₂ = k₁≈k₂ (ƛ t ρ)
     ⟦ t₁ · t₂ ⟧W-congW ρ k₁≈k₂ = ⟦ t₁ ⟧W-congW ρ (λ v₁ →
                                  ⟦ t₂ ⟧W-congW ρ (λ v₂ →
@@ -194,8 +195,8 @@ sem-con : ∀ {A n} i {ρ : Env n} {k : Value → Maybe A ⊥} →
 sem-con i {k = k} = k (con i) ∎
 
 sem-var : ∀ {A n} x {ρ : Env n} {k : Value → Maybe A ⊥} →
-          ⟦ var x ⟧ ρ k ≅ k (lookup x ρ)
-sem-var x {ρ} {k} = k (lookup x ρ) ∎
+          ⟦ var x ⟧ ρ k ≅ k (lookup ρ x)
+sem-var x {ρ} {k} = k (lookup ρ x) ∎
 
 sem-ƛ : ∀ {A n} t {ρ : Env n} {k : Value → Maybe A ⊥} →
         ⟦ ƛ t ⟧ ρ k ≅ k (ƛ t ρ)
@@ -232,7 +233,7 @@ module Unique
   (⟪con⟫ : ∀ {n} i {ρ : Env n} {k : Value → Maybe A ⊥} →
    ⟪ con i ⟫ ρ k ≅ k (con i))
   (⟪var⟫ : ∀ {n} x {ρ : Env n} {k : Value → Maybe A ⊥} →
-   ⟪ var x ⟫ ρ k ≅ k (lookup x ρ))
+   ⟪ var x ⟫ ρ k ≅ k (lookup ρ x))
   (⟪ƛ⟫ : ∀ {n} t {ρ : Env n} {k : Value → Maybe A ⊥} →
    ⟪ ƛ t ⟫ ρ k ≅ k (ƛ t ρ))
   (⟪·⟫ : ∀ {n} t₁ t₂ {ρ : Env n} {k : Value → Maybe A ⊥} →
@@ -278,8 +279,8 @@ module Unique
       k₂ (con i)      ∎
     semW (var x) {ρ} {k₁} {k₂} k₁≅k₂ =
       ⟪ var x ⟫ ρ k₁   ≅⟨ ⟪var⟫ x ⟩W
-      k₁ (lookup x ρ)  ≅⟪ k₁≅k₂ _ ⟫W
-      k₂ (lookup x ρ)  ∎
+      k₁ (lookup ρ x)  ≅⟪ k₁≅k₂ _ ⟫W
+      k₂ (lookup ρ x)  ∎
     semW (ƛ t) {ρ} {k₁} {k₂} k₁≅k₂ =
       ⟪ ƛ t ⟫ ρ k₁  ≅⟨ ⟪ƛ⟫ t ⟩W
       k₁ (ƛ t ρ)    ≅⟪ k₁≅k₂ _ ⟫W
@@ -370,9 +371,9 @@ module Correctness {k : OtherKind} where
       exec ⟨ c , val (Lambda.Syntax.Closure.con i) ∷ s , comp-env ρ ⟩  ≈⟨ hyp (con i) ⟩W
       k (con i)                                                        ∎)
     correctW (var x) {ρ} {c} {s} {k} hyp = laterˡ (
-      exec ⟨ c , val (lookup x (comp-env ρ)) ∷ s , comp-env ρ ⟩  ≡⟨ P.cong (λ v → exec ⟨ c , val v ∷ s , comp-env ρ ⟩) $ lookup-hom x ρ ⟩W
-      exec ⟨ c , val (comp-val (lookup x ρ)) ∷ s , comp-env ρ ⟩  ≈⟨ hyp (lookup x ρ) ⟩W
-      k (lookup x ρ)                                   ∎)
+      exec ⟨ c , val (lookup (comp-env ρ) x) ∷ s , comp-env ρ ⟩  ≡⟨ P.cong (λ v → exec ⟨ c , val v ∷ s , comp-env ρ ⟩) $ lookup-hom x ρ ⟩W
+      exec ⟨ c , val (comp-val (lookup ρ x)) ∷ s , comp-env ρ ⟩  ≈⟨ hyp (lookup ρ x) ⟩W
+      k (lookup ρ x)                                             ∎)
     correctW (ƛ t) {ρ} {c} {s} {k} hyp = laterˡ (
       exec ⟨ c , val (comp-val (ƛ t ρ)) ∷ s , comp-env ρ ⟩  ≈⟨ hyp (ƛ t ρ) ⟩W
       k (ƛ t ρ)                                             ∎)

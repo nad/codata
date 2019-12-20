@@ -8,10 +8,10 @@
 module Lambda.Closure.Functional.Non-deterministic.No-workarounds where
 
 open import Category.Monad.Partiality as Pa using (_⊥; now; later)
-open import Coinduction
+open import Codata.Musical.Notation
 open import Data.Fin using (Fin; zero; suc; #_)
 open import Data.List hiding (lookup)
-open import Data.Maybe
+open import Data.Maybe hiding (_>>=_)
 open import Data.Nat
 open import Data.Vec using ([]; _∷_; lookup)
 open import Function
@@ -178,7 +178,7 @@ mutual
 
   ⟦_⟧ : ∀ {n} → Tm n → Env n → D Value
   ⟦ con i ⟧   ρ = return (con i)
-  ⟦ var x ⟧   ρ = return (lookup x ρ)
+  ⟦ var x ⟧   ρ = return (lookup ρ x)
   ⟦ ƛ t ⟧     ρ = return (ƛ t ρ)
   ⟦ t₁ · t₂ ⟧ ρ = ⟦ t₁ ⟧ ρ >>= λ v₁ →
                   ⟦ t₂ ⟧ ρ >>= λ v₂ →
@@ -225,7 +225,7 @@ mutual
 -- lookup x is homomorphic with respect to comp-env/comp-val.
 
 lookup-hom : ∀ {n} (x : Fin n) ρ →
-             lookup x (comp-env ρ) ≡ comp-val (lookup x ρ)
+             lookup (comp-env ρ) x ≡ comp-val (lookup ρ x)
 lookup-hom zero    (v ∷ ρ) = P.refl
 lookup-hom (suc x) (v ∷ ρ) = lookup-hom x ρ
 
@@ -365,9 +365,9 @@ module Correctness where
       exec ⟨ c , val (con i) ∷ s , comp-env ρ ⟩  ≈∈⟨ hyp (con i) ⟩
       k (con i)                                  ∎)
     correct (var x) {ρ} {c} {s} {k} hyp = laterˡ (
-      exec ⟨ c , val (lookup x (comp-env ρ)) ∷ s , comp-env ρ ⟩  ≡⟨ P.cong (λ v → exec ⟨ c , val v ∷ s , comp-env ρ ⟩) (lookup-hom x ρ) ⟩
-      exec ⟨ c , val (comp-val (lookup x ρ)) ∷ s , comp-env ρ ⟩  ≈∈⟨ hyp (lookup x ρ) ⟩
-      k (lookup x ρ)                                             ∎)
+      exec ⟨ c , val (lookup (comp-env ρ) x) ∷ s , comp-env ρ ⟩  ≡⟨ P.cong (λ v → exec ⟨ c , val v ∷ s , comp-env ρ ⟩) (lookup-hom x ρ) ⟩
+      exec ⟨ c , val (comp-val (lookup ρ x)) ∷ s , comp-env ρ ⟩  ≈∈⟨ hyp (lookup ρ x) ⟩
+      k (lookup ρ x)                                             ∎)
     correct (ƛ t) {ρ} {c} {s} {k} hyp = laterˡ (
       exec ⟨ c , val (comp-val (ƛ t ρ)) ∷ s , comp-env ρ ⟩  ≈∈⟨ hyp (ƛ t ρ) ⟩
       k (ƛ t ρ)                                             ∎)
@@ -407,7 +407,7 @@ infix 4 _⊢_∈_
 
 data _⊢_∈_ {n} (Γ : Ctxt n) : Tm n → Ty → Set where
   con : ∀ {i} → Γ ⊢ con i ∈ nat
-  var : ∀ {x} → Γ ⊢ var x ∈ lookup x Γ
+  var : ∀ {x} → Γ ⊢ var x ∈ lookup Γ x
   ƛ   : ∀ {t σ τ} (t∈ : ♭ σ ∷ Γ ⊢ t ∈ ♭ τ) → Γ ⊢ ƛ t ∈ σ ⇾ τ
   _·_ : ∀ {t₁ t₂ σ τ} (t₁∈ : Γ ⊢ t₁ ∈ σ ⇾ τ) (t₂∈ : Γ ⊢ t₂ ∈ ♭ σ) →
         Γ ⊢ t₁ · t₂ ∈ ♭ τ
@@ -466,7 +466,7 @@ data WF-DV (σ : Ty) : D Value → Set where
 -- well-formed values.
 
 lookup-wf : ∀ {n Γ ρ} (x : Fin n) → WF-Env Γ ρ →
-            WF-Value (lookup x Γ) (lookup x ρ)
+            WF-Value (lookup Γ x) (lookup ρ x)
 lookup-wf zero    (v-wf ∷ ρ-wf) = v-wf
 lookup-wf (suc x) (v-wf ∷ ρ-wf) = lookup-wf x ρ-wf
 

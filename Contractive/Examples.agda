@@ -4,10 +4,10 @@
 
 module Contractive.Examples where
 
-open import Coinduction
+open import Codata.Musical.Notation
+open import Codata.Musical.Stream
 open import Data.Nat
 open import Data.Nat.Properties
-open import Data.Stream
 import Data.Vec as Vec
 open Vec using (_∷_; [])
 open import Function

@@ -13,7 +13,8 @@ open import Data.Vec as Vec
 open import Relation.Binary.PropositionalEquality as PropEq
   using (_≡_; refl; sym; cong₂)
 open PropEq.≡-Reasoning
-open import Data.Star using (Star; ε; _◅_; _▻_)
+open import Relation.Binary.Construct.Closure.ReflexiveTransitive
+  using (Star; ε; _◅_; _▻_)
 
 open import RecursiveTypes.Syntax
 
@@ -29,7 +30,7 @@ module TyApp {T : ℕ → Set} (l : Lift T Ty) where
   _/_ : ∀ {m n} → Ty m → Sub T m n → Ty n
   ⊥       / ρ = ⊥
   ⊤       / ρ = ⊤
-  var x   / ρ = lift (Vec.lookup x ρ)
+  var x   / ρ = lift (Vec.lookup ρ x)
   σ ⟶ τ   / ρ = (σ / ρ) ⟶ (τ / ρ)
   μ σ ⟶ τ / ρ = μ (σ / ρ ↑) ⟶ (τ / ρ ↑)
 

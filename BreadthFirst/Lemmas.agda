@@ -4,12 +4,13 @@
 
 module BreadthFirst.Lemmas where
 
-open import Coinduction
+open import Codata.Musical.Notation
+open import Codata.Musical.Colist as Colist
+  using (Colist; []; _∷_; concat; _++_)
 open import Function
 open import Data.List using ([]; _∷_)
 open import Data.List.NonEmpty as List⁺ using (List⁺; [_]; _∷_; _⁺++⁺_)
 import Data.Vec as Vec
-open import Data.Colist as Colist using (Colist; []; _∷_; concat; _++_)
 open import Data.Product using (_,_)
 open import Relation.Binary.PropositionalEquality as PropEq
   using (_≡_) renaming (refl to ≡-refl)

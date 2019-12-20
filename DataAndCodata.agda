@@ -11,7 +11,7 @@
 
 module DataAndCodata where
 
-open import Coinduction hiding (Rec; module Rec)
+open import Codata.Musical.Notation
 open import Function
 open import Relation.Binary.PropositionalEquality
 

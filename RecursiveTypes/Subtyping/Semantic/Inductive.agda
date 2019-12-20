@@ -6,7 +6,7 @@ module RecursiveTypes.Subtyping.Semantic.Inductive where
 
 open import Data.Nat
 open import Data.Fin
-open import Coinduction
+open import Codata.Musical.Notation
 
 open import RecursiveTypes.Syntax
 open import RecursiveTypes.Semantics

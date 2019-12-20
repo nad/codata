@@ -9,7 +9,7 @@
 
 module RecursiveTypes.Subtyping.Axiomatic.Incorrect where
 
-open import Coinduction hiding (unfold)
+open import Codata.Musical.Notation
 open import Data.Fin using (Fin; zero; suc)
 open import Function using (id; _$_)
 open import Data.Nat

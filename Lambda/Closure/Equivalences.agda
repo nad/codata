@@ -7,14 +7,16 @@ module Lambda.Closure.Equivalences where
 
 open import Category.Monad.Partiality as Partiality
   using (_⊥; later⁻¹; laterˡ⁻¹; laterʳ⁻¹)
-open import Coinduction
+open import Codata.Musical.Notation
 open import Data.Fin using (Fin; zero)
-open import Data.Maybe as Maybe
+open import Data.Maybe hiding (_>>=_)
+open import Data.Maybe.Relation.Binary.Pointwise as Maybe
+  using (just; nothing)
 open import Data.Nat
 open import Data.Product as Prod
 open import Data.Unit
 open import Data.Vec using ([]; _∷_)
-open import Function
+open import Function.Base
 open import Function.Equality using (_⟨$⟩_)
 open import Function.Equivalence
   using (_⇔_; equivalence; module Equivalence)
@@ -52,7 +54,7 @@ open module EC {A : Set} = Partiality.Equality (λ (_ _ : A) → ⊤)
   (h₂ _ _)
   where
   h₁ : {x y : A ⊥} → x ≈○ y → x ⇓ → y ⇓
-  h₁ (EC.now _)      (v , now P.refl) = , now P.refl
+  h₁ (EC.now _)      (v , now P.refl) = -, now P.refl
   h₁ (EC.later  x≈y) (v , laterˡ x⇓v) = Prod.map id laterˡ $ h₁ (♭ x≈y) (v , x⇓v)
   h₁ (EC.laterʳ x≈y) (v , x⇓v)        = Prod.map id laterˡ $ h₁    x≈y  (v , x⇓v)
   h₁ (EC.laterˡ x≈y) (v , laterˡ x⇓v) =                      h₁    x≈y  (v , x⇓v)
@@ -60,11 +62,11 @@ open module EC {A : Set} = Partiality.Equality (λ (_ _ : A) → ⊤)
   h₂ : (x y : A ⊥) → x ⇓ ⇔ y ⇓ → x ≈○ y
   h₂ (now v) y x⇓⇔y⇓ =
     now v  ≈○⟨ EC.now _ ⟩
-    now _  ≈○⟨ Partiality.map _ (sym $ proj₂ $ Equivalence.to   x⇓⇔y⇓ ⟨$⟩ (, now P.refl)) ⟩
+    now _  ≈○⟨ Partiality.map _ (sym $ proj₂ $ Equivalence.to   x⇓⇔y⇓ ⟨$⟩ (-, now P.refl)) ⟩
     y      ∎○
 
   h₂ x (now v) x⇓⇔y⇓ =
-    x      ≈○⟨ Partiality.map _ (      proj₂ $ Equivalence.from x⇓⇔y⇓ ⟨$⟩ (, now P.refl)) ⟩
+    x      ≈○⟨ Partiality.map _ (      proj₂ $ Equivalence.from x⇓⇔y⇓ ⟨$⟩ (-, now P.refl)) ⟩
     now _  ≈○⟨ EC.now _ ⟩
     now v  ∎○
 
@@ -167,7 +169,7 @@ module Incorrect where
   -- Equivalence of possibly exceptional values.
 
   _≈mv_ : Maybe Value → Maybe Value → Set
-  _≈mv_ = Maybe.Eq _≈v_
+  _≈mv_ = Maybe.Pointwise _≈v_
 
   -- Equivalence of computations.
 
@@ -226,7 +228,7 @@ data _≈v_ : Value → Value → Set
 -- Equivalence of possibly exceptional values.
 
 _≈mv_ : Maybe Value → Maybe Value → Set
-_≈mv_ = Maybe.Eq _≈v_
+_≈mv_ = Maybe.Pointwise _≈v_
 
 -- Equivalence of computations.
 

@@ -4,8 +4,8 @@
 
 module Nested where
 
-open import Coinduction
-open import Data.Stream
+open import Codata.Musical.Notation
+open import Codata.Musical.Stream
 open import Function
 import Relation.Binary.PropositionalEquality as P
 

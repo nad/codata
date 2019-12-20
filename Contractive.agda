@@ -10,7 +10,7 @@ module Contractive where
 
 open import Relation.Unary
 open import Relation.Binary
-import Relation.Binary.EqReasoning as EqR
+import Relation.Binary.Reasoning.Setoid as EqR
 open import Induction.WellFounded
 open import Function
 open import Level hiding (lift)
@@ -20,7 +20,7 @@ open import Level hiding (lift)
 record IsWellFoundedOrder {A} (_<_ : Rel A zero) : Set where
   field
     trans         : Transitive _<_
-    isWellFounded : Well-founded _<_
+    isWellFounded : WellFounded _<_
 
 -- Ordered families of equivalences.
 

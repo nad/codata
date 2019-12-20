@@ -4,11 +4,11 @@
 
 module MapIterate where
 
-open import Coinduction
-open import Data.Nat
-open import Data.Stream as Stream
+open import Codata.Musical.Notation
+open import Codata.Musical.Stream as Stream
   using (Stream; map; zipWith; iterate; _≈_)
 open Stream.Stream; open Stream._≈_
+open import Data.Nat
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 

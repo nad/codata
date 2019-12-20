@@ -9,13 +9,13 @@
 
 module InductiveStreamEquality {A : Set} where
 
-open import Coinduction
+open import Codata.Musical.Notation
+open import Codata.Musical.Stream hiding (_∈_; lookup)
 open import Data.List
-open import Data.List.All as All
-open import Data.List.Any using (here; there)
 open import Data.List.Membership.Propositional
+open import Data.List.Relation.Unary.All as All
+open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.Product
-open import Data.Stream hiding (_∈_; lookup)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 
 infixr 5 _∷_

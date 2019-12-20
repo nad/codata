@@ -7,7 +7,7 @@ module RecursiveTypes.Subtyping.Axiomatic.Coinductive where
 import Data.Empty as E
 open import Data.Fin using (Fin; zero; suc)
 open import Data.Nat using (ℕ; zero; suc)
-open import Coinduction hiding (unfold)
+open import Codata.Musical.Notation
 open import Relation.Nullary
 
 open import RecursiveTypes.Syntax

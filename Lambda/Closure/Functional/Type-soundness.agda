@@ -7,9 +7,10 @@ module Lambda.Closure.Functional.Type-soundness where
 import Category.Monad.Partiality as Partiality
 open import Category.Monad.Partiality.All as All
   using (All; now; later)
-open import Coinduction
+open import Codata.Musical.Notation
 open import Data.Fin using (Fin; zero; suc)
-open import Data.Maybe as Maybe using (Maybe; just; nothing)
+open import Data.Maybe using (Maybe; just; nothing)
+open import Data.Maybe.Relation.Unary.Any as Maybe using (just)
 open import Data.Nat
 open import Data.Vec using (Vec; []; _∷_; lookup)
 open import Relation.Binary.PropositionalEquality using (_≡_)
@@ -53,7 +54,7 @@ WF-MV σ = Maybe.Any (WF-Value σ)
 -- well-formed values.
 
 lookup-wf : ∀ {n Γ ρ} (x : Fin n) → WF-Env Γ ρ →
-            WF-Value (lookup x Γ) (lookup x ρ)
+            WF-Value (lookup Γ x) (lookup ρ x)
 lookup-wf zero    (v-wf ∷ ρ-wf) = v-wf
 lookup-wf (suc x) (v-wf ∷ ρ-wf) = lookup-wf x ρ-wf
 

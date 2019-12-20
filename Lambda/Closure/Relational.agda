@@ -4,13 +4,14 @@
 
 module Lambda.Closure.Relational where
 
-open import Coinduction
+open import Codata.Musical.Notation
 open import Data.Empty
 open import Data.List hiding (lookup)
 open import Data.Product
-open import Data.Star.Properties
 open import Data.Vec using (Vec; _∷_; []; lookup)
 open import Function
+open import
+  Relation.Binary.Construct.Closure.ReflexiveTransitive.Properties
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
 open import Relation.Nullary
 
@@ -29,7 +30,7 @@ open InfiniteSequence
 infix 4 _⊢_⇓_
 
 data _⊢_⇓_ {n} (ρ : Env n) : Tm n → Value → Set where
-  var : ∀ {x} → ρ ⊢ var x ⇓ lookup x ρ
+  var : ∀ {x} → ρ ⊢ var x ⇓ lookup ρ x
   con : ∀ {i} → ρ ⊢ con i ⇓ con i
   ƛ   : ∀ {t} → ρ ⊢ ƛ t ⇓ ƛ t ρ
   app : ∀ {t₁ t₂ n t} {ρ′ : Env n} {v v′}
@@ -102,9 +103,9 @@ correct⇓′ : ∀ {n ρ c s v} {t : Tm n} →
             ⟨ c , val (comp-val v) ∷ s , comp-env ρ ⟩
 correct⇓′ {ρ = ρ} {c} {s} (var {x}) = begin
   ⟨ var x ∷ c , s                               , comp-env ρ ⟩ ⟶⟨ var ⟩
-  ⟨         c , val (lookup x (comp-env ρ)) ∷ s , comp-env ρ ⟩ ≡⟨ P.cong (λ v → ⟨ c , val v ∷ s , comp-env ρ ⟩)
+  ⟨         c , val (lookup (comp-env ρ) x) ∷ s , comp-env ρ ⟩ ≡⟨ P.cong (λ v → ⟨ c , val v ∷ s , comp-env ρ ⟩)
                                                                          (lookup-hom x ρ) ⟩
-  ⟨         c , val (comp-val (lookup x ρ)) ∷ s , comp-env ρ ⟩ ∎
+  ⟨         c , val (comp-val (lookup ρ x)) ∷ s , comp-env ρ ⟩ ∎
 correct⇓′ {ρ = ρ} {c} {s} (con {i}) = begin
   ⟨ con i ∷ c ,                                     s , comp-env ρ ⟩ ⟶⟨ con ⟩
   ⟨         c , val (Lambda.Syntax.Closure.con i) ∷ s , comp-env ρ ⟩ ∎

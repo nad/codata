@@ -7,7 +7,7 @@ module Hinze.Lemmas where
 open import Stream.Programs
 open import Stream.Equality
 
-open import Coinduction hiding (∞)
+open import Codata.Musical.Notation hiding (∞)
 open import Relation.Binary.PropositionalEquality
 open import Function using (_∘_; flip)
 

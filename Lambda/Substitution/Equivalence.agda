@@ -4,7 +4,7 @@
 
 module Lambda.Substitution.Equivalence where
 
-open import Coinduction
+open import Codata.Musical.Notation
 
 open import Lambda.Syntax
 open WHNF
