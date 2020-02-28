@@ -13,7 +13,7 @@ open import Codata.Musical.Notation hiding (∞)
 open import Data.Nat renaming (suc to 1+)
 open import Function using (_∘_)
 open import Relation.Binary.PropositionalEquality
-open ≡-Reasoning renaming (_≡⟨_⟩_ to _=⟨_⟩_; _∎ to _QED)
+  renaming (module ≡-Reasoning to ER)
 open import Algebra.Structures
 import Data.Nat.Properties as Nat
 private
@@ -76,14 +76,14 @@ nat-lemma₁ =
   lemma : ∀ m s → (λ n → m + m * n) · s ≊ _*_ m · 1+ · s
   lemma m = pointwise 1 (λ s → (λ n → m + m * n) · s)
                         (λ s → _*_ m · 1+ · s)
-                        (λ n → sym (begin
+                        (λ n → sym (ER.begin
                            m * (1 + n)
-                                          =⟨ proj₁ CS.distrib m 1 n ⟩
+                                          ER.≡⟨ proj₁ CS.distrib m 1 n ⟩
                            m * 1 + m * n
-                                          =⟨ cong (λ x → x + m * n)
-                                                  (proj₂ CS.*-identity m) ⟩
+                                          ER.≡⟨ cong (λ x → x + m * n)
+                                                     (proj₂ CS.*-identity m) ⟩
                            m + m * n
-                                          QED))
+                                          ER.∎))
 
 nat-lemma₂ : nat ≊ 2* · nat ⋎ 1+2* · nat
 nat-lemma₂ =

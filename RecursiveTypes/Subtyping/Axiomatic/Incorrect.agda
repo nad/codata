@@ -14,9 +14,9 @@ open import Data.Fin using (Fin; zero; suc)
 open import Function using (id; _$_)
 open import Data.Nat
   using (ℕ; zero; suc; z≤n; s≤s; ≤′-refl) renaming (_≤_ to _≤ℕ_)
+open import Data.Nat.Induction
 open import Data.Nat.Properties using (≤-step; ≤⇒≤′)
 open import Data.Product as Prod
-open import Induction.Nat
 open import Relation.Binary.PropositionalEquality
 open import Relation.Nullary
 

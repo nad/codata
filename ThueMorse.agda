@@ -26,8 +26,8 @@ import Relation.Binary.Reasoning.Setoid as EqReasoning
 
 private
   module SS {A : Set} = Setoid (S.setoid A)
-  open module EqR {A : Set} = EqReasoning (S.setoid A)
-    using (begin_; _∎) renaming (_≈⟨_⟩_ to _≈⟨_⟩′_)
+  open module SR {A : Set} = EqReasoning (S.setoid A)
+    using (begin_; _∎)
 
 ------------------------------------------------------------------------
 -- Chunks
@@ -341,7 +341,7 @@ mutual
   [ xs ]   ⋎W-hom [ ys ]    = [ ♯ (xs ⋎-hom ys) ]
   [ xs ]   ⋎W-hom (y ∷ ys′) =
     [ ♯ (⟦ xs ⋎ program ys ⟧P                 ≈⟨ xs ⋎-hom program ys ⟩P (begin
-         (⟦ xs ⟧P ⟨ S._⋎_ ⟩ ⟦ program ys ⟧P)  ≈⟨ SS.refl ⟨ S._⋎-cong_ ⟩ program-hom ys ⟩′
+         (⟦ xs ⟧P ⟨ S._⋎_ ⟩ ⟦ program ys ⟧P)  SR.≈⟨ SS.refl ⟨ S._⋎-cong_ ⟩ program-hom ys ⟩
          (⟦ xs ⟧P ⟨ S._⋎_ ⟩ ⟦ ys ⟧W)          ∎)) ]
     where ys = y ∷ ys′
 
@@ -402,10 +402,10 @@ correct : ⟦ thueMorse ⟧P ≈[ [cn]³[ccn]ω ]P rhs ⟦ thueMorse ⟧P
 correct = false ∷ [ ♯ cast lemma (
   ⟦ cast lemma (map not (evens thueMorse) ⋎ tail thueMorse) ⟧P          ≈⟨ cast-hom lemma (map not (evens thueMorse) ⋎ tail thueMorse) ⟩
   ⟦ map not (evens thueMorse) ⋎ tail thueMorse ⟧P                       ≈⟨ map not (evens thueMorse) ⋎-hom tail thueMorse ⟩P (begin
-  (⟦ map not (evens thueMorse) ⟧P ⟨ S._⋎_ ⟩ ⟦ tail thueMorse ⟧P)        ≈⟨ SS.trans (map-hom not (evens thueMorse))
+  (⟦ map not (evens thueMorse) ⟧P ⟨ S._⋎_ ⟩ ⟦ tail thueMorse ⟧P)        SR.≈⟨ SS.trans (map-hom not (evens thueMorse))
                                                                                     (S.map-cong not (evens-hom thueMorse))
                                                                              ⟨ S._⋎-cong_ ⟩
-                                                                           tail-hom thueMorse ⟩′
+                                                                           tail-hom thueMorse ⟩
   (S.map not (S.evens ⟦ thueMorse ⟧P) ⟨ S._⋎_ ⟩ S.tail ⟦ thueMorse ⟧P)  ∎ )) ]
 
 -- The defining equation has at most one solution.
@@ -417,5 +417,5 @@ unique bs bs′ bs≈ bs′≈ =
                            (map not (evens (unique bs bs′ bs≈ bs′≈))
                               ⋎
                             tail (unique bs bs′ bs≈ bs′≈)) ] ⟩P (begin
-  rhs bs′ ≈⟨ SS.sym bs′≈ ⟩′
+  rhs bs′ SR.≈⟨ SS.sym bs′≈ ⟩
   bs′     ∎)

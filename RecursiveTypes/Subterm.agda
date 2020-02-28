@@ -147,10 +147,6 @@ sound (var x) (there ())
   where open EqR ([ set ]-Equality _)
 
 open BSEq.⊆-Reasoning
-private
-  open module R {A : Set} = PreR (⊆-preorder A)
-    using (begin_; _≡⟨_⟩_; _∎)
-    renaming (_∼⟨_⟩_ to _⊆⟨_⟩_)
 
 mutual
 
@@ -277,12 +273,12 @@ sub-∗-commute k (μ σ₁ ⟶ σ₂) τ {χ} (there (there •∈•)) = there
   ρ = sub τ ↑⋆ k
   σ = μ σ₁ ⟶ σ₂
 
-  lem = begin′
-    τ ∗ // wk⋆ (suc k) // sub (σ / ρ)  ≡⟨ P.cong₂ _//_ (//./-weaken (τ ∗)) P.refl ⟩′
-    τ ∗ // wk⋆ k // wk // sub (σ / ρ)  ≡⟨ //.wk-sub-vanishes (τ ∗ // wk⋆ k) ⟩′
-    τ ∗ // wk⋆ k                       ∎′
-    where open P.≡-Reasoning
-            renaming (begin_ to begin′_; _≡⟨_⟩_ to _≡⟨_⟩′_; _∎ to _∎′)
+  lem = ≡R.begin
+    τ ∗ // wk⋆ (suc k) // sub (σ / ρ)  ≡R.≡⟨ P.cong₂ _//_ (//./-weaken (τ ∗)) P.refl ⟩
+    τ ∗ // wk⋆ k // wk // sub (σ / ρ)  ≡R.≡⟨ //.wk-sub-vanishes (τ ∗ // wk⋆ k) ⟩
+    τ ∗ // wk⋆ k                       ≡R.∎
+    where
+    module ≡R = P.≡-Reasoning
 
 -- The list contains all subterms.
 

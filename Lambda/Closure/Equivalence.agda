@@ -12,13 +12,13 @@ open import Codata.Musical.Notation
 open import Data.Empty using (⊥-elim)
 open import Data.Maybe hiding (_>>=_)
 open import Data.Nat
+open import Data.Nat.Induction
 import Data.Nat.Properties as ℕ
 import Data.Nat.Solver as ℕ
 open import Data.Product
 open import Data.Sum
 open import Data.Vec using (Vec; []; _∷_)
 open import Function
-open import Induction.Nat
 import Level
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
 open import Relation.Nullary

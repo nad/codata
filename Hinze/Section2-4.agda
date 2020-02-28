@@ -20,7 +20,7 @@ open import Hinze.Lemmas
 open import Codata.Musical.Notation hiding (∞)
 open import Data.Nat
 open import Relation.Binary.PropositionalEquality
-open ≡-Reasoning renaming (_≡⟨_⟩_ to _=⟨_⟩_; _∎ to _QED)
+  renaming (module ≡-Reasoning to ER)
 open import Algebra.Structures
 import Data.Nat.Properties as Nat
 private
@@ -80,13 +80,13 @@ nat-lemma₁ =
           (s ⟨ _*_ ⟩ t) ⟨ _+_ ⟩ s ≊ s ⟨ _*_ ⟩ (t ⟨ _+_ ⟩ 1 ∞)
   lemma = pointwise 2 (λ s t → (s ⟨ _*_ ⟩ t) ⟨ _+_ ⟩ s)
                       (λ s t → s ⟨ _*_ ⟩ (t ⟨ _+_ ⟩ 1 ∞))
-                      (λ m n → sym (begin
+                      (λ m n → sym (ER.begin
                          m * (n + 1)
-                                        =⟨ proj₁ CS.distrib m n 1 ⟩
+                                        ER.≡⟨ proj₁ CS.distrib m n 1 ⟩
                          m * n + m * 1
-                                        =⟨ cong (_+_ (m * n)) (proj₂ CS.*-identity m) ⟩
+                                        ER.≡⟨ cong (_+_ (m * n)) (proj₂ CS.*-identity m) ⟩
                          m * n + m
-                                        QED))
+                                        ER.∎))
 
 nat-lemma₂ : nat ≊ 2*nat ⋎ 2*nat+1
 nat-lemma₂ =
