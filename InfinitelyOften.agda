@@ -22,7 +22,7 @@ open import Function.Equivalence
   using (_⇔_; equivalence; module Equivalence)
 import Function.Related as Related
 open import Level using (Lift; lift; lower)
-open import Relation.Binary hiding (_⇒_)
+open import Relation.Binary hiding (_⇒_; _⇔_)
 open import Relation.Nullary
 open import Relation.Nullary.Negation
 import Relation.Nullary.Universe as Univ
