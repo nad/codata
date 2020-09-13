@@ -17,7 +17,7 @@ open import Relation.Binary.PropositionalEquality
 open import Algebra.Structures
 import Data.Nat.Properties as Nat
 private
-  module CS = IsCommutativeSemiring Nat.*-+-isCommutativeSemiring
+  module CS = IsCommutativeSemiring Nat.+-*-isCommutativeSemiring
 open import Data.Product
 
 ------------------------------------------------------------------------

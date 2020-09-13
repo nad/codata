@@ -20,7 +20,7 @@ import Data.Nat.Properties as Nat
 import Relation.Binary.PropositionalEquality as P
 open import Algebra.Structures
 private
-  module CS = IsCommutativeSemiring Nat.*-+-isCommutativeSemiring
+  module CS = IsCommutativeSemiring Nat.+-*-isCommutativeSemiring
 
 ------------------------------------------------------------------------
 -- Definitions
