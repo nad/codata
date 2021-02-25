@@ -9,7 +9,7 @@ open import Data.Empty
 open import Data.List hiding (lookup)
 open import Data.Product
 open import Data.Vec using (Vec; _∷_; []; lookup)
-open import Function
+open import Function.Base
 open import
   Relation.Binary.Construct.Closure.ReflexiveTransitive.Properties
 open import Relation.Binary.PropositionalEquality as P using (_≡_)

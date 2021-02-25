@@ -6,7 +6,7 @@ module RecursiveTypes.Syntax where
 
 open import Data.Nat
 open import Data.Fin
-open import Function
+open import Function.Base
 open import Data.Product
 open import Codata.Musical.Notation
 open import Relation.Nullary

@@ -6,7 +6,7 @@ module RecursiveTypes.Subtyping.Semantic.Equivalence where
 
 open import Data.Nat
 open import Codata.Musical.Notation
-open import Function
+open import Function.Base
 
 open import RecursiveTypes.Syntax
 open import RecursiveTypes.Subtyping.Semantic.Inductive

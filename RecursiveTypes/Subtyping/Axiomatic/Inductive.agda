@@ -13,7 +13,7 @@ open import Data.List.Relation.Unary.All as All using (All; []; _∷_)
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.Product
 open import Data.Sum as Sum using (_⊎_; inj₁; inj₂; [_,_]′)
-open import Function
+open import Function.Base
 open import Function.Equality using (_⟨$⟩_)
 open import Function.Inverse using (module Inverse)
 open import Relation.Nullary using (¬_; Dec; yes; no)

@@ -11,6 +11,7 @@ open import Data.List using (List; []; _∷_; [_]; _++_)
 open import Data.List.Properties
 open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.List.Relation.Unary.Any.Properties
+  using (++↔; map-with-∈↔)
 open import Data.List.Membership.Propositional
 open import Data.List.Membership.Propositional.Properties
 open import Data.List.Relation.Binary.BagAndSetEquality as BSEq
@@ -18,7 +19,7 @@ open import Data.List.Relation.Binary.Subset.Propositional
 open import Data.List.Relation.Binary.Subset.Propositional.Properties
 open import Data.Product
 open import Data.Sum
-open import Function
+open import Function.Base
 open import Function.Equality using (_⟨$⟩_)
 open import Function.Inverse using (module Inverse)
 open import Relation.Binary
@@ -161,8 +162,8 @@ mutual
                   σ / wk ↑⋆ k ∗′ ⊆ σ ∗′ // wk ↑⋆ k
   wk-∗′-commute k (σ₁ ⟶ σ₂) = begin
     σ₁ ⟶ σ₂ / wk ↑⋆ k ∗′                ≡⟨ P.refl ⟩
-    σ₁ / wk ↑⋆ k ∗ ++ σ₂ / wk ↑⋆ k ∗    ⊆⟨ wk-∗-commute k σ₁ ++-mono
-                                           wk-∗-commute k σ₂ ⟩
+    σ₁ / wk ↑⋆ k ∗ ++ σ₂ / wk ↑⋆ k ∗    ⊆⟨ ++⁺ (wk-∗-commute k σ₁)
+                                               (wk-∗-commute k σ₂) ⟩
     σ₁ ∗ // wk ↑⋆ k ++ σ₂ ∗ // wk ↑⋆ k  ≡⟨ P.sym $ map-++-commute
                                              (λ σ → σ / wk ↑⋆ k) (σ₁ ∗) (σ₂ ∗) ⟩
     (σ₁ ∗ ++ σ₂ ∗) // wk ↑⋆ k           ≡⟨ P.refl ⟩
@@ -171,7 +172,7 @@ mutual
     (μ σ₁ ⟶ σ₂) / wk ↑⋆ k ∗′                          ≡⟨ P.refl ⟩
     σ₁ ⟶ σ₂ / wk ↑⋆ (suc k) / sub (σ / wk ↑⋆ k) ∷
       (σ₁ / wk ↑⋆ (suc k) ∗ ++ σ₂ / wk ↑⋆ (suc k) ∗)
-        // sub (σ / wk ↑⋆ k)                          ⊆⟨ lem₁ ++-mono lem₂ ⟩
+        // sub (σ / wk ↑⋆ k)                          ⊆⟨ ++⁺ lem₁ lem₂ ⟩
     σ₁ ⟶ σ₂ / sub σ / wk ↑⋆ k ∷
       (σ₁ ∗ ++ σ₂ ∗) // sub σ // wk ↑⋆ k              ≡⟨ P.refl ⟩
     μ σ₁ ⟶ σ₂ ∗′ // wk ↑⋆ k                           ∎
@@ -187,8 +188,8 @@ mutual
     lem₂ : _ ⊆ _
     lem₂ = begin
       (σ₁ / wk ↑⋆ (suc k) ∗ ++
-       σ₂ / wk ↑⋆ (suc k) ∗) // sub (σ / wk ↑⋆ k)           ⊆⟨ map-mono _ (wk-∗-commute (suc k) σ₁ ++-mono
-                                                                           wk-∗-commute (suc k) σ₂) ⟩
+       σ₂ / wk ↑⋆ (suc k) ∗) // sub (σ / wk ↑⋆ k)           ⊆⟨ map⁺ _ (++⁺ (wk-∗-commute (suc k) σ₁)
+                                                                           (wk-∗-commute (suc k) σ₂)) ⟩
       (σ₁ ∗ // wk ↑⋆ (suc k) ++
        σ₂ ∗ // wk ↑⋆ (suc k)) // sub (σ / wk ↑⋆ k)          ≡⟨ P.cong (λ σs → σs // sub (σ / wk ↑⋆ k)) $
                                                                  P.sym $ map-++-commute
@@ -222,7 +223,7 @@ sub-∗′-commute-var (suc k) zero τ = begin
 sub-∗′-commute-var (suc k) (suc x) τ = begin
   var (suc x) / sub τ ↑⋆ suc k ∗′         ≡⟨ P.cong _∗′ (suc-/-↑ {ρ = sub τ ↑⋆ k} x) ⟩
   var x / sub τ ↑⋆ k / wk ∗′              ⊆⟨ wk-∗′-commute zero (var x / sub τ ↑⋆ k) ⟩
-  var x / sub τ ↑⋆ k ∗′ // wk             ⊆⟨ map-mono _ (sub-∗′-commute-var k x τ) ⟩
+  var x / sub τ ↑⋆ k ∗′ // wk             ⊆⟨ map⁺ _ (sub-∗′-commute-var k x τ) ⟩
   τ ∗ // wk⋆ k // wk                      ≡⟨ P.sym $ //./-weaken (τ ∗) ⟩
   τ ∗ // wk⋆ (suc k)                      ∎
 
@@ -234,8 +235,8 @@ sub-∗-commute k ⊤         τ     •∈•           = Inverse.to ++↔ ⟨$
 sub-∗-commute k (var x)   τ     (there •∈•)   = there $ sub-∗′-commute-var k x τ •∈•
 sub-∗-commute k (σ₁ ⟶ σ₂) τ {χ} (there •∈•)   = there $
   χ                                    ∈⟨ •∈• ⟩
-  (σ₁ / ρ) ∗ ++ (σ₂ / ρ) ∗             ⊆⟨ sub-∗-commute k σ₁ τ ++-mono
-                                          sub-∗-commute k σ₂ τ ⟩
+  (σ₁ / ρ) ∗ ++ (σ₂ / ρ) ∗             ⊆⟨ ++⁺ (sub-∗-commute k σ₁ τ)
+                                              (sub-∗-commute k σ₂ τ) ⟩
   (σ₁ ∗ // ρ ++ τ ∗ // wk⋆ k) ++
   (σ₂ ∗ // ρ ++ τ ∗ // wk⋆ k)          ∼⟨ ++-lemma (σ₁ ∗ // ρ) (σ₂ ∗ // ρ) ⟩
   (σ₁ ∗ // ρ ++ σ₂ ∗ // ρ) ++
@@ -248,9 +249,9 @@ sub-∗-commute k (μ σ₁ ⟶ σ₂) τ (there (here P.refl)) =
   there $ here $ P.sym $ sub-commutes (σ₁ ⟶ σ₂)
 sub-∗-commute k (μ σ₁ ⟶ σ₂) τ {χ} (there (there •∈•)) = there $ there $
   χ                                              ∈⟨ •∈• ⟩
-  ((σ₁ / ρ ↑) ∗ ++ (σ₂ / ρ ↑) ∗) // sub (σ / ρ)  ⊆⟨ map-mono _ (begin
-      (σ₁ / ρ ↑) ∗ ++ (σ₂ / ρ ↑) ∗                    ⊆⟨ sub-∗-commute (suc k) σ₁ τ ++-mono
-                                                         sub-∗-commute (suc k) σ₂ τ ⟩
+  ((σ₁ / ρ ↑) ∗ ++ (σ₂ / ρ ↑) ∗) // sub (σ / ρ)  ⊆⟨ map⁺ _ (begin
+      (σ₁ / ρ ↑) ∗ ++ (σ₂ / ρ ↑) ∗                    ⊆⟨ ++⁺ (sub-∗-commute (suc k) σ₁ τ)
+                                                             (sub-∗-commute (suc k) σ₂ τ) ⟩
       (σ₁ ∗ // ρ ↑ ++ τ ∗ // wk⋆ (suc k)) ++
       (σ₂ ∗ // ρ ↑ ++ τ ∗ // wk⋆ (suc k))             ∼⟨ ++-lemma (σ₁ ∗ // ρ ↑) (σ₂ ∗ // ρ ↑) ⟩
       (σ₁ ∗ // ρ ↑ ++ σ₂ ∗ // ρ ↑) ++
@@ -291,7 +292,7 @@ complete (unfold {σ} {τ₁} {τ₂} σ⊑) =
   unfold[μ τ₁ ⟶ τ₂ ] ∗              ⊆⟨ sub-∗-commute zero (τ₁ ⟶ τ₂) τ ⟩
   τ₁ ⟶ τ₂ ∗ // sub τ ++ τ ∗ // idˢ  ≡⟨ P.cong (_++_ (τ₁ ⟶ τ₂ ∗ // sub τ))
                                               (//.id-vanishes (τ ∗)) ⟩
-  τ ∗′ ++ τ ∗                       ⊆⟨ there {x = τ} {xs = τ ∗′} ++-mono id ⟩
+  τ ∗′ ++ τ ∗                       ⊆⟨ ++⁺ (there {x = τ} {xs = τ ∗′}) id ⟩
   τ ∗  ++ τ ∗                       ∼⟨ ++-idempotent (τ ∗) ⟩
   τ ∗                               ∎
   where τ = μ τ₁ ⟶ τ₂
