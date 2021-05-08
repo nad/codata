@@ -2,8 +2,6 @@
 -- Pointwise equalities can be lifted
 ------------------------------------------------------------------------
 
-{-# OPTIONS --universe-polymorphism #-}
-
 module Stream.Pointwise where
 
 open import Codata.Musical.Notation hiding (∞)
