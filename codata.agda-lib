@@ -2,3 +2,5 @@ name: codata
 depend: standard-library
         parser-combinators
 include: .
+flags:
+  --guardedness
