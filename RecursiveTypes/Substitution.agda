@@ -7,7 +7,7 @@ module RecursiveTypes.Substitution where
 open import Data.Fin.Substitution
 open import Data.Fin.Substitution.Lemmas
 import Data.Fin.Substitution.List as ListSubst
-open import Data.Nat
+open import Data.Nat using (ℕ; suc)
 open import Data.List
 open import Data.Vec as Vec
 open import Relation.Binary.PropositionalEquality as PropEq

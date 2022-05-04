@@ -15,14 +15,14 @@
 
 module Lambda.Closure.Functional.Alternative where
 
-open import Category.Monad
-open import Category.Monad.Partiality as Partiality
-  using (_⊥; never; Kind; OtherKind)
 open import Codata.Musical.Notation
 open import Data.List hiding (lookup)
 open import Data.Maybe
-import Data.Maybe.Categorical as Maybe
+import Data.Maybe.Effectful as Maybe
 open import Data.Vec using (Vec; []; _∷_; lookup)
+open import Effect.Monad
+open import Effect.Monad.Partiality as Partiality
+  using (_⊥; never; Kind; OtherKind)
 open import Function
 open import Level
 open import Relation.Binary using (module Preorder)

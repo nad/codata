@@ -4,9 +4,6 @@
 
 module Lambda.VirtualMachine where
 
-open import Category.Monad
-open import Category.Monad.Partiality as P
-  using (_⊥; never); open P._⊥
 open import Codata.Musical.Notation
 open import Data.Empty using (⊥-elim)
 open import Data.Fin
@@ -15,6 +12,9 @@ open import Data.Maybe
 open import Data.Nat
 open import Data.Product as Prod
 open import Data.Vec using (Vec; []; _∷_; lookup)
+open import Effect.Monad
+open import Effect.Monad.Partiality as P
+  using (_⊥; never); open P._⊥
 open import Function.Base
 import Level
 open import Relation.Binary.Construct.Closure.ReflexiveTransitive

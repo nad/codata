@@ -6,7 +6,7 @@ module RecursiveTypes.Subterm where
 
 open import Algebra
 open import Data.Fin using (Fin; zero; suc; lift)
-open import Data.Nat
+open import Data.Nat using (zero; suc; _+_)
 open import Data.List using (List; []; _∷_; [_]; _++_)
 open import Data.List.Properties
 open import Data.List.Relation.Unary.Any using (here; there)
@@ -303,7 +303,7 @@ complete (unfold {σ} {τ₁} {τ₂} σ⊑) =
 -- Pairs up subterms with proofs.
 
 subtermsOf : ∀ {n} (τ : Ty n) → List (∃ λ σ → σ ⊑ τ)
-subtermsOf τ = map-with-∈ (τ ∗) (-,_ ∘′ sound τ)
+subtermsOf τ = mapWith∈ (τ ∗) (-,_ ∘′ sound τ)
 
 -- subtermsOf is complete.
 

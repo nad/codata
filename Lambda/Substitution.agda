@@ -7,7 +7,7 @@ module Lambda.Substitution where
 open import Data.Fin using (Fin; zero; suc)
 open import Data.Fin.Substitution
 open import Data.Fin.Substitution.Lemmas
-open import Data.Nat
+open import Data.Nat using (ℕ; suc)
 open import Data.Product
 open import Data.Unit
 open import Data.Vec as Vec

@@ -6,8 +6,6 @@
 module Lambda.Closure.Equivalence where
 
 open import Axiom.ExcludedMiddle
-open import Category.Monad.Partiality as Partiality
-  using (_⊥; never; steps; module Steps)
 open import Codata.Musical.Notation
 open import Data.Empty using (⊥-elim)
 open import Data.Maybe hiding (_>>=_)
@@ -18,6 +16,8 @@ import Data.Nat.Solver as ℕ
 open import Data.Product
 open import Data.Sum
 open import Data.Vec using (Vec; []; _∷_)
+open import Effect.Monad.Partiality as Partiality
+  using (_⊥; never; steps; module Steps)
 open import Function
 import Level
 open import Relation.Binary.PropositionalEquality as P using (_≡_)

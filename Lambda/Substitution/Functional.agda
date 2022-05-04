@@ -5,13 +5,13 @@
 
 module Lambda.Substitution.Functional where
 
-open import Category.Monad.Partiality as Partiality using (_⊥; never)
-open import Category.Monad.Partiality.All as All
-  using (All; now; later)
 open import Codata.Musical.Notation
 open import Data.Maybe as Maybe using (Maybe)
 open import Data.Maybe.Relation.Unary.Any as Maybe using (just)
 open import Data.Vec using ([])
+open import Effect.Monad.Partiality as Partiality using (_⊥; never)
+open import Effect.Monad.Partiality.All as All
+  using (All; now; later)
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
 open import Relation.Nullary
 

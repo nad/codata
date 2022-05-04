@@ -7,7 +7,7 @@ module Lambda.Substitution.OneSemantics where
 open import Codata.Musical.Notation
 open import Data.Fin
 open import Function
-open import Data.Nat
+open import Data.Nat using (ℕ)
 
 open import Lambda.Syntax
 open WHNF

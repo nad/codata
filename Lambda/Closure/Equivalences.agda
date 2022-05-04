@@ -5,8 +5,6 @@
 
 module Lambda.Closure.Equivalences where
 
-open import Category.Monad.Partiality as Partiality
-  using (_⊥; later⁻¹; laterˡ⁻¹; laterʳ⁻¹)
 open import Codata.Musical.Notation
 open import Data.Fin using (Fin; zero)
 open import Data.Maybe hiding (_>>=_)
@@ -16,6 +14,8 @@ open import Data.Nat
 open import Data.Product as Prod
 open import Data.Unit
 open import Data.Vec using ([]; _∷_)
+open import Effect.Monad.Partiality as Partiality
+  using (_⊥; later⁻¹; laterˡ⁻¹; laterʳ⁻¹)
 open import Function.Base
 open import Function.Equality using (_⟨$⟩_)
 open import Function.Equivalence

@@ -6,18 +6,18 @@
 
 module Lambda.Closure.Functional.No-workarounds where
 
-open import Category.Monad
-open import Category.Monad.Partiality as Partiality
-  using (_⊥; never; OtherKind; other; steps)
 open import Codata.Musical.Notation
 open import Data.Empty using (⊥-elim)
 open import Data.List hiding (lookup)
 open import Data.Maybe hiding (_>>=_)
-import Data.Maybe.Categorical as Maybe
+import Data.Maybe.Effectful as Maybe
 open import Data.Nat
 open import Data.Product
 open import Data.Sum
 open import Data.Vec using (Vec; []; _∷_; lookup)
+open import Effect.Monad
+open import Effect.Monad.Partiality as Partiality
+  using (_⊥; never; OtherKind; other; steps)
 open import Function
 import Level
 open import Relation.Binary using (module Preorder)

@@ -7,14 +7,14 @@
 
 module Lambda.Closure.Functional.Non-deterministic.No-workarounds where
 
-open import Category.Monad.Partiality as Pa using (_⊥; now; later)
 open import Codata.Musical.Notation
 open import Data.Fin using (Fin; zero; suc; #_)
 open import Data.List hiding (lookup)
 open import Data.Maybe hiding (_>>=_)
 open import Data.Nat
 open import Data.Vec using ([]; _∷_; lookup)
-open import Function
+open import Effect.Monad.Partiality as Pa using (_⊥; now; later)
+open import Function.Base
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
 open import Relation.Nullary
 open import Relation.Nullary.Decidable

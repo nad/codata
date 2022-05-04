@@ -6,9 +6,8 @@
 
 module InfinitelyOften where
 
-open import Algebra
+open import Algebra.Lattice
 open import Axiom.ExcludedMiddle
-open import Category.Monad
 open import Codata.Musical.Notation
 open import Data.Empty
 open import Data.Nat
@@ -16,6 +15,7 @@ import Data.Nat.Properties as NatProp
 open import Data.Product as Prod hiding (map)
 open import Data.Sum hiding (map)
 open import Data.Unit using (tt)
+open import Effect.Monad
 open import Function.Base
 open import Function.Equality using (_⟨$⟩_)
 open import Function.Equivalence

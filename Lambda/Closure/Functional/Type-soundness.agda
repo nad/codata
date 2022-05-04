@@ -4,15 +4,15 @@
 
 module Lambda.Closure.Functional.Type-soundness where
 
-import Category.Monad.Partiality as Partiality
-open import Category.Monad.Partiality.All as All
-  using (All; now; later)
 open import Codata.Musical.Notation
 open import Data.Fin using (Fin; zero; suc)
 open import Data.Maybe using (Maybe; just; nothing)
 open import Data.Maybe.Relation.Unary.Any as Maybe using (just)
 open import Data.Nat
 open import Data.Vec using (Vec; []; _∷_; lookup)
+import Effect.Monad.Partiality as Partiality
+open import Effect.Monad.Partiality.All as All
+  using (All; now; later)
 open import Relation.Binary.PropositionalEquality using (_≡_)
 open import Relation.Nullary
 

@@ -26,7 +26,7 @@ import Data.Vec
 
 -- The partiality monad.
 
-import Category.Monad.Partiality
+import Effect.Monad.Partiality
 
 -- A variant of trivial, as well as proofs showing that the definition
 -- of weak bisimilarity in the paper coincides with Capretta's
@@ -74,7 +74,7 @@ import Lambda.Closure.Functional.Type-soundness
 -- partiality monad.
 
 import Data.Maybe
-import Category.Monad.Partiality.All
+import Effect.Monad.Partiality.All
 
 -- An alternative definition of the functional semantics, using
 -- substitutions instead of environments and closures, plus a proof of
@@ -136,4 +136,4 @@ import Lambda.Closure.Equivalences
 
 -- _⇓.
 
-import Category.Monad.Partiality
+import Effect.Monad.Partiality

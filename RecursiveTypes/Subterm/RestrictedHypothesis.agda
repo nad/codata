@@ -10,20 +10,20 @@ open import RecursiveTypes.Syntax
 module RecursiveTypes.Subterm.RestrictedHypothesis
          {n} (χ₁ χ₂ : Ty n) where
 
-open import Category.Monad
 open import Function
 open import Function.Equality using (_⟨$⟩_)
 open import Function.Inverse using (module Inverse)
 open import Data.List as List
 open import Data.List.Relation.Unary.Any as Any
 open import Data.List.Relation.Unary.Any.Properties
-import Data.List.Categorical
 import Data.List.Countdown as Countdown
+import Data.List.Effectful
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Membership.Propositional.Properties
 import Data.List.Membership.Setoid
 open import Data.Product as Prod
 open import Data.Sum as Sum
+open import Effect.Monad
 open import Level
 open import Relation.Nullary
 open import Relation.Binary
@@ -31,7 +31,7 @@ import Relation.Binary.Construct.On as On
 open import Relation.Binary.PropositionalEquality as PropEq
   using (_≡_; refl)
 
-open RawMonad (Data.List.Categorical.monad {ℓ = zero})
+open RawMonad (Data.List.Effectful.monad {ℓ = zero})
 
 open import RecursiveTypes.Subterm as ST using (_⊑_; _∗)
 
