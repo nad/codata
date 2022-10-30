@@ -11,7 +11,7 @@ open import Data.List using (List; []; _∷_; [_]; _++_)
 open import Data.List.Properties
 open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.List.Relation.Unary.Any.Properties
-  using (++↔; map-with-∈↔)
+  using (++↔; mapWith∈↔)
 open import Data.List.Membership.Propositional
 open import Data.List.Membership.Propositional.Properties
 open import Data.List.Relation.Binary.BagAndSetEquality as BSEq
@@ -164,8 +164,7 @@ mutual
     σ₁ ⟶ σ₂ / wk ↑⋆ k ∗′                ≡⟨ P.refl ⟩
     σ₁ / wk ↑⋆ k ∗ ++ σ₂ / wk ↑⋆ k ∗    ⊆⟨ ++⁺ (wk-∗-commute k σ₁)
                                                (wk-∗-commute k σ₂) ⟩
-    σ₁ ∗ // wk ↑⋆ k ++ σ₂ ∗ // wk ↑⋆ k  ≡⟨ P.sym $ map-++-commute
-                                             (λ σ → σ / wk ↑⋆ k) (σ₁ ∗) (σ₂ ∗) ⟩
+    σ₁ ∗ // wk ↑⋆ k ++ σ₂ ∗ // wk ↑⋆ k  ≡⟨ P.sym $ map-++ (λ σ → σ / wk ↑⋆ k) (σ₁ ∗) (σ₂ ∗) ⟩
     (σ₁ ∗ ++ σ₂ ∗) // wk ↑⋆ k           ≡⟨ P.refl ⟩
     σ₁ ⟶ σ₂ ∗′ // wk ↑⋆ k               ∎
   wk-∗′-commute k (μ σ₁ ⟶ σ₂) = begin
@@ -192,8 +191,7 @@ mutual
                                                                            (wk-∗-commute (suc k) σ₂)) ⟩
       (σ₁ ∗ // wk ↑⋆ (suc k) ++
        σ₂ ∗ // wk ↑⋆ (suc k)) // sub (σ / wk ↑⋆ k)          ≡⟨ P.cong (λ σs → σs // sub (σ / wk ↑⋆ k)) $
-                                                                 P.sym $ map-++-commute
-                                                                   (λ σ → σ / wk ↑⋆ suc k) (σ₁ ∗) (σ₂ ∗) ⟩
+                                                                 P.sym $ map-++ (λ σ → σ / wk ↑⋆ suc k) (σ₁ ∗) (σ₂ ∗) ⟩
       (σ₁ ∗ ++ σ₂ ∗) // wk ↑⋆ (suc k) // sub (σ / wk ↑⋆ k)  ≡⟨ P.sym $ //.sub-commutes (σ₁ ∗ ++ σ₂ ∗) ⟩
       (σ₁ ∗ ++ σ₂ ∗) // sub σ // wk ↑⋆ k                    ∎
   wk-∗′-commute k (var x) = begin
@@ -241,7 +239,7 @@ sub-∗-commute k (σ₁ ⟶ σ₂) τ {χ} (there •∈•)   = there $
   (σ₂ ∗ // ρ ++ τ ∗ // wk⋆ k)          ∼⟨ ++-lemma (σ₁ ∗ // ρ) (σ₂ ∗ // ρ) ⟩
   (σ₁ ∗ // ρ ++ σ₂ ∗ // ρ) ++
   τ ∗ // wk⋆ k                         ≡⟨ P.cong₂ _++_
-                                            (P.sym $ map-++-commute (λ σ → σ / ρ) (σ₁ ∗) (σ₂ ∗))
+                                            (P.sym $ map-++ (λ σ → σ / ρ) (σ₁ ∗) (σ₂ ∗))
                                             P.refl ⟩
   (σ₁ ∗ ++ σ₂ ∗) // ρ ++ τ ∗ // wk⋆ k  ∎
   where ρ = sub τ ↑⋆ k
@@ -256,14 +254,13 @@ sub-∗-commute k (μ σ₁ ⟶ σ₂) τ {χ} (there (there •∈•)) = there
       (σ₂ ∗ // ρ ↑ ++ τ ∗ // wk⋆ (suc k))             ∼⟨ ++-lemma (σ₁ ∗ // ρ ↑) (σ₂ ∗ // ρ ↑) ⟩
       (σ₁ ∗ // ρ ↑ ++ σ₂ ∗ // ρ ↑) ++
       τ ∗ // wk⋆ (suc k)                              ≡⟨ P.cong₂ _++_
-                                                           (P.sym $ map-++-commute
-                                                                      (λ σ → σ / ρ ↑) (σ₁ ∗) (σ₂ ∗))
+                                                           (P.sym $ map-++ (λ σ → σ / ρ ↑) (σ₁ ∗) (σ₂ ∗))
                                                            P.refl ⟩
       (σ₁ ∗ ++ σ₂ ∗) // ρ ↑ ++
       τ ∗ // wk⋆ (suc k)                              ∎) ⟩
   ((σ₁ ∗ ++ σ₂ ∗) // ρ ↑ ++
-   τ ∗ // wk⋆ (suc k)) // sub (σ / ρ)            ≡⟨ map-++-commute (λ χ → χ / sub (σ / ρ))
-                                                                   ((σ₁ ∗ ++ σ₂ ∗) // ρ ↑) _ ⟩
+   τ ∗ // wk⋆ (suc k)) // sub (σ / ρ)            ≡⟨ map-++ (λ χ → χ / sub (σ / ρ))
+                                                           ((σ₁ ∗ ++ σ₂ ∗) // ρ ↑) _ ⟩
   (σ₁ ∗ ++ σ₂ ∗) // ρ ↑ // sub (σ / ρ) ++
   τ ∗ // wk⋆ (suc k) // sub (σ / ρ)              ≡⟨ P.cong₂ _++_
                                                       (P.sym $ //.sub-commutes (σ₁ ∗ ++ σ₂ ∗))
@@ -310,5 +307,5 @@ subtermsOf τ = mapWith∈ (τ ∗) (-,_ ∘′ sound τ)
 subtermsOf-complete : ∀ {n} {σ τ : Ty n} →
                       σ ⊑ τ → ∃ λ σ⊑τ → (σ , σ⊑τ) ∈ subtermsOf τ
 subtermsOf-complete {σ = σ} {τ} σ⊑τ =
-  (-, Inverse.to (map-with-∈↔ {f = -,_ ∘′ sound τ}) ⟨$⟩
+  (-, Inverse.to (mapWith∈↔ {f = -,_ ∘′ sound τ}) ⟨$⟩
         (σ , complete σ⊑τ , P.refl))
