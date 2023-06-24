@@ -81,8 +81,8 @@ open import Relation.Binary.PropositionalEquality as P using (_≡_; [_])
 
 forget-lemma : ∀ {A} x (xs : StreamP true A) →
                ⟦ x ∷ forget xs ⟧P ≈P x ∷ ♯ ⟦ xs ⟧P
-forget-lemma x xs with whnf xs | P.inspect whnf xs
-... | y ∷ [ ys ] | [ eq ] = x ∷ ♯ helper eq
+forget-lemma x xs with whnf xs in eq
+... | y ∷ [ ys ] = x ∷ ♯ helper eq
   where
   helper : whnf xs ≡ y ∷ [ ys ] →
            ⟦ y ∷ forget ys ⟧P ≈P ⟦ xs ⟧P

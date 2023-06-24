@@ -11,7 +11,7 @@ open import Data.Bool
 open import Data.Nat
 open import Data.Vec as V using (Vec; []; _∷_)
 open import Relation.Binary.PropositionalEquality as P
-  using (_≡_; refl; [_])
+  using (_≡_; refl)
 
 ------------------------------------------------------------------------
 -- Stream programs
@@ -116,13 +116,13 @@ mutual
 
   forget-lemma : ∀ {m n A} x (xs : StreamP (suc m) (suc n) A) →
                  ⟦ x ∷ forget xs ⟧P ≈P x ∷ ♯ ⟦ xs ⟧P
-  forget-lemma x xs with whnf xs | P.inspect whnf xs
-  ... | y ∷ y′ ∷ ys | [ eq ] = x ∷ ♯ helper eq
+  forget-lemma x xs with whnf xs in eq
+  ... | y ∷ y′ ∷ ys = x ∷ ♯ helper eq
     where
     helper : whnf xs ≡ y ∷ y′ ∷ ys →
              ⟦ y ∷ forgetW (y′ ∷ ys) ⟧W ≈P ⟦ xs ⟧P
     helper eq rewrite eq = _ ≈⟨ forgetW-lemma y (y′ ∷ ys) ⟩ y ∷ ♯ (_ ∎)
-  ... | y ∷ [ ys ]  | [ eq ] = x ∷ ♯ helper eq
+  ... | y ∷ [ ys ] = x ∷ ♯ helper eq
     where
     helper : whnf xs ≡ y ∷ [ ys ] →
              ⟦ y ∷ forget ys ⟧P ≈P ⟦ xs ⟧P
@@ -155,8 +155,8 @@ map₂ f (x ∷ xs) | y ∷ ys = f x ∷ ♯ (f y ∷ ♯ map₂ f (♭ ys))
 
 map≈map₂ : ∀ {A B} →
            (f : A → B) → (xs : Stream A) → S.map f xs ≈ map₂ f xs
-map≈map₂ f (x ∷ xs) with ♭ xs | P.inspect ♭ xs
-map≈map₂ f (x ∷ xs) | y ∷ ys | [ eq ] = refl ∷ ♯ helper eq
+map≈map₂ f (x ∷ xs) with ♭ xs in eq
+map≈map₂ f (x ∷ xs) | y ∷ ys = refl ∷ ♯ helper eq
   where
   map-f-y∷ys = _
 

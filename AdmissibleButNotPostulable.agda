@@ -175,19 +175,19 @@ module Capretta'sEquality where
     later : ∀ {x y} (x≈y : ♭ x ≈P ♭ y) → later x ≈W later y
 
   laterʳW : ∀ {A : Set} {x : A ⊥} {y} → x ≈W ♭ y → x ≈W later y
-  laterʳW {y = y} x≈y with ♭ y | P.inspect ♭ y
-  laterʳW x≈y | y′ | [ eq ] with x≈y
-  laterʳW x≈y | y′ | [ eq ] | now {v = v} x⇓v y⇓v =
+  laterʳW {y = y} x≈y with ♭ y in eq
+  laterʳW x≈y | y′ with x≈y
+  laterʳW x≈y | y′ | now {v = v} x⇓v y⇓v =
     now x⇓v (later (P.subst (λ y → y ⇓ v) (P.sym eq) y⇓v))
-  laterʳW x≈y | later y′ | [ eq ] | later x′≈y′ =
+  laterʳW x≈y | later y′ | later x′≈y′ =
     later (P.subst (_≈P_ _) (P.sym eq) (laterʳ x′≈y′))
 
   laterˡW : ∀ {A : Set} {x} {y : A ⊥} → ♭ x ≈W y → later x ≈W y
-  laterˡW {x = x} x≈y with ♭ x | P.inspect ♭ x
-  laterˡW x≈y | x′ | [ eq ] with x≈y
-  laterˡW x≈y | x′ | [ eq ] | now {v = v} x⇓v y⇓v =
+  laterˡW {x = x} x≈y with ♭ x in eq
+  laterˡW x≈y | x′ with x≈y
+  laterˡW x≈y | x′ | now {v = v} x⇓v y⇓v =
     now (later (P.subst (λ x → x ⇓ v) (P.sym eq) x⇓v)) y⇓v
-  laterˡW x≈y | later x′ | [ eq ] | later {y = y′} x′≈y′ =
+  laterˡW x≈y | later x′ | later {y = y′} x′≈y′ =
     later (P.subst (λ x → x ≈P ♭ y′) (P.sym eq) (laterˡ x′≈y′))
 
   whnf : {A : Set} {x y : A ⊥} → x ≈P y → x ≈W y

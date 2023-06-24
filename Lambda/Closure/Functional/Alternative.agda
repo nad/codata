@@ -18,7 +18,7 @@ module Lambda.Closure.Functional.Alternative where
 open import Codata.Musical.Notation
 open import Data.List hiding (lookup)
 open import Data.Maybe
-import Data.Maybe.Effectful as Maybe
+import Data.Maybe.Effectful.Transformer as Maybe
 open import Data.Vec using (Vec; []; _∷_; lookup)
 open import Effect.Monad
 open import Effect.Monad.Partiality as Partiality
@@ -46,10 +46,19 @@ private
 -- A monad with partiality and failure
 
 PF : RawMonad {f = zero} (_⊥ ∘ Maybe)
-PF = Maybe.monadT Partiality.monad
+PF = mkRawMonad
+  _
+  (λ x → PF′ .RawMonad.pure x .Maybe.runMaybeT)
+  (λ m f →
+     PF′ .RawMonad._>>=_
+       (Maybe.mkMaybeT m) (Maybe.mkMaybeT ∘ f)
+       .Maybe.runMaybeT)
+  where
+  PF′ : RawMonad {f = Level.zero} (Maybe.MaybeT _⊥)
+  PF′ = Maybe.monadT Partiality.monad .RawMonadTd.rawMonad
 
 module PF where
-  open RawMonad PF public
+  open RawMonad PF public renaming (pure to return)
 
   fail : {A : Set} → Maybe A ⊥
   fail = now nothing

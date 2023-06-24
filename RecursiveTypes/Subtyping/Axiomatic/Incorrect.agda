@@ -15,7 +15,7 @@ open import Function using (id; _$_)
 open import Data.Nat
   using (ℕ; zero; suc; z≤n; s≤s; ≤′-refl) renaming (_≤_ to _≤ℕ_)
 open import Data.Nat.Induction
-open import Data.Nat.Properties using (≤-step; ≤⇒≤′)
+open import Data.Nat.Properties using (m≤n⇒m≤1+n; ≤⇒≤′)
 open import Data.Product as Prod
 open import Relation.Binary.PropositionalEquality
 open import Relation.Nullary
@@ -133,8 +133,8 @@ mutual
                     length σ₂≲τ₂′ ≤ℕ length σ₁⟶σ₂≲μτ₁⟶τ₂
   codomain-⟶μ [ fold ]                  = ([ _ ∎ ] , z≤n)
   codomain-⟶μ (τ₁≤′σ₁ ⟶ σ₂≤′τ₂ ∷ τ₂≲τ₃) = Prod.map (_∷_ (♭ σ₂≤′τ₂)) s≤s (codomain-⟶μ τ₂≲τ₃)
-  codomain-⟶μ (fold            ∷ τ₂≲τ₃) = Prod.map id ≤-step (codomain-μμ τ₂≲τ₃)
-  codomain-⟶μ ((._ ∎)          ∷ τ₂≲τ₃) = Prod.map id ≤-step (codomain-⟶μ τ₂≲τ₃)
+  codomain-⟶μ (fold            ∷ τ₂≲τ₃) = Prod.map id m≤n⇒m≤1+n (codomain-μμ τ₂≲τ₃)
+  codomain-⟶μ ((._ ∎)          ∷ τ₂≲τ₃) = Prod.map id m≤n⇒m≤1+n (codomain-⟶μ τ₂≲τ₃)
   codomain-⟶μ (⊤               ∷ τ₂≲τ₃) with sound (≲-sound τ₂≲τ₃)
   ... | ()
 
@@ -143,8 +143,8 @@ mutual
                 ∃ λ (σ₂′≲τ₂′ : σ₂ [0≔ μ σ₁ ⟶ σ₂ ] ≲ τ₂ [0≔ μ τ₁ ⟶ τ₂ ]) →
                     length σ₂′≲τ₂′ ≤ℕ length μσ₁⟶σ₂≲μτ₁⟶τ₂
   codomain-μμ [ ._ ∎ ]         = ([ _ ∎ ] , z≤n)
-  codomain-μμ (unfold ∷ τ₂≲τ₃) = Prod.map id ≤-step (codomain-⟶μ τ₂≲τ₃)
-  codomain-μμ ((._ ∎) ∷ τ₂≲τ₃) = Prod.map id ≤-step (codomain-μμ τ₂≲τ₃)
+  codomain-μμ (unfold ∷ τ₂≲τ₃) = Prod.map id m≤n⇒m≤1+n (codomain-⟶μ τ₂≲τ₃)
+  codomain-μμ ((._ ∎) ∷ τ₂≲τ₃) = Prod.map id m≤n⇒m≤1+n (codomain-μμ τ₂≲τ₃)
   codomain-μμ (⊤      ∷ τ₂≲τ₃) with sound (≲-sound τ₂≲τ₃)
   ... | ()
 

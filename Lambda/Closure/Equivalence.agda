@@ -22,7 +22,7 @@ open import Function
 import Level
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
 open import Relation.Nullary
-open import Relation.Nullary.Negation
+open import Relation.Nullary.Decidable
 
 open ℕ.+-*-Solver using (solve; _:=_; _:+_; con)
 open Partiality._⊥

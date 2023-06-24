@@ -22,7 +22,7 @@ open import Relation.Binary.Construct.Closure.ReflexiveTransitive
 open import Relation.Binary.PropositionalEquality as PE using (_≡_)
 open import Relation.Nullary
 
-open RawMonad (P.monad {f = Level.zero})
+open RawMonad (P.monad {f = Level.zero}) renaming (pure to return)
 
 open import Lambda.Syntax
 private module C = Closure Tm

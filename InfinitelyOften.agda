@@ -24,11 +24,13 @@ import Function.Related as Related
 open import Level using (Lift; lift; lower)
 open import Relation.Binary hiding (_⇒_; _⇔_)
 open import Relation.Nullary
+open import Relation.Nullary.Decidable using (decidable-stable)
 open import Relation.Nullary.Negation
 import Relation.Nullary.Universe as Univ
 open import Relation.Unary hiding (_⇒_)
 private
   open module M {f} = RawMonad {f = f} ¬¬-Monad
+    renaming (pure to return)
   module NatOrder   = DecTotalOrder NatProp.≤-decTotalOrder
   module NatLattice = DistributiveLattice
                         NatProp.⊓-⊔-distributiveLattice
@@ -83,7 +85,7 @@ module Has-upper-bound where
   -- A closure lemma.
 
   up : ∀ {P i} → P Has-upper-bound i → (P ∘ suc) Has-upper-bound i
-  up ¬p = λ j i≤j → ¬p (suc j) (NatProp.≤-step i≤j)
+  up ¬p = λ j i≤j → ¬p (suc j) (NatProp.m≤n⇒m≤1+n i≤j)
 
   -- A conversion lemma.
 

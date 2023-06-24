@@ -84,8 +84,8 @@ _∷zipWith_·_[tail_]-hom :
   ∀ {A} (x : A) (f : A → A → A) (xs ys : StreamP A) →
   ⟦ x ∷zipWith f · xs [tail ys ] ⟧P ≈
   x ∷ ♯ S.zipWith f ⟦ xs ⟧P (S.tail ⟦ ys ⟧P)
-x ∷zipWith f · xs [tail ys ]-hom with whnf ys | P.inspect whnf ys
-... | y ∷ ys′ | [ eq ] = P.refl ∷ ♯ helper eq
+x ∷zipWith f · xs [tail ys ]-hom with whnf ys in eq
+... | y ∷ ys′ = P.refl ∷ ♯ helper eq
   where
   helper : whnf ys ≡ y ∷ ys′ →
            ⟦ zipWith f xs ys′ ⟧P ≈

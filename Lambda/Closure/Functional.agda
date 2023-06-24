@@ -8,7 +8,7 @@ open import Codata.Musical.Notation
 open import Data.Empty using (⊥-elim)
 open import Data.List hiding (lookup)
 open import Data.Maybe hiding (_>>=_)
-import Data.Maybe.Effectful as Maybe
+import Data.Maybe.Effectful.Transformer as Maybe
 open import Data.Nat
 open import Data.Product
 open import Data.Sum
@@ -40,10 +40,19 @@ private
 -- A monad with partiality and failure
 
 PF : RawMonad {f = Level.zero} (_⊥ ∘ Maybe)
-PF = Maybe.monadT Partiality.monad
+PF = mkRawMonad
+  _
+  (λ x → PF′ .RawMonad.pure x .Maybe.runMaybeT)
+  (λ m f →
+     PF′ .RawMonad._>>=_
+       (Maybe.mkMaybeT m) (Maybe.mkMaybeT ∘ f)
+       .Maybe.runMaybeT)
+  where
+  PF′ : RawMonad {f = Level.zero} (Maybe.MaybeT _⊥)
+  PF′ = Maybe.monadT Partiality.monad .RawMonadTd.rawMonad
 
 module PF where
-  open RawMonad PF public
+  open RawMonad PF public renaming (pure to return)
 
   fail : {A : Set} → Maybe A ⊥
   fail = now nothing
