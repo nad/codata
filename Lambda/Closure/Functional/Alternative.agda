@@ -58,7 +58,7 @@ PF = mkRawMonad
   PF′ = Maybe.monadT Partiality.monad .RawMonadTd.rawMonad
 
 module PF where
-  open RawMonad PF public renaming (pure to return)
+  open RawMonad PF public
 
   fail : {A : Set} → Maybe A ⊥
   fail = now nothing

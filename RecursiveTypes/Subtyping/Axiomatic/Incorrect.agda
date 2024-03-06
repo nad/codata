@@ -162,8 +162,8 @@ incomplete hyp = σ≴τ $ ≲-complete $ hyp σ≤τ
 
     ≴ : ∀ n → <′-Rec Pred n → Pred n
     ≴ n  rec [ () ]           _
-    ≴ ._ rec ((._ ∎) ∷ τ₂≲τ₃) refl = rec _ ≤′-refl τ₂≲τ₃ refl
+    ≴ ._ rec ((._ ∎) ∷ τ₂≲τ₃) refl = rec ≤′-refl τ₂≲τ₃ refl
     ≴ ._ rec (unfold ∷ τ₂≲τ₃) refl with codomain-⟶μ τ₂≲τ₃
-    ... | (τ₂≲τ₃′ , not-longer) = rec _ (≤⇒≤′ $ s≤s not-longer) τ₂≲τ₃′ refl
+    ... | (τ₂≲τ₃′ , not-longer) = rec (≤⇒≤′ $ s≤s not-longer) τ₂≲τ₃′ refl
     ≴ n  rec (⊤      ∷ τ₂≲τ₃) _    with sound (≲-sound τ₂≲τ₃)
     ... | ()

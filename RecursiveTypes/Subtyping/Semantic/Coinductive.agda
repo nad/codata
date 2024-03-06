@@ -9,8 +9,7 @@ open import Data.Nat using (ℕ; zero; suc)
 open import Data.Fin using (Fin)
 open import Function.Base
 open import Data.Empty using (⊥-elim)
-open import Relation.Nullary
-open import Relation.Nullary.Negation hiding (stable)
+open import Relation.Nullary hiding (stable)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 
 open import RecursiveTypes.Syntax

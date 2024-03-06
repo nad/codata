@@ -79,9 +79,9 @@ sound⇓ t t⇓ = <′-rec P sound⇓′ (steps t⇓) t t⇓ P.refl
   sound⇓′ s rec (t₁ · t₂) {ρ}     t₁t₂⇓ eq | (v₁    , t₁⇓ , t₂∙⇓ , eq₁) with >>=-inversion-⇓ (⟦ t₂ ⟧ ρ) t₂∙⇓
   sound⇓′ s rec (t₁ · t₂)         t₁t₂⇓ eq | (con i , t₁⇓ , t₂∙⇓ , eq₁) | (v₂ , t₂⇓ , now ()    , _  )
   sound⇓′ s rec (t₁ · t₂) {ρ} {v} t₁t₂⇓ eq | (ƛ t _ , t₁⇓ , t₂∙⇓ , eq₁) | (v₂ , t₂⇓ , laterˡ ∙⇓ , eq₂) =
-    app (rec (steps t₁⇓) ₁< t₁ t₁⇓ P.refl)
-        (rec (steps t₂⇓) ₂< t₂ t₂⇓ P.refl)
-        (rec (steps  ∙⇓) ∙< t   ∙⇓ P.refl)
+    app (rec ₁< t₁ t₁⇓ P.refl)
+        (rec ₂< t₂ t₂⇓ P.refl)
+        (rec ∙< t   ∙⇓ P.refl)
     where
     open ℕ.≤-Reasoning
 

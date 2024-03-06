@@ -16,11 +16,8 @@ open import Data.Product as Prod hiding (map)
 open import Data.Sum hiding (map)
 open import Data.Unit using (tt)
 open import Effect.Monad
-open import Function.Base
-open import Function.Equality using (_⟨$⟩_)
-open import Function.Equivalence
-  using (_⇔_; equivalence; module Equivalence)
-import Function.Related as Related
+open import Function
+import Function.Related.Propositional as Related
 open import Level using (Lift; lift; lower)
 open import Relation.Binary hiding (_⇒_; _⇔_)
 open import Relation.Nullary
@@ -30,7 +27,6 @@ import Relation.Nullary.Universe as Univ
 open import Relation.Unary hiding (_⇒_)
 private
   open module M {f} = RawMonad {f = f} ¬¬-Monad
-    renaming (pure to return)
   module NatOrder   = DecTotalOrder NatProp.≤-decTotalOrder
   module NatLattice = DistributiveLattice
                         NatProp.⊓-⊔-distributiveLattice
@@ -51,7 +47,7 @@ module Above where
   -- Conversion lemma.
 
   move-suc : ∀ {P i} → P Above suc i ⇔ (P ∘ suc) Above i
-  move-suc {P} {i} = equivalence ⇒ ⇐
+  move-suc {P} {i} = mk⇔ ⇒ ⇐
     where
     ⇒ : P Above suc i → (P ∘ suc) Above i
     ⇒ (.(1 + j) , s≤s {n = j} i≤j , P[1+j]) = (j , i≤j , P[1+j])
@@ -65,8 +61,8 @@ module Above where
     ∀ {P} →
     (∀ i → Stable (P Above i)) → (∀ i → Stable ((P ∘ suc) Above i))
   stable-up stable i ¬¬P∘suc⇑i =
-    Equivalence.to move-suc ⟨$⟩
-      stable (1 + i) (_⟨$⟩_ (Equivalence.from move-suc) <$> ¬¬P∘suc⇑i)
+    Equivalence.to move-suc $
+      stable (1 + i) (Equivalence.from move-suc <$> ¬¬P∘suc⇑i)
 
 ------------------------------------------------------------------------
 -- Has upper bound
@@ -91,7 +87,7 @@ module Has-upper-bound where
 
   move-suc : ∀ {P i} →
              P Has-upper-bound suc i ⇔ (P ∘ suc) Has-upper-bound i
-  move-suc {P} {i} = equivalence ⇒ ⇐
+  move-suc {P} {i} = mk⇔ ⇒ ⇐
     where
     ⇒ : P Has-upper-bound suc i → (P ∘ suc) Has-upper-bound i
     ⇒ P↯[1+i] j i≤j P[1+j] = P↯[1+i] (1 + j) (s≤s i≤j) P[1+j]
@@ -103,7 +99,7 @@ module Has-upper-bound where
 
   mutually-inconsistent :
     ∀ {P i} → P Has-upper-bound i ⇔ (¬ (P Above i))
-  mutually-inconsistent {P} {i} = equivalence ⇒ ⇐
+  mutually-inconsistent {P} {i} = mk⇔ ⇒ ⇐
     where
     ⇒ : P Has-upper-bound i → ¬ (P Above i)
     ⇒ P↯i (j , i≤j , Pj) = P↯i j i≤j Pj
@@ -140,7 +136,7 @@ module Below where
   -- _Above_ (_Below_ P) is pointwise equivalent to _Below_ P.
 
   ⇑⇓⇔⇓ : ∀ {P} i → (_Below_ P) Above i ⇔ P Below i
-  ⇑⇓⇔⇓ {P} i = equivalence ⇒ ⇐
+  ⇑⇓⇔⇓ {P} i = mk⇔ ⇒ ⇐
     where
     ⇒ : (_Below_ P) Above i → P Below i
     ⇒ (j , i≤j , P⇓j) k k≤i = P⇓j k (NatOrder.trans k≤i i≤j)
@@ -177,13 +173,13 @@ module Mixed where
             Inf (P ∪ Q) → ¬ Inf P → Inf Q
   filter₂ {P} {Q} stable p∪q ¬p = helper witness stable p∪q ¬p
     where
-    open Related.EquationalReasoning
+    open Related.EquationalReasoning {k = Related.implication}
 
     witness : ∃ Q
-    witness = Prod.map id proj₂ $ stable 0 (
-      ¬ (Q Above 0)  ∼⟨ contraposition (Prod.map id (_,_ z≤n)) ⟩
-      ¬ ∃ Q          ∼⟨ filter₁ p∪q ⟩
-      Inf P          ∼⟨ ¬p ⟩
+    witness = Prod.map id proj₂ $ stable 0 $ Func.to (
+      ¬ (Q Above 0)  ∼⟨ mk⟶ $ contraposition (Prod.map id (_,_ z≤n)) ⟩
+      ¬ ∃ Q          ∼⟨ mk⟶ $ filter₁ p∪q ⟩
+      Inf P          ∼⟨ mk⟶ ¬p ⟩
       ⊥              ∎)
 
     helper : ∀ {P Q} →
@@ -228,7 +224,7 @@ module Alternative where
   up _ (now _ inf) = ♭ inf
 
   equivalent : ∀ {P} → Inf P ⇔ Mixed.Inf P
-  equivalent = equivalence ⇒ ⇐
+  equivalent = mk⇔ ⇒ ⇐
     where
     ⇒ : ∀ {P} → Inf P → Mixed.Inf P
     ⇒ (now p inf) = ⇒′ p (♭ inf)
@@ -260,10 +256,10 @@ module Functional where
   -- This definition is equivalent to the ones above.
 
   up : ∀ {P} → Inf P → Inf (P ∘ suc)
-  up ∀iP⇑i i = Equivalence.to Above.move-suc ⟨$⟩ ∀iP⇑i (suc i)
+  up ∀iP⇑i i = Equivalence.to Above.move-suc $ ∀iP⇑i (suc i)
 
   equivalent : ∀ {P} → Inf P ⇔ Mixed.Inf P
-  equivalent = equivalence ⇒ ⇐
+  equivalent = mk⇔ ⇒ ⇐
     where
     ⇒ : ∀ {P} → Inf P → Mixed.Inf P
     ⇒ {P} inf with inf 0
@@ -307,7 +303,7 @@ module Fin where
     ⇐′ zero    fin (now p inf) = fin 0 z≤n p
     ⇐′ zero    fin (skip  inf) = ⇐′ zero (λ j i≤j → fin (suc j) z≤n) inf
     ⇐′ (suc i) fin inf         =
-      ⇐′ i (Equivalence.to Has-upper-bound.move-suc ⟨$⟩ fin)
+      ⇐′ i (Equivalence.to Has-upper-bound.move-suc fin)
          (Mixed.up inf)
 
   -- The other direction (with a double-negated conclusion) implies
@@ -321,7 +317,7 @@ module Fin where
               Mixed.Inf (P ∪ Q) →
               ∀ i → P Has-upper-bound i → Mixed.Inf Q
     filter′ (now (inj₁ p) inf) 0       fin = ⊥-elim (fin 0 z≤n p)
-    filter′ (now (inj₁ p) inf) (suc i) fin = skip (filter′ (♭ inf) i (Equivalence.to Has-upper-bound.move-suc ⟨$⟩ fin))
+    filter′ (now (inj₁ p) inf) (suc i) fin = skip (filter′ (♭ inf) i (Equivalence.to Has-upper-bound.move-suc fin))
     filter′ (now (inj₂ q) inf) i       fin = now q (♯ filter′ (♭ inf) i (Has-upper-bound.up fin))
     filter′ (skip         inf) i       fin = skip (filter′ inf i (Has-upper-bound.up fin))
 
@@ -386,8 +382,8 @@ module Double-negation-shift where
   respects : ∀ {P₁ P₂} → (∀ i → P₁ i ⇔ P₂ i) → DNS P₁ → DNS P₂
   respects P₁⇔P₂ dns ∀i¬¬P₂i ¬∀iP₂i =
     dns (λ i ¬P₁i → ∀i¬¬P₂i i (λ P₂i →
-                      ¬P₁i (Equivalence.from (P₁⇔P₂ i) ⟨$⟩ P₂i)))
-        (λ ∀iP₁i → ¬∀iP₂i (λ i → Equivalence.to (P₁⇔P₂ i) ⟨$⟩ ∀iP₁i i))
+                      ¬P₁i (Equivalence.from (P₁⇔P₂ i) P₂i)))
+        (λ ∀iP₁i → ¬∀iP₂i (λ i → Equivalence.to (P₁⇔P₂ i) $ ∀iP₁i i))
 
   -- Double-negation shift property restricted to predicates which are
   -- downwards closed.
@@ -481,22 +477,22 @@ module NonConstructive where
   Other-direction P = Inf P → ¬ ¬ Functional.Inf P
 
   equivalent₁ : ∀ {P} → Other-direction P ⇔ DNS (_Above_ P)
-  equivalent₁ = equivalence ⇒shift shift⇒
+  equivalent₁ = mk⇔ ⇒shift shift⇒
     where
     shift⇒ : ∀ {P} → DNS (_Above_ P) → Other-direction P
     shift⇒ shift ¬fin =
       shift (λ i ¬p →
         ¬fin (i , Equivalence.from
-                    Has-upper-bound.mutually-inconsistent ⟨$⟩ ¬p))
+                    Has-upper-bound.mutually-inconsistent ¬p))
 
     ⇒shift : ∀ {P} → Other-direction P → DNS (_Above_ P)
     ⇒shift hyp p =
       hyp (uncurry (λ i fin →
         p i (Equivalence.to
-               Has-upper-bound.mutually-inconsistent ⟨$⟩ fin)))
+               Has-upper-bound.mutually-inconsistent fin)))
 
   equivalent₂ : ∀ {P} → Other-direction (_Below_ P) ⇔ DNS P
-  equivalent₂ {P} = equivalence ⇒shift shift⇒
+  equivalent₂ {P} = mk⇔ ⇒shift shift⇒
     where
     shift⇒ : DNS P → Other-direction (_Below_ P)
     shift⇒ shift inf ¬inf =
@@ -505,32 +501,30 @@ module NonConstructive where
             (λ ∀iPi → ¬inf (λ i → i , NatOrder.refl , λ j j≤i → ∀iPi j))
 
     ⇒shift : ∀ {P} → Other-direction (_Below_ P) → DNS P
-    ⇒shift {P} =
-      Other-direction (_Below_ P)                   ∼⟨ (λ other₁ →
-        Inf (_Below_ (_Below_ P))                         ∼⟨ map Below.counit ⟩
-        Inf (_Below_ P)                                   ∼⟨ other₁ ⟩
-        ¬ ¬ Functional.Inf (_Below_ P)                    ∼⟨ _<$>_ (Functional.map Below.cojoin) ⟩
-        (¬ ¬ Functional.Inf (_Below_ (_Below_ P)))        ∎) ⟩
-      Other-direction (_Below_ (_Below_ P))         ∼⟨ _⟨$⟩_ (Equivalence.to equivalent₁) ⟩
-      DNS (_Above_ (_Below_ (_Below_ P)))           ∼⟨ Double-negation-shift.respects Below.⇑⇓⇔⇓ ⟩
-      DNS (_Below_ (_Below_ P))                     ∼⟨ Double-negation-shift.DNS⇒DNS⇓ ⟩
-      DNS⇓ (_Below_ P)                              ∼⟨ Double-negation-shift.DNS⇓⇒DNS ⟩
-      DNS P                                         ∎
-      where open Related.EquationalReasoning
+    ⇒shift {P} = Func.to (
+      Other-direction (_Below_ P)                   ∼⟨ (mk⟶ λ other₁ → Func.to (
+        Inf (_Below_ (_Below_ P))                         ∼⟨ mk⟶ (map Below.counit) ⟩
+        Inf (_Below_ P)                                   ∼⟨ mk⟶ other₁ ⟩
+        ¬ ¬ Functional.Inf (_Below_ P)                    ∼⟨ mk⟶ (_<$>_ (Functional.map Below.cojoin)) ⟩
+        (¬ ¬ Functional.Inf (_Below_ (_Below_ P)))        ∎)) ⟩
+      Other-direction (_Below_ (_Below_ P))         ∼⟨ mk⟶ (Equivalence.to equivalent₁) ⟩
+      DNS (_Above_ (_Below_ (_Below_ P)))           ∼⟨ mk⟶ (Double-negation-shift.respects Below.⇑⇓⇔⇓) ⟩
+      DNS (_Below_ (_Below_ P))                     ∼⟨ mk⟶ Double-negation-shift.DNS⇒DNS⇓ ⟩
+      DNS⇓ (_Below_ P)                              ∼⟨ mk⟶ Double-negation-shift.DNS⇓⇒DNS ⟩
+      DNS P                                         ∎)
+      where open Related.EquationalReasoning {k = Related.implication}
 
   equivalent : (∀ P → Other-direction P) ⇔ (∀ P → DNS P)
   equivalent =
-    equivalence (λ other P → _⟨$⟩_ (Equivalence.to   equivalent₂)
-                                   (other (_Below_ P)))
-                (λ shift P → _⟨$⟩_ (Equivalence.from equivalent₁)
-                                   (shift (_Above_ P)))
+    mk⇔ (λ other P → Equivalence.to   equivalent₂ (other (_Below_ P)))
+        (λ shift P → Equivalence.from equivalent₁ (shift (_Above_ P)))
 
   -- Some lemmas used below.
 
   up : ∀ {P} → Inf P → Inf (P ∘ suc)
   up =
     contraposition
-      (Prod.map suc (_⟨$⟩_ (Equivalence.from Has-upper-bound.move-suc)))
+      (Prod.map suc (Equivalence.from Has-upper-bound.move-suc))
 
   witness : ∀ {P} → Inf P → ¬ ¬ ∃ P
   witness ¬fin ¬p = ¬fin (0 , λ i _ Pi → ¬p (i , Pi))
@@ -563,7 +557,7 @@ module DoubleNegated where
   expand (f ⟪$⟫ m) = λ ¬inf → m (¬inf ∘ f)
 
   ¬¬equivalent : ∀ {P} → NonConstructive.Inf P ⇔ ¬¬Inf P
-  ¬¬equivalent = equivalence ⇒ ⇐
+  ¬¬equivalent = mk⇔ ⇒ ⇐
     where
     ⇒ : ∀ {P} → NonConstructive.Inf P → ¬¬Inf P
     ⇒ ¬fin = helper ¬fin ⟪$⟫ NonConstructive.witness ¬fin
@@ -590,22 +584,22 @@ module DoubleNegated where
   -- (in the double-negation monad).
 
   ⇐ : ∀ {P} → Inf P → NonConstructive.Inf P
-  ⇐ {P} =
-    Inf P                  ∼⟨ (λ inf → const inf ⟪$⟫ return tt) ⟩
-    ¬¬Inf P                ∼⟨ _⟨$⟩_ (Equivalence.from ¬¬equivalent) ⟩
-    NonConstructive.Inf P  ∎
-    where open Related.EquationalReasoning
+  ⇐ {P} = Func.to (
+    Inf P                  ∼⟨ mk⟶ (λ inf → const inf ⟪$⟫ return tt) ⟩
+    ¬¬Inf P                ∼⟨ mk⟶ (Equivalence.from ¬¬equivalent) ⟩
+    NonConstructive.Inf P  ∎)
+    where open Related.EquationalReasoning {k = Related.implication}
 
   ⇒ : ∀ {P} → NonConstructive.Inf P → ¬ ¬ Inf P
-  ⇒ {P} =
-    NonConstructive.Inf P  ∼⟨ _⟨$⟩_ (Equivalence.to ¬¬equivalent) ⟩
-    ¬¬Inf P                ∼⟨ expand ⟩
-    (¬ ¬ Inf P)            ∎
-    where open Related.EquationalReasoning
+  ⇒ {P} = Func.to (
+    NonConstructive.Inf P  ∼⟨ mk⟶ (Equivalence.to ¬¬equivalent) ⟩
+    ¬¬Inf P                ∼⟨ mk⟶ expand ⟩
+    (¬ ¬ Inf P)            ∎)
+    where open Related.EquationalReasoning {k = Related.implication}
 
   equivalent : ∀ {P} → ¬ ¬ (NonConstructive.Inf P ⇔ Inf P)
   equivalent {P} =
-    (λ ⇒′ → equivalence (⇒′ ∘ lift) ⇐) <$>
+    (λ ⇒′ → mk⇔ (⇒′ ∘ lift) ⇐) <$>
       Univ.¬¬-pull (Univ._⇒_ _ Univ.Id) (λ inf → ⇒ (lower inf))
 
   -- Inf commutes with binary sums (in the double-negation monad).

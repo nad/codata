@@ -16,7 +16,7 @@ open import Data.Vec using (Vec; []; _∷_; lookup)
 open import Effect.Monad
 open import Effect.Monad.Partiality as Partiality
   using (_⊥; never; OtherKind; other; steps)
-open import Function
+open import Function hiding (_⟨$⟩_)
 import Level
 open import Relation.Binary using (module Preorder)
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
@@ -52,7 +52,7 @@ PF = mkRawMonad
   PF′ = Maybe.monadT Partiality.monad .RawMonadTd.rawMonad
 
 module PF where
-  open RawMonad PF public renaming (pure to return)
+  open RawMonad PF public
 
   fail : {A : Set} → Maybe A ⊥
   fail = now nothing

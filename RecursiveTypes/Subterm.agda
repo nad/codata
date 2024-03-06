@@ -19,9 +19,7 @@ open import Data.List.Relation.Binary.Subset.Propositional
 open import Data.List.Relation.Binary.Subset.Propositional.Properties
 open import Data.Product
 open import Data.Sum
-open import Function.Base
-open import Function.Equality using (_⟨$⟩_)
-open import Function.Inverse using (module Inverse)
+open import Function hiding (_⟶_)
 open import Relation.Binary
 import Relation.Binary.Reasoning.Preorder as PreR
 import Relation.Binary.Reasoning.Setoid as EqR
@@ -118,14 +116,14 @@ sound : ∀ {n σ} (τ : Ty n) → σ ∈ τ ∗ → σ ⊑ τ
 sound τ         (here P.refl) = refl
 sound (τ₁ ⟶ τ₂) (there σ∈)    =
   [ ⟶ˡ ∘ sound τ₁ , ⟶ʳ ∘ sound τ₂ ]′
-    (Inverse.from (++↔ {xs = τ₁ ∗}) ⟨$⟩ σ∈)
+    (Inverse.from (++↔ {xs = τ₁ ∗}) σ∈)
 sound (μ τ₁ ⟶ τ₂) (there (here P.refl)) = unfold refl
 sound (μ τ₁ ⟶ τ₂) (there (there σ∈))
   with Inverse.from (map-∈↔ (λ σ → σ / sub (μ τ₁ ⟶ τ₂))
-                            {xs = τ₁ ∗ ++ τ₂ ∗}) ⟨$⟩ σ∈
+                            {xs = τ₁ ∗ ++ τ₂ ∗}) σ∈
 ... | (χ , χ∈ , P.refl) =
   sub-⊑-μ $ [ ⟶ˡ ∘ sound τ₁ , ⟶ʳ ∘ sound τ₂ ]′
-              (Inverse.from (++↔ {xs = τ₁ ∗}) ⟨$⟩ χ∈)
+              (Inverse.from (++↔ {xs = τ₁ ∗}) χ∈)
 sound ⊥       (there ())
 sound ⊤       (there ())
 sound (var x) (there ())
@@ -228,8 +226,8 @@ sub-∗′-commute-var (suc k) (suc x) τ = begin
 sub-∗-commute : ∀ k {n} σ (τ : Ty n) →
                 σ / sub τ ↑⋆ k ∗ ⊆ σ ∗ // sub τ ↑⋆ k ++ τ ∗ // wk⋆ k
 sub-∗-commute k σ         τ     (here P.refl) = here P.refl
-sub-∗-commute k ⊥         τ     •∈•           = Inverse.to ++↔ ⟨$⟩ inj₁ •∈•
-sub-∗-commute k ⊤         τ     •∈•           = Inverse.to ++↔ ⟨$⟩ inj₁ •∈•
+sub-∗-commute k ⊥         τ     •∈•           = Inverse.to ++↔ $ inj₁ •∈•
+sub-∗-commute k ⊤         τ     •∈•           = Inverse.to ++↔ $ inj₁ •∈•
 sub-∗-commute k (var x)   τ     (there •∈•)   = there $ sub-∗′-commute-var k x τ •∈•
 sub-∗-commute k (σ₁ ⟶ σ₂) τ {χ} (there •∈•)   = there $
   χ                                    ∈⟨ •∈• ⟩
@@ -282,8 +280,8 @@ sub-∗-commute k (μ σ₁ ⟶ σ₂) τ {χ} (there (there •∈•)) = there
 
 complete : ∀ {n} {σ τ : Ty n} → σ ⊑ τ → σ ∈ τ ∗
 complete refl                      = here P.refl
-complete (⟶ˡ σ⊑τ₁)                 = there (Inverse.to ++↔                            ⟨$⟩ inj₁ (complete σ⊑τ₁))
-complete (⟶ʳ σ⊑τ₂)                 = there (Inverse.to (++↔ {P = P._≡_ _} {xs = _ ∗}) ⟨$⟩ inj₂ (complete σ⊑τ₂))
+complete (⟶ˡ σ⊑τ₁)                 = there (Inverse.to ++↔                            $ inj₁ (complete σ⊑τ₁))
+complete (⟶ʳ σ⊑τ₂)                 = there (Inverse.to (++↔ {P = P._≡_ _} {xs = _ ∗}) $ inj₂ (complete σ⊑τ₂))
 complete (unfold {σ} {τ₁} {τ₂} σ⊑) =
   σ                                 ∈⟨ complete σ⊑ ⟩
   unfold[μ τ₁ ⟶ τ₂ ] ∗              ⊆⟨ sub-∗-commute zero (τ₁ ⟶ τ₂) τ ⟩
@@ -307,5 +305,5 @@ subtermsOf τ = mapWith∈ (τ ∗) (-,_ ∘′ sound τ)
 subtermsOf-complete : ∀ {n} {σ τ : Ty n} →
                       σ ⊑ τ → ∃ λ σ⊑τ → (σ , σ⊑τ) ∈ subtermsOf τ
 subtermsOf-complete {σ = σ} {τ} σ⊑τ =
-  (-, Inverse.to (mapWith∈↔ {f = -,_ ∘′ sound τ}) ⟨$⟩
+  (-, Inverse.to (mapWith∈↔ {f = -,_ ∘′ sound τ})
         (σ , complete σ⊑τ , P.refl))

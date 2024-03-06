@@ -13,9 +13,7 @@ open import Data.List.Relation.Unary.All as All using (All; []; _∷_)
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.Product
 open import Data.Sum as Sum using (_⊎_; inj₁; inj₂; [_,_]′)
-open import Function.Base
-open import Function.Equality using (_⟨$⟩_)
-open import Function.Inverse using (module Inverse)
+open import Function hiding (_⟶_)
 open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Relation.Binary.PropositionalEquality as PropEq
   using (_≡_; refl)
@@ -226,7 +224,7 @@ module Decidable {n} (χ₁ χ₂ : Ty n) where
 
       helper : ∀ {ℓ} → Any (_≈_ H) A ⊎ (∃ λ n → ℓ ≡ suc n × H ∷ A ⊕ n) →
                ⟨ A ⟩⋆ ⊢ σ₁ ⟶ σ₂ ≤ τ₁ ⟶ τ₂ ⊎ ¬ σ₁ ⟶ σ₂ ≤Coind τ₁ ⟶ τ₂
-      helper (inj₁ σ≲τ)             = inj₁ $ hyp $ Inverse.to map↔ ⟨$⟩ σ≲τ
+      helper (inj₁ σ≲τ)             = inj₁ $ hyp $ Inverse.to map↔ σ≲τ
       helper (inj₂ (_ , refl , T′)) = helper₂
         (T′ ⊢ τ₁ , anti-mono ST.⟶ˡ′ τ⊑ ≤? σ₁ , anti-mono ST.⟶ˡ′ σ⊑)
         (T′ ⊢ σ₂ , anti-mono ST.⟶ʳ′ σ⊑ ≤? τ₂ , anti-mono ST.⟶ʳ′ τ⊑)
@@ -275,7 +273,7 @@ weaken unfold                = unfold
 weaken fold                  = fold
 weaken (τ ∎)                 = τ ∎
 weaken (τ₁ ≤⟨ τ₁≤τ₂ ⟩ τ₂≤τ₃) = τ₁ ≤⟨ weaken τ₁≤τ₂ ⟩ weaken τ₂≤τ₃
-weaken (hyp h)               = hyp (Inverse.to ++↔ ⟨$⟩ inj₁ h)
+weaken (hyp h)               = hyp (Inverse.to ++↔ $ inj₁ h)
 weaken (τ₁≤σ₁ ⟶ σ₂≤τ₂)       = weaken τ₁≤σ₁ ⟶ weaken σ₂≤τ₂
 
 -- The subtyping relation defined above is complete with respect to

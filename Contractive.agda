@@ -109,7 +109,7 @@ record ContractiveFun (cofe : COFE) : Set where
   -- The fixpoint is the limit of the following family.
 
   fam : Carrier → Domain
-  fam = wfRec _ (const Domain) (λ a rec → F (lim↓ a rec))
+  fam = wfRec _ (const Domain) (λ a rec → F (lim↓ a (λ _ → rec)))
 
   fixpoint : Domain
   fixpoint = limU fam
@@ -133,9 +133,9 @@ record ContractiveFun (cofe : COFE) : Set where
     step a rec {c} {b} c<a b<a c<b = begin
       fam c                  ≈⟨ unfold c c ⟩
       F (lim↓ c (lift fam))  ≈⟨ isContractive (λ {d} d<c → begin
-         lim↓ c (lift fam)      ≈⟨ sym $ isLimit↓ c (rec c c<a) d<c ⟩
+         lim↓ c (lift fam)      ≈⟨ sym $ isLimit↓ c (rec c<a) d<c ⟩
          lift {↓ a} fam d
-              (trans d<c c<a)   ≈⟨ isLimit↓ b (rec b b<a) (trans d<c c<b) ⟩
+              (trans d<c c<a)   ≈⟨ isLimit↓ b (rec b<a) (trans d<c c<b) ⟩
          lim↓ b (lift fam)      ∎) ⟩
       F (lim↓ b (lift fam))  ≈⟨ sym $ unfold b c ⟩
       fam b                  ∎
@@ -179,6 +179,6 @@ record ContractiveFun (cofe : COFE) : Set where
     step : ∀ a → WfRec _<_ P a → P a
     step a rec = begin
       x           ≈⟨ isFix a ⟩
-      F x         ≈⟨ isContractive (λ {a'} a'<a → rec a' a'<a) ⟩
+      F x         ≈⟨ isContractive rec ⟩
       F fixpoint  ≈⟨ sym $ isFixpoint a ⟩
       fixpoint    ∎

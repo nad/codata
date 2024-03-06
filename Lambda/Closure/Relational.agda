@@ -9,7 +9,7 @@ open import Data.Empty
 open import Data.List hiding (lookup)
 open import Data.Product
 open import Data.Vec using (Vec; _∷_; []; lookup)
-open import Function.Base
+open import Function hiding (_⟶_)
 open import
   Relation.Binary.Construct.Closure.ReflexiveTransitive.Properties
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
@@ -113,10 +113,10 @@ correct⇓′ {ρ = ρ} {c} {s} (ƛ {t}) = begin
   ⟨ clo (comp t [ ret ]) ∷ c ,                          s , comp-env ρ ⟩ ⟶⟨ clo ⟩
   ⟨                        c , val (comp-val (ƛ t ρ)) ∷ s , comp-env ρ ⟩ ∎
 correct⇓′ {ρ = ρ} {c} {s} {v} (app {t₁} {t₂} {t = t} {ρ′} {v′ = v′} t₁⇓ t₂⇓ t₁t₂⇓) = begin
-  ⟨ comp t₁ (comp t₂ (app ∷ c)) ,                                               s ,               comp-env ρ  ⟩ ⟶⋆⟨ correct⇓′ t₁⇓ ⟩
-  ⟨          comp t₂ (app ∷ c)  ,                     val (comp-val (ƛ t ρ′)) ∷ s ,               comp-env ρ  ⟩ ⟶⋆⟨ correct⇓′ t₂⇓ ⟩
+  ⟨ comp t₁ (comp t₂ (app ∷ c)) ,                                               s ,               comp-env ρ  ⟩ ⟶*⟨ correct⇓′ t₁⇓ ⟩
+  ⟨          comp t₂ (app ∷ c)  ,                     val (comp-val (ƛ t ρ′)) ∷ s ,               comp-env ρ  ⟩ ⟶*⟨ correct⇓′ t₂⇓ ⟩
   ⟨                   app ∷ c   , val (comp-val v′) ∷ val (comp-val (ƛ t ρ′)) ∷ s ,               comp-env ρ  ⟩ ⟶⟨ app ⟩
-  ⟨ comp t [ ret ]              ,                          ret c (comp-env ρ) ∷ s , comp-val v′ ∷ comp-env ρ′ ⟩ ⟶⋆⟨ correct⇓′ t₁t₂⇓ ⟩
+  ⟨ comp t [ ret ]              ,                          ret c (comp-env ρ) ∷ s , comp-val v′ ∷ comp-env ρ′ ⟩ ⟶*⟨ correct⇓′ t₁t₂⇓ ⟩
   ⟨        [ ret ]              ,       val (comp-val v) ∷ ret c (comp-env ρ) ∷ s , comp-val v′ ∷ comp-env ρ′ ⟩ ⟶⟨ ret ⟩
   ⟨                         c   ,       val (comp-val v) ∷                      s ,               comp-env ρ  ⟩ ∎
 

@@ -11,8 +11,6 @@ module RecursiveTypes.Subterm.RestrictedHypothesis
          {n} (χ₁ χ₂ : Ty n) where
 
 open import Function
-open import Function.Equality using (_⟨$⟩_)
-open import Function.Inverse using (module Inverse)
 open import Data.List as List
 open import Data.List.Relation.Unary.Any as Any
 open import Data.List.Relation.Unary.Any.Properties
@@ -85,7 +83,7 @@ subtermsOf-complete :
   ∀ {τ} (f : ∀ {σ} → σ ⊑ τ → Subterm σ) {σ} →
   σ ⊑ τ → ∃ λ σ⊑τ → (σ , f σ⊑τ) ∈ subtermsOf τ f
 subtermsOf-complete f σ⊑τ =
-  Prod.map id (λ ∈ → Inverse.to (map-∈↔ _) ⟨$⟩ (_ , ∈ , refl)) $
+  Prod.map id (λ ∈ → Inverse.to (map-∈↔ _) (_ , ∈ , refl)) $
     ST.subtermsOf-complete σ⊑τ
 
 subtermsOf²-complete :
@@ -97,7 +95,7 @@ subtermsOf²-complete :
     (subtermsOf τ₁ f ⊗ subtermsOf τ₂ g)
 subtermsOf²-complete f g σ₁⊑τ₁ σ₂⊑τ₂ =
   Any.map (PropEq.cong $ Prod.map proj₁ proj₁) $
-    Inverse.to ⊗-∈↔ ⟨$⟩
+    Inverse.to ⊗-∈↔
       ( proj₂ (subtermsOf-complete f σ₁⊑τ₁)
       , proj₂ (subtermsOf-complete g σ₂⊑τ₂)
       )
@@ -120,21 +118,21 @@ restrictedHyps = (⊑-χ₁ ⊗ ⊑-χ₂) ++ (⊑-χ₂ ⊗ ⊑-χ₁) ++
 
 complete : ∀ h → h ⟨∈⟩ restrictedHyps
 complete ((σ , inj₁ σ⊑χ₁) ≲ (τ , inj₂ τ⊑χ₂)) =
-  Inverse.to ++↔ ⟨$⟩ (inj₁ $
+  Inverse.to ++↔ (inj₁ $
   subtermsOf²-complete inj₁ inj₂ σ⊑χ₁ τ⊑χ₂)
 complete ((σ , inj₂ σ⊑χ₂) ≲ (τ , inj₁ τ⊑χ₁)) =
-  Inverse.to (++↔ {xs = ⊑-χ₁ ⊗ ⊑-χ₂}) ⟨$⟩ (inj₂ $
-  Inverse.to ++↔                      ⟨$⟩ (inj₁ $
+  Inverse.to (++↔ {xs = ⊑-χ₁ ⊗ ⊑-χ₂}) (inj₂ $
+  Inverse.to ++↔                      (inj₁ $
   subtermsOf²-complete inj₂ inj₁ σ⊑χ₂ τ⊑χ₁))
 complete ((σ , inj₁ σ⊑χ₁) ≲ (τ , inj₁ τ⊑χ₁)) =
-  Inverse.to (++↔ {xs = ⊑-χ₁ ⊗ ⊑-χ₂}) ⟨$⟩ (inj₂ $
-  Inverse.to (++↔ {xs = ⊑-χ₂ ⊗ ⊑-χ₁}) ⟨$⟩ (inj₂ $
-  Inverse.to ++↔                      ⟨$⟩ (inj₁ $
+  Inverse.to (++↔ {xs = ⊑-χ₁ ⊗ ⊑-χ₂}) (inj₂ $
+  Inverse.to (++↔ {xs = ⊑-χ₂ ⊗ ⊑-χ₁}) (inj₂ $
+  Inverse.to ++↔                      (inj₁ $
   subtermsOf²-complete inj₁ inj₁ σ⊑χ₁ τ⊑χ₁)))
 complete ((σ , inj₂ σ⊑χ₂) ≲ (τ , inj₂ τ⊑χ₂)) =
-  Inverse.to (++↔ {xs = ⊑-χ₁ ⊗ ⊑-χ₂}) ⟨$⟩ (inj₂ $
-  Inverse.to (++↔ {xs = ⊑-χ₂ ⊗ ⊑-χ₁}) ⟨$⟩ (inj₂ $
-  Inverse.to (++↔ {xs = ⊑-χ₁ ⊗ ⊑-χ₁}) ⟨$⟩ (inj₂ $
+  Inverse.to (++↔ {xs = ⊑-χ₁ ⊗ ⊑-χ₂}) (inj₂ $
+  Inverse.to (++↔ {xs = ⊑-χ₂ ⊗ ⊑-χ₁}) (inj₂ $
+  Inverse.to (++↔ {xs = ⊑-χ₁ ⊗ ⊑-χ₁}) (inj₂ $
   subtermsOf²-complete inj₂ inj₂ σ⊑χ₂ τ⊑χ₂)))
 
 ------------------------------------------------------------------------
