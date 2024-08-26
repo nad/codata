@@ -19,12 +19,12 @@ open import Effect.Monad
 open import Function
 import Function.Related.Propositional as Related
 open import Level using (Lift; lift; lower)
-open import Relation.Binary hiding (_⇒_; _⇔_)
+open import Relation.Binary hiding (_⇒_; _⇔_; Stable)
 open import Relation.Nullary
 open import Relation.Nullary.Decidable using (decidable-stable)
 open import Relation.Nullary.Negation
 import Relation.Nullary.Universe as Univ
-open import Relation.Unary hiding (_⇒_)
+open import Relation.Unary hiding (_⇒_; Stable)
 private
   open module M {f} = RawMonad {f = f} ¬¬-Monad
   module NatOrder   = DecTotalOrder NatProp.≤-decTotalOrder

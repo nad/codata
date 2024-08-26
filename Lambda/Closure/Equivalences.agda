@@ -16,10 +16,7 @@ open import Data.Unit
 open import Data.Vec using ([]; _∷_)
 open import Effect.Monad.Partiality as Partiality
   using (_⊥; later⁻¹; laterˡ⁻¹; laterʳ⁻¹)
-open import Function.Base
-open import Function.Equality using (_⟨$⟩_)
-open import Function.Equivalence
-  using (_⇔_; equivalence; module Equivalence)
+open import Function
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
 open import Relation.Nullary
 
@@ -49,8 +46,8 @@ open module EC {A : Set} = Partiality.Equality (λ (_ _ : A) → ⊤)
 -- _≈○_ is equivalent to "terminates iff terminates".
 
 ≈○⇔⇓≈⇓ : {A : Set} {x y : A ⊥} → x ≈○ y ⇔ (x ⇓ ⇔ y ⇓)
-≈○⇔⇓≈⇓ {A} = equivalence
-  (λ x≈y → equivalence (h₁ x≈y) (h₁ (RC.sym x≈y)))
+≈○⇔⇓≈⇓ {A} = mk⇔
+  (λ x≈y → mk⇔ (h₁ x≈y) (h₁ (RC.sym x≈y)))
   (h₂ _ _)
   where
   h₁ : {x y : A ⊥} → x ≈○ y → x ⇓ → y ⇓
@@ -62,18 +59,18 @@ open module EC {A : Set} = Partiality.Equality (λ (_ _ : A) → ⊤)
   h₂ : (x y : A ⊥) → x ⇓ ⇔ y ⇓ → x ≈○ y
   h₂ (now v) y x⇓⇔y⇓ =
     now v  ≈○⟨ EC.now _ ⟩
-    now _  ≈○⟨ Partiality.map _ (sym $ proj₂ $ Equivalence.to   x⇓⇔y⇓ ⟨$⟩ (-, now P.refl)) ⟩
+    now _  ≈○⟨ Partiality.map _ (sym $ proj₂ $ Equivalence.to   x⇓⇔y⇓ (-, now P.refl)) ⟩
     y      ∎○
 
   h₂ x (now v) x⇓⇔y⇓ =
-    x      ≈○⟨ Partiality.map _ (      proj₂ $ Equivalence.from x⇓⇔y⇓ ⟨$⟩ (-, now P.refl)) ⟩
+    x      ≈○⟨ Partiality.map _ (      proj₂ $ Equivalence.from x⇓⇔y⇓ (-, now P.refl)) ⟩
     now _  ≈○⟨ EC.now _ ⟩
     now v  ∎○
 
   h₂ (later x) (later y) x⇓⇔y⇓ = EC.later (♯
     h₂ (♭ x) (♭ y)
-       (equivalence (lemma (_⟨$⟩_ (Equivalence.to   x⇓⇔y⇓)))
-                    (lemma (_⟨$⟩_ (Equivalence.from x⇓⇔y⇓)))))
+       (mk⇔ (lemma (Equivalence.to   x⇓⇔y⇓))
+            (lemma (Equivalence.from x⇓⇔y⇓))))
     where
     lemma : {A : Set} {x y : ∞ (A ⊥)} →
             (later x ⇓ → later y ⇓) → (♭ x ⇓ → ♭ y ⇓)
@@ -127,9 +124,9 @@ t₁ ≈C′ t₂ = ∀ C → ⟦ C [ t₁ ] ⟧ [] ⇓ ⇔ ⟦ C [ t₂ ] ⟧ [
 -- These definitions are equivalent.
 
 ≈C⇔≈C′ : ∀ {n} {t₁ t₂ : Tm n} → t₁ ≈C t₂ ⇔ t₁ ≈C′ t₂
-≈C⇔≈C′ = equivalence
-  (λ t₁≈t₂ C → Equivalence.to   ≈○⇔⇓≈⇓ ⟨$⟩ t₁≈t₂ C)
-  (λ t₁≈t₂ C → Equivalence.from ≈○⇔⇓≈⇓ ⟨$⟩ t₁≈t₂ C)
+≈C⇔≈C′ = mk⇔
+  (λ t₁≈t₂ C → Equivalence.to   ≈○⇔⇓≈⇓ $ t₁≈t₂ C)
+  (λ t₁≈t₂ C → Equivalence.from ≈○⇔⇓≈⇓ $ t₁≈t₂ C)
 
 ------------------------------------------------------------------------
 -- A very strict term equivalence
