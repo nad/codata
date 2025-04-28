@@ -105,7 +105,6 @@ private
 
   isLimit↓ : ∀ x n (s : Family (↓ n)) →
              IsCoherent s → IsLimit s (lim↓ x n s)
-  isLimit↓ x zero    s coh ()
   isLimit↓ x (suc n) s coh ≤′-refl       = refl
   isLimit↓ x (suc n) s coh (≤′-step m<n) =
     coh (≤′-step m<n) ≤′-refl m<n
