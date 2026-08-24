@@ -17,7 +17,7 @@ open import Data.Nat
 open import Data.Nat.Induction
 open import Data.Nat.Properties using (m≤n⇒m≤1+n; ≤⇒≤′)
 open import Data.Product as Prod
-open import Relation.Binary.PropositionalEquality
+open import Relation.Binary.PropositionalEquality hiding ([_])
 open import Relation.Nullary
 
 open import RecursiveTypes.Syntax hiding (_≲_)

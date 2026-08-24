@@ -77,7 +77,7 @@ zipWith-hom _∙_ xs ys | x ∷ [ xs′ ] | y ∷ [ ys′ ] =
 -- forget is the identity on streams.
 
 open import MapIterate as M using (_≈P_; _∷_; _≈⟨_⟩_; _∎)
-open import Relation.Binary.PropositionalEquality as P using (_≡_; [_])
+open import Relation.Binary.PropositionalEquality as P using (_≡_)
 
 forget-lemma : ∀ {A} x (xs : StreamP true A) →
                ⟦ x ∷ forget xs ⟧P ≈P x ∷ ♯ ⟦ xs ⟧P
